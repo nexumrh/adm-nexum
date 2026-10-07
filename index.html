@@ -407,6 +407,7 @@ function ouvir() {
   A.unsub.forEach(u => u()); A.unsub = [];
   const erro = col => e => { console.error(col, e); A.carregado = true; A.erro = { col, code: e.code || e.message }; redesenhar(); };
   A.unsub.push(FB.db.collection('tenants').onSnapshot(s => { A.tenants = s.docs.map(tenantDe); A.carregado = true; A.erro = null; contarColab(); lerPix(); redesenhar(); }, erro('tenants')));
+  A.unsub.push(FB.db.collection('suporte').onSnapshot(s => { const antes = (A.sup || []).filter(x => x.naoLidoDono).length; A.sup = s.docs.map(d => d.data()); A.supErro = false; const n = A.sup.filter(x => x.naoLidoDono).length; document.title = n ? `(${n}) Painel do Dono` : 'Painel do Dono'; if (n > antes) toast(`Nova mensagem no suporte (${n} aguardando).`); if (A.supAberto && $('#sc-c')) A.supAberto(); if (A.view === 'sup' || !$('#sc-c')) redesenhar(); }, () => { A.sup = A.sup || []; A.supErro = true; }));
   A.unsub.push(FB.db.collection('contratacoes').onSnapshot(s => { A.ped = s.docs.map(d => ({ id: d.id, ...d.data() })); A.pedErro = false; redesenhar(); }, () => { A.ped = A.ped || []; A.pedErro = true; }));
   A.unsub.push(FB.db.collection('pagamentos').onSnapshot(s => { A.pag = s.docs.map(d => ({ id: d.id, ...d.data() })); redesenhar(); }, erro('pagamentos')));
 }
@@ -509,7 +510,7 @@ const ICO = {
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>'
 };
 const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-const NAV = [['geral', 'Visão geral'], ['empresas', 'Empresas'], ['pag', 'Pagamentos'], ['ped', 'Pedidos e vencimentos'], ['plat', 'Dados da plataforma'], ['chave', 'Gerar chave']];
+const NAV = [['geral', 'Visão geral'], ['empresas', 'Empresas'], ['pag', 'Pagamentos'], ['ped', 'Pedidos e vencimentos'], ['sup', 'Suporte'], ['plat', 'Dados da plataforma'], ['chave', 'Gerar chave']];
 function renderApp() {
   $$('.toast').forEach(t => t.remove());
   const nav = FB_ON ? NAV : NAV.filter(n => n[0] === 'chave');
@@ -528,7 +529,7 @@ function go(v, manterScroll) {
   A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open');
   $('#t-view').textContent = (NAV.find(n => n[0] === v) || [])[1] || '';
   const el = $('#view'), sc = $('.content').scrollTop; el.innerHTML = '';
-  ({ geral: vGeral, empresas: vEmpresas, pag: vPag, ped: vPed, plat: vPlat, chave: vChave })[v](el);
+  ({ geral: vGeral, empresas: vEmpresas, pag: vPag, ped: vPed, sup: vSup, plat: async e => { await vPlat(e); painelIA(e); }, chave: vChave })[v](el);
   const b = $('#bdg-emp'); if (b) b.textContent = A.tenants.filter(t => { const s = situacao(t); return (s.k === 'teste' && s.d <= 3) || (s.k === 'ativo' && s.d <= 7) || (s.k === 'vencido' && s.d >= -30); }).length || '';
   $('.content').scrollTop = manterScroll ? sc : 0;
 }
@@ -623,6 +624,45 @@ async function carregarPlat() {
   A.plat = A.plat || { publico: {}, pix: {} };
   try { const [pb, px] = await Promise.all([FB.db.doc('plataforma/publico').get(), FB.db.doc('plataforma/pix').get()]); A.plat = { publico: pb.exists ? pb.data() : {}, pix: px.exists ? px.data() : {} }; } catch (e) { console.warn('plataforma', e); }
 }
+/* ---------- Suporte: protocolos abertos pelo RH dos clientes ---------- */
+const SUP_ST = { bot: 'Com o assistente', analise: 'Em análise', concluido: 'Concluído', cancelado: 'Cancelado' }, SUP_CLS = { bot: '', analise: 'warn', concluido: 'ok', cancelado: 'bad' };
+function vSup(el) {
+  const l = (A.sup || []).slice().sort((a, b) => (b.naoLidoDono - a.naoLidoDono) || (b.atualizadoEm || '').localeCompare(a.atualizadoEm || '')), f = A.supF || 'analise';
+  const cont = k => l.filter(x => k === 'todos' || x.status === k).length, vis = l.filter(x => f === 'todos' || x.status === f);
+  el.innerHTML = `<section class="panel"><div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px">${[['analise', 'Em análise'], ['bot', 'Com o assistente'], ['concluido', 'Concluídos'], ['cancelado', 'Cancelados'], ['todos', 'Todos']].map(([k, t]) => `<button class="btn ${f === k ? '' : 'sec'} sm" data-sf="${k}">${t} (${cont(k)})</button>`).join('')}</div>
+    ${A.supErro ? '<p class="hint" style="color:var(--bad)">Não foi possível ler os atendimentos. Publique o firestore.rules mais recente.</p>' : ''}
+    ${vis.length ? `<div class="tbl-wrap"><table><thead><tr><th>Protocolo</th><th>Empresa</th><th>Quem abriu</th><th>Última mensagem</th><th>Situação</th><th></th></tr></thead><tbody>${vis.map(x => { const u = (x.msgs || []).slice(-1)[0] || {}; return `<tr${x.naoLidoDono ? ' style="background:#FFF8EC"' : ''}><td><b>${esc(x.protocolo)}</b>${x.naoLidoDono ? ' <span class="pill warn">nova</span>' : ''}<div class="hint">${new Date(x.criadoEm).toLocaleString('pt-BR').slice(0, 17)}</div></td><td>${esc(x.empresa)}<div class="hint">${esc(x.tid)}</div></td><td>${esc(x.nome)}<div class="hint">${esc(x.email)}</div></td><td style="max-width:260px">${esc(String(u.t || '').slice(0, 90))}<div class="hint">${u.em ? new Date(u.em).toLocaleString('pt-BR').slice(0, 17) : ''}</div></td><td><span class="pill ${SUP_CLS[x.status]}">${SUP_ST[x.status]}</span></td><td><button class="btn sm" data-sa="${x.protocolo}">Abrir</button></td></tr>`; }).join('')}</tbody></table></div>` : '<p class="hint">Nenhum atendimento aqui.</p>'}</section>`;
+  $$('[data-sf]', el).forEach(b => b.onclick = () => { A.supF = b.dataset.sf; vSup(el); });
+  $$('[data-sa]', el).forEach(b => b.onclick = () => supChat(b.dataset.sa));
+}
+function supChat(prot) {
+  const des = () => { const x = (A.sup || []).find(y => y.protocolo === prot); if (!x) return; const c = $('#sc-c'); if (!c) return;
+    c.innerHTML = (x.msgs || []).map(m => `<div style="display:flex;${m.de === 'dono' ? 'justify-content:flex-end' : ''};margin:8px 0"><div style="max-width:78%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;font-size:14px;line-height:1.45;${m.de === 'dono' ? 'background:#1F5FE8;color:#fff' : m.de === 'bot' ? 'background:#EEF0F4' : 'background:#E4EDFF'}"><b style="display:block;font-size:11.5px;opacity:.8">${m.de === 'dono' ? 'Você' : m.de === 'bot' ? 'Assistente' : esc(m.por || x.nome)} · ${new Date(m.em).toLocaleString('pt-BR').slice(0, 17)}</b>${esc(m.t)}</div></div>`).join(''); c.scrollTop = c.scrollHeight;
+    const st = $('#sc-st'); if (st && document.activeElement !== st) st.value = x.status; };
+  const x0 = (A.sup || []).find(y => y.protocolo === prot); if (!x0) return;
+  modal(`Protocolo ${esc(prot)} · ${esc(x0.empresa)}`, `<p class="hint" style="margin-top:0">${esc(x0.nome)} · ${esc(x0.email)}</p><div id="sc-c" style="height:340px;overflow-y:auto;background:#F7F8FB;border-radius:10px;padding:8px 12px"></div>
+    <div class="row" style="gap:8px;margin-top:10px;align-items:flex-end"><textarea class="inp" id="sc-t" rows="2" placeholder="Responder ao cliente..." style="flex:1"></textarea><button class="btn" id="sc-env">Enviar</button></div>
+    <div class="row" style="gap:8px;margin-top:10px"><label class="hint" for="sc-st">Situação</label><select class="inp" id="sc-st" style="width:auto">${opts(Object.entries(SUP_ST), x0.status)}</select></div>`,
+    { size: 'lg', onMount: m => {
+      A.supAberto = des; des(); if (x0.naoLidoDono) FB.db.doc(`suporte/${prot}`).update({ naoLidoDono: false }).catch(() => {});
+      const env = async () => { const t = $('#sc-t', m).value.trim(); if (!t) return; const x = A.sup.find(y => y.protocolo === prot), msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t, em: new Date().toISOString(), por: 'NEXUM' };
+        try { await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: msg.em, ...(x.status === 'bot' ? { status: 'analise' } : {}) }); $('#sc-t', m).value = ''; } catch (e) { toast('Não foi possível enviar: ' + (e.code || e.message), true); } };
+      $('#sc-env', m).onclick = env; $('#sc-t', m).onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); env(); } };
+      $('#sc-st', m).onchange = async e => { const v = e.target.value, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: v === 'concluido' ? 'Atendimento concluído. Obrigado pelo contato! Se precisar, é só abrir um novo chat.' : v === 'cancelado' ? 'Atendimento cancelado.' : 'Seu atendimento está em análise.', em: new Date().toISOString(), por: 'NEXUM' };
+        try { await FB.db.doc(`suporte/${prot}`).update({ status: v, msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, atualizadoEm: msg.em }); toast(`Protocolo ${prot}: ${SUP_ST[v]}.`); } catch (er) { toast('Não foi possível mudar: ' + (er.code || er.message), true); } }; } });
+}
+async function painelIA(el) {
+  if ($('#ia-p', el)) return; let k = '', ia = {}; try { ia = (await FB.db.doc('plataforma/ia').get()).data() || {}; k = ia.groqKey || ''; } catch (e) { }
+  el.insertAdjacentHTML('beforeend', `<section class="panel" id="ia-p"><h2 style="margin-bottom:4px">Assistente de IA (Groq)</h2><p class="hint" style="margin-top:0">Chave usada pelo chat de suporte e por todos os recursos de IA do NEXUM RH dos clientes, sem eles configurarem nada. Fica guardada no Firebase, legível só por usuários do RH logados, e não aparece no código do site. Crie em console.groq.com/keys.</p>
+    <div class="row" style="gap:8px"><input class="inp" id="ia-k" type="password" value="${esc(k)}" placeholder="gsk_..." autocomplete="off" style="flex:1"><button class="btn sec" id="ia-t">Testar</button><button class="btn" id="ia-ok">Salvar</button></div><p class="hint" id="ia-r" style="margin:8px 0 0">${k ? 'Chave salva no painel.' : 'Sem chave no painel: o sistema usa a chave embutida no código.'}</p>
+    <h3 style="margin:18px 0 4px">Anthropic (Claude): respostas mais completas</h3><p class="hint" style="margin-top:0">Se a chave embutida for revogada, cole uma nova aqui. Vale no lugar da embutida.</p>
+    <div class="row" style="gap:8px"><input class="inp" id="ia-c" type="password" value="${esc(ia.claudeKey || '')}" placeholder="sk-ant-..." autocomplete="off" style="flex:2"><input class="inp" id="ia-w" value="${esc(ia.workspace || '')}" placeholder="wrkspc_... (se a chave pedir)" style="flex:1"><button class="btn" id="ia-cok">Salvar</button></div></section>`);
+  $('#ia-cok', el).onclick = async () => { const c = $('#ia-c', el).value.trim(), w = $('#ia-w', el).value.trim(); if (c && !/^sk-ant-/.test(c)) return toast('A chave da Anthropic começa com sk-ant-.', true); try { await FB.db.doc('plataforma/ia').set({ claudeKey: c, workspace: w, atualizadoEm: new Date().toISOString() }, { merge: true }); toast(c ? 'Chave da Anthropic salva.' : 'Chave da Anthropic removida do painel.'); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
+  $('#ia-ok', el).onclick = async () => { const v = $('#ia-k', el).value.trim(); if (v && !/^gsk_\w{20,}$/.test(v)) return toast('A chave do Groq começa com gsk_.', true); try { await FB.db.doc('plataforma/ia').set({ groqKey: v, atualizadoEm: new Date().toISOString() }, { merge: true }); toast(v ? 'Chave salva.' : 'Chave removida.'); $('#ia-r', el).textContent = v ? 'Chave configurada.' : 'Nenhuma chave configurada.'; } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
+  $('#ia-t', el).onclick = async () => { const v = $('#ia-k', el).value.trim(); $('#ia-r', el).textContent = 'Testando…';
+    try { const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + v }, body: JSON.stringify({ model: 'openai/gpt-oss-120b', max_tokens: 20, messages: [{ role: 'user', content: 'Responda só: ok' }] }) }); $('#ia-r', el).textContent = r.ok ? 'Funcionando.' : r.status === 401 ? 'Chave inválida.' : `Erro ${r.status}.`; } catch (e) { $('#ia-r', el).textContent = 'Sem conexão com o Groq.'; } };
+}
+
 /* ---------- Pedidos do site, vencimentos e comprovante de aceite ---------- */
 const NOME_PL = { essencial: 'Essencial', profissional: 'Profissional', empresa: 'Empresa', recrutamento: 'Só Recrutamento' };
 const soD = v => String(v || '').replace(/\D/g, '');
