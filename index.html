@@ -357,12 +357,13 @@ const A = { view: 'geral', tenants: [], pag: [], colab: {}, q: '', filtro: 'todo
 let FB = null;
 function tenantDe(d) {
   const x = d.data(), exp = x.expiraTs && x.expiraTs.toDate ? x.expiraTs.toDate() : hoje();
-  return { id: d.id, nome: x.nome || d.id, cnpj: x.cnpj || '', plano: x.plano || 'essencial', trial: !!x.trial, suspenso: !!x.suspenso, criadoEm: x.criadoEm || '', expira: iso(addD(exp, -1)), expiraDate: exp, telefone: x.telefone || '', email: x.email || '', obs: x.obs || '', ownerUid: x.ownerUid || '' };
+  return { id: d.id, nome: x.nome || d.id, cnpj: x.cnpj || '', plano: x.plano || 'essencial', trial: !!x.trial, suspenso: !!x.suspenso, bloqueado: !!x.bloqueado, criadoEm: x.criadoEm || '', expira: iso(addD(exp, -1)), expiraDate: exp, telefone: x.telefone || '', email: x.email || '', obs: x.obs || '', ownerUid: x.ownerUid || '' };
 }
 function situacao(t) {
   const d = diffD(hoje(), pd(t.expira));
-  if (t.suspenso) return { k: 'suspenso', rot: 'Suspensa', cls: 'bad', d };
-  if (d < 0) return { k: 'vencido', rot: t.trial ? 'Teste vencido' : 'Vencida', cls: 'bad', d };
+  if (t.bloqueado) return { k: 'suspenso', rot: 'Bloqueada por você', cls: 'bad', d };
+  if (t.suspenso) return { k: 'suspenso', rot: 'Suspensa (somente leitura)', cls: 'bad', d };
+  if (d < 0) { const tol = t.trial ? 0 : 5; return { k: 'vencido', rot: d >= -tol ? `Vencida há ${-d} dia${d === -1 ? '' : 's'} · tolerância` : d >= -15 ? `${t.trial ? 'Teste vencido' : 'Vencida'} · somente leitura` : `${t.trial ? 'Teste vencido' : 'Vencida'} · bloqueada`, cls: d >= -tol ? 'warn' : 'bad', d }; }
   if (t.trial) return { k: 'teste', rot: 'Em teste', cls: 'warn', d };
   return { k: 'ativo', rot: 'Ativa', cls: 'ok', d };
 }
@@ -443,7 +444,7 @@ function renovar(t, pre) {
       $('#rn-ok', m).onclick = async () => {
         const plano = $('#rn-p', m).value, meses = +$('#rn-m', m).value, fim = calc(), valor = num($('#rn-v', m).value); const b = $('#rn-ok', m); b.disabled = true;
         try {
-          await atualizarTenant(t, { plano, trial: false, suspenso: false, expiraTs: firebase.firestore.Timestamp.fromDate(addD(fim, 1)) });
+          await atualizarTenant(t, { plano, trial: false, suspenso: false, bloqueado: false, expiraTs: firebase.firestore.Timestamp.fromDate(addD(fim, 1)) });
           await FB.db.collection('pagamentos').add({ tid: t.id, empresa: t.nome, plano, meses, valor, forma: $('#rn-f', m).value, data: $('#rn-d', m).value || iso(hoje()), obs: $('#rn-o', m).value.trim(), validadeAte: iso(fim), registradoEm: new Date().toISOString() });
           if (pre) { await FB.db.doc(`tenants/${t.id}/meta/pix`).set({ ...pre, status: 'confirmado', confirmadoEm: new Date().toISOString() }).catch(() => { }); delete (A.pix || {})[t.id]; }
           closeModal(); toast(`${t.nome} renovada até ${fim.toLocaleDateString('pt-BR')}.`);
@@ -481,13 +482,15 @@ function detalhes(t) {
     <div class="res">${lin('CNPJ', esc(t.cnpj || '—'))}${lin('E-mail do dono', `<span id="dt-em">${esc(t.email || 'buscando…')}</span>`)}${lin('Criada em', fd(t.criadoEm))}${lin('Válida até', `${fd(t.expira)} (${st.d >= 0 ? st.d + ' dias' : 'há ' + -st.d + ' dias'})`)}${lin('Colaboradores ativos', `${A.colab[t.id] ?? '…'} de ${(PLANOS[t.plano] || {}).limite > 9999 ? 'ilimitados' : (PLANOS[t.plano] || {}).limite}`)}</div>
     <div class="grid" style="margin-top:14px"><div class="fld"><label for="dt-tel">WhatsApp</label><input class="inp" id="dt-tel" value="${esc(t.telefone)}" inputmode="tel"></div><div class="fld"><label for="dt-pl">Plano</label><select class="inp" id="dt-pl">${opts(Object.entries(PLANOS).map(([k, p]) => [k, p.nome]), t.plano)}</select></div>
       <div class="fld full"><label for="dt-o">Anotações internas</label><textarea class="inp" id="dt-o" placeholder="Ex.: paga todo dia 10, indicação do fulano">${esc(t.obs)}</textarea></div></div>
-    <div class="row"><button class="btn sec sm" id="dt-s">Salvar dados</button><span class="sp"></span><button class="btn sec sm" id="dt-7">+7 dias de teste</button><button class="btn sec sm" id="dt-sus" style="color:${t.suspenso ? 'var(--ok)' : 'var(--bad)'}">${t.suspenso ? 'Reativar acesso' : 'Suspender acesso'}</button></div>
+    <div class="row"><button class="btn sec sm" id="dt-s">Salvar dados</button><span class="sp"></span><button class="btn sec sm" id="dt-7">+7 dias de teste</button><button class="btn sec sm" id="dt-5">Liberar +5 dias</button><button class="btn sec sm" id="dt-sus" style="color:${t.suspenso ? 'var(--ok)' : 'var(--bad)'}">${t.suspenso ? 'Tirar da somente leitura' : 'Somente leitura'}</button><button class="btn sm" id="dt-bq" style="background:${t.bloqueado ? 'var(--ok)' : 'var(--bad)'};border-color:${t.bloqueado ? 'var(--ok)' : 'var(--bad)'}">${t.bloqueado ? 'Desbloquear' : 'Bloquear agora'}</button></div><p class="hint" style="margin:8px 0 0">Sem pagamento, o sistema segue sozinho a régua do contrato: tolerância até o 5º dia, somente leitura do 6º ao 15º e bloqueio a partir do 16º. Os botões acima permitem agir antes ou dar prazo.</p>
     <h3 style="margin:20px 0 8px;font-size:15px">Pagamentos</h3>${pags.length ? `<ul class="list">${pags.map(p => `<li><div class="t"><div>${brl(p.valor)} · ${esc(p.forma || '')}</div><div>${fd(p.data)} · ${(PLANOS[p.plano] || {}).nome || ''} ${p.meses} ${p.meses > 1 ? 'meses' : 'mês'} · até ${fd(p.validadeAte)}${p.obs ? ' · ' + esc(p.obs) : ''}</div></div></li>`).join('')}</ul>` : '<p class="hint">Nenhum pagamento registrado.</p>'}
     <div class="row" style="margin-top:20px"><button class="btn ghost sm" id="dt-x" style="color:var(--bad)">Excluir empresa</button></div>`, {
     foot: '<button class="btn sec" id="dt-w">Cobrar no WhatsApp</button><button class="btn" id="dt-r">Renovar / registrar pagamento</button>', onMount: async m => {
       $('#dt-r', m).onclick = () => renovar(t); $('#dt-w', m).onclick = () => cobrar(t); $('#dt-x', m).onclick = () => excluirEmpresa(t);
       $('#dt-s', m).onclick = async () => { await atualizarTenant(t, { telefone: $('#dt-tel', m).value.trim(), obs: $('#dt-o', m).value.trim(), plano: $('#dt-pl', m).value }, 'Dados salvos.').catch(() => { }); };
       $('#dt-7', m).onclick = async () => { const base = pd(t.expira) >= hoje() ? addD(pd(t.expira), 1) : hoje(); await atualizarTenant(t, { expiraTs: firebase.firestore.Timestamp.fromDate(addD(base, 7)) }, 'Mais 7 dias liberados.').catch(() => { }); closeModal(); };
+      $('#dt-bq', m).onclick = () => confirmar(t.bloqueado ? `Desbloquear <b>${esc(t.nome)}</b>? O acesso volta a seguir a data de vencimento.` : `Bloquear <b>${esc(t.nome)}</b> agora? O sistema do RH e o Portal do Colaborador ficam bloqueados até você desbloquear. O administrador da empresa ainda consegue baixar o backup, como manda a lei.`, () => atualizarTenant(t, { bloqueado: !t.bloqueado }, t.bloqueado ? 'Empresa desbloqueada.' : 'Empresa bloqueada.').then(() => closeModal()).catch(() => { }), t.bloqueado ? 'Desbloquear' : 'Bloquear', !t.bloqueado);
+      $('#dt-5', m).onclick = async () => { if (pd(t.expira) >= addD(hoje(), 5)) return toast('A licença já vale por mais de 5 dias.', true); await atualizarTenant(t, { expiraTs: firebase.firestore.Timestamp.fromDate(addD(hoje(), 6)), bloqueado: false }, 'Liberado por mais 5 dias.').catch(() => { }); closeModal(); };
       $('#dt-sus', m).onclick = () => confirmar(t.suspenso ? `Reativar o acesso de <b>${esc(t.nome)}</b>?` : `Suspender <b>${esc(t.nome)}</b>? O RH e o portal ficam só para leitura até você reativar.`, () => atualizarTenant(t, { suspenso: !t.suspenso }, t.suspenso ? 'Acesso reativado.' : 'Empresa suspensa.').catch(() => { }), t.suspenso ? 'Reativar' : 'Suspender', !t.suspenso);
       if (!t.email && t.ownerUid) { try { const u = await FB.db.doc(`users/${t.ownerUid}`).get(); const e = $('#dt-em', m); if (e) e.textContent = u.exists ? u.data().email : '—'; } catch (e) { const x = $('#dt-em', m); if (x) x.textContent = '—'; } }
       else { const e = $('#dt-em', m); if (e && !t.email) e.textContent = '—'; }
