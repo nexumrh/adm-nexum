@@ -560,7 +560,7 @@ function go(v, manterScroll) {
   A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open');
   $('#t-view').textContent = (NAV.find(n => n[0] === v) || [])[1] || '';
   const el = $('#view'), sc = $('.content').scrollTop; el.innerHTML = '';
-  ({ geral: vGeral, empresas: vEmpresas, pag: vPag, ped: vPed, sup: e => { vSup(e); centralAjuda(e); }, avisos: vAvisos, rev: vRevenda, saude: vSaude, cupons: vCupons, novid: vNovid, nf: vNF, leads: vLeads, rst: vRst, num: vNum, equipe: vEquipeNx, impl: vImpl, sug: vSugAdm, plat: async e => { await vPlat(e); painelIA(e); painelLinksMP(e); painelBackup(e); }, chave: vChave })[v](el);
+  ({ geral: vGeral, empresas: vEmpresas, pag: vPag, ped: vPed, sup: e => { vSup(e); painelLeadsSup(e); centralAjuda(e); }, avisos: vAvisos, rev: vRevenda, saude: vSaude, cupons: vCupons, novid: vNovid, nf: vNF, leads: vLeads, rst: vRst, num: vNum, equipe: vEquipeNx, impl: vImpl, sug: vSugAdm, plat: async e => { await vPlat(e); painelIA(e); painelLinksMP(e); painelBackup(e); }, chave: vChave })[v](el);
   const b = $('#bdg-emp'); if (b) b.textContent = A.tenants.filter(t => { const s = situacao(t); return (s.k === 'teste' && s.d <= 3) || (s.k === 'ativo' && s.d <= 7) || (s.k === 'vencido' && s.d >= -30); }).length || '';
   $('.content').scrollTop = manterScroll ? sc : 0;
 }
@@ -1243,6 +1243,33 @@ async function vSugAdm(el) {
         const xb = $('#se-x', m); if (xb) xb.onclick = async () => { if (!confirm('Excluir esta sugestão de vez?')) return; try { await FB.db.doc(`sugestoes/${x.id}`).delete(); closeModal(); vSugAdm(el); } catch (e) { toast(e.code || e.message, true); } }; } }); });
 }
 document.head.insertAdjacentHTML('beforeend', '<style>.im-p{display:flex;gap:3px;margin-top:5px}.im-p span{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font-size:11px;background:var(--line);color:var(--mut)}.im-p span.ok{background:var(--ok);color:#fff}</style>');
+
+
+/* ---------- Contatos do chat de vendas do site: aviso na hora, contador no menu e resposta pelo WhatsApp ---------- */
+function ouvirLeads() {
+  if (!(A.papel === 'dono' || (typeof podeVer === 'function' && podeVer('leads')))) return; if (A._unsubLeads) A._unsubLeads();
+  let ini = true; A._unsubLeads = FB.db.collection('leads').onSnapshot(s => { const l = s.docs.map(d => ({ id: d.id, ...d.data() })), novos = l.filter(x => (x.status || 'novo') === 'novo');
+    if (!ini) s.docChanges().filter(c => c.type === 'added').forEach(c => { const x = c.doc.data(); toast(`Novo contato do site: ${x.nome || ''}${x.empresa ? ' · ' + x.empresa : ''}. Veja em Suporte.`); });
+    ini = false; A.leads = l; badgeLeads(); if (A.view === 'sup' && !$('#modal-root').innerHTML && !(document.activeElement && document.activeElement.matches('#view input, #view textarea, #view select'))) redesenhar(); }, () => { A.leads = A.leads || []; });
+}
+function badgeLeads() { const n = (A.leads || []).filter(x => (x.status || 'novo') === 'novo').length;
+  ['leads', 'sup'].forEach(v => { const b = $(`.side .nav button[data-v="${v}"]`); if (!b) return; let s = $(`#bdg-ld-${v}`); if (!s) { b.insertAdjacentHTML('beforeend', `<span class="bdg" id="bdg-ld-${v}" title="contatos novos do site"></span>`); s = $(`#bdg-ld-${v}`); } s.textContent = n || ''; }); }
+const waLead = x => { const n = soDig(x.whatsapp).replace(/^55(?=\d{10,11}$)/, ''); return `https://wa.me/55${n}?text=${encodeURIComponent(`Olá, ${String(x.nome || '').split(' ')[0]}! Aqui é da NEXUM RH. Vi que você conversou com o nosso assistente no site${x.empresa ? ' sobre a ' + x.empresa : ''}. Como posso te ajudar?`)}`; };
+function painelLeadsSup(el) {
+  if ($('#ld-sup', el)) return; const l = (A.leads || []).filter(x => (x.status || 'novo') === 'novo').sort((a, b) => (b.em || '').localeCompare(a.em || ''));
+  if (!A.leads && (A.papel === 'dono' || podeVer('leads'))) { el.insertAdjacentHTML('afterbegin', '<section class="panel" id="ld-sup"><p class="hint" style="margin:0">Carregando os contatos do site…</p></section>'); return; }
+  if (!l.length) return;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="ld-sup" style="border-color:var(--warn,#B7791F)"><div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:6px"><h2 style="margin:0;flex:1">Contatos do site esperando resposta (${l.length})</h2><button class="btn ghost sm" data-goleads>Ver todos os leads</button></div><p class="hint" style="margin-top:0">Pessoas que pediram para um consultor chamar no chat do site. Responda pelo WhatsApp e marque como "Em contato".</p>
+    <ul class="list">${l.map(x => `<li><div class="t"><div><b>${esc(x.nome || '')}</b>${x.empresa ? ' · ' + esc(x.empresa) : ''}${x.funcionarios ? ' · ' + esc(String(x.funcionarios)) + ' func.' : ''} <span class="hint">${x.em ? new Date(x.em).toLocaleString('pt-BR').slice(0, 17) : ''}</span></div><div>${esc(x.resumo || 'Sem resumo')}${x.plano && x.plano !== 'indefinido' ? ' · plano sugerido: ' + esc(x.plano) : ''}</div></div>
+      <a class="btn sm" target="_blank" rel="noopener" href="${waLead(x)}" data-ldw="${x.id}">Responder no WhatsApp</a><button class="btn ghost sm" data-ldc="${x.id}">Conversa</button><button class="btn ghost sm" data-ldok="${x.id}">Em contato</button></li>`).join('')}</ul></section>`);
+  const marcar = async (id, st) => { try { await FB.db.doc(`leads/${id}`).update({ status: st }); } catch (e) { toast('Não foi possível atualizar: ' + (e.code || e.message), true); } };
+  $$('[data-ldw]', el).forEach(b => b.addEventListener('click', () => setTimeout(() => marcar(b.dataset.ldw, 'contato'), 400)));
+  $$('[data-ldok]', el).forEach(b => b.onclick = () => marcar(b.dataset.ldok, 'contato'));
+  $$('[data-ldc]', el).forEach(b => b.onclick = () => { const x = A.leads.find(y => y.id === b.dataset.ldc); modal(`Conversa · ${esc(x.nome || '')}`, `<div style="display:flex;flex-direction:column;gap:8px">${(x.conversa || []).map(m => `<div style="align-self:${m.r === 'u' ? 'flex-end' : 'flex-start'};background:${m.r === 'u' ? 'var(--pri-s,#E8F0FF)' : '#F4F6FB'};padding:8px 12px;border-radius:12px;max-width:85%;white-space:pre-wrap">${esc(m.t)}</div>`).join('') || '<p class="hint">Sem conversa registrada.</p>'}</div>`, { size: 'lg', foot: `<a class="btn" target="_blank" rel="noopener" href="${waLead(x)}">Responder no WhatsApp</a><button class="btn sec" data-close>Fechar</button>` }); });
+  const g = $('[data-goleads]', el); if (g) g.onclick = () => go('leads');
+}
+{ const _ou8 = ouvir; ouvir = function () { const r = _ou8.apply(this, arguments); try { ouvirLeads(); } catch (e) { } return r; }; }
+{ const _ra8 = renderApp; renderApp = function () { const r = _ra8.apply(this, arguments); try { badgeLeads(); } catch (e) { } return r; }; }
 
 /* ---------- Links fixos do Mercado Pago (aparecem na aba Plano do RH dos clientes) ---------- */
 const MP_PLANOS = [['essencial', 'Essencial'], ['profissional', 'Profissional'], ['empresa', 'Empresa'], ['recrutamento', 'Recrutamento e Seleção (adicional)']], MP_MESES = [1, 3, 6, 12];
