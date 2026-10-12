@@ -757,7 +757,7 @@ const LINKS_NX = [
   ['Site de vendas', 'https://vendas.nexumdp.com.br/'], ['Planos e preços', 'https://vendas.nexumdp.com.br/#planos'], ['Seleção terceirizada', 'https://vendas.nexumdp.com.br/#selecao'],
   ['Demonstração sem cadastro', 'https://rh.nexumdp.com.br/#demo'], ['Guia trabalhista', 'https://vendas.nexumdp.com.br/blog.html'],
   ['Contrato de prestação de serviços', 'https://rh.nexumdp.com.br/contrato.html'], ['Termos de uso', 'https://rh.nexumdp.com.br/termos.html'], ['Política de privacidade', 'https://rh.nexumdp.com.br/privacidade.html'],
-  ['Painel do Dono', 'https://adm.nexumdp.com.br/'], ['Firebase do NEXUM RH', 'https://console.firebase.google.com/project/nexum-30044/overview'], ['Firebase do Recrutamento', 'https://console.firebase.google.com/project/recrutamento-bed5d/overview']
+  ['Painel do Dono', 'https://adm.nexumdp.com.br/'], ['Portal da Equipe NEXUM', 'https://adm.nexumdp.com.br/equipe.html'], ['Firebase do NEXUM RH', 'https://console.firebase.google.com/project/nexum-30044/overview'], ['Firebase do Recrutamento', 'https://console.firebase.google.com/project/recrutamento-bed5d/overview']
 ];
 const LINKS_CLIENTE = 11; /* os 11 primeiros podem ser mandados ao cliente; os outros são internos */
 const RESP_GRUPOS = [
@@ -841,8 +841,8 @@ function supChat(prot) {
     <div class="row" style="gap:8px;margin-top:10px"><label class="hint" for="sc-st">Situação</label><select class="inp" id="sc-st" style="width:auto">${opts(Object.entries(SUP_ST), x0.status)}</select></div>`,
     { size: 'lg', onMount: m => {
       A.supAberto = des; des(); if (x0.naoLidoDono) FB.db.doc(`suporte/${prot}`).update({ naoLidoDono: false }).catch(() => {});
-      const env = async () => { const t = $('#sc-t', m).value.trim(); if (!t) return; const x = A.sup.find(y => y.protocolo === prot), msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t, em: new Date().toISOString(), por: 'NEXUM' };
-        try { await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: msg.em, ...(x.status === 'bot' ? { status: 'analise' } : {}) }); $('#sc-t', m).value = ''; } catch (e) { toast('Não foi possível enviar: ' + (e.code || e.message), true); } };
+      const env = async () => { const t = $('#sc-t', m).value.trim(); if (!t) return; const x = A.sup.find(y => y.protocolo === prot), msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t, em: new Date().toISOString(), por: nomeEu(), porEmail: emailEu() };
+        try { await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: msg.em, ...(x.status === 'bot' ? { status: 'analise' } : {}), ...(!x.atendenteEmail ? { atendente: nomeEu(), atendenteEmail: emailEu() } : {}) }); $('#sc-t', m).value = ''; logEq('sup-msg', `Respondeu o protocolo ${prot} · ${x.empresa || ''}`); } catch (e) { toast('Não foi possível enviar: ' + (e.code || e.message), true); } };
       const rps = () => { const minhas = (A.respostas || {}).lista || [], l = [...RESP_PADRAO, ...minhas]; let k = 0; $('#sc-rp', m).innerHTML = `<select class="inp" id="sc-rsel" style="width:auto;max-width:100%" aria-label="Respostas prontas"><option value="">Respostas prontas…</option>${RESP_GRUPOS.map(([g, gl]) => `<optgroup label="${g}">${gl.map(([t]) => `<option value="${k++}">${esc(t)}</option>`).join('')}</optgroup>`).join('')}${minhas.length ? `<optgroup label="Minhas respostas">${minhas.map(r => `<option value="${k++}">${esc(r.titulo)}</option>`).join('')}</optgroup>` : ''}</select><select class="inp" id="sc-lsel" style="width:auto" aria-label="Inserir link"><option value="">Inserir link…</option>${LINKS_NX.slice(0, LINKS_CLIENTE).map(([t], i) => `<option value="${i}">${t}</option>`).join('')}</select>` + '<button type="button" class="btn ghost sm" id="sc-rps" style="border:1px dashed var(--line);border-radius:999px">Salvar como resposta pronta</button>';
         const ins = tx => { const t = $('#sc-t', m); t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + tx; t.focus(); };
         $('#sc-rsel', m).onchange = e => { const r = l[+e.target.value]; if (r) ins(r.texto.replace('{nome}', String(x0.nome || '').split(' ')[0] || '')); e.target.value = ''; };
@@ -852,8 +852,8 @@ function supChat(prot) {
           const lista = [...((A.respostas || {}).lista || []), { titulo: ti.trim().slice(0, 30), texto: tx }]; try { await FB.db.doc('plataforma/suporte').set({ lista }, { merge: true }); A.respostas = { lista }; rps(); toast('Resposta pronta salva.'); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } }; };
       if (A.respostas) rps(); else { rps(); FB.db.doc('plataforma/suporte').get().then(d => { A.respostas = d.data() || { lista: [] }; if ($('#sc-rp', m)) rps(); }).catch(() => { A.respostas = { lista: [] }; }); }
       $('#sc-env', m).onclick = env; $('#sc-t', m).onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); env(); } };
-      $('#sc-st', m).onchange = async e => { const v = e.target.value, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: v === 'concluido' ? 'Atendimento concluído. Obrigado pelo contato! Se precisar, é só abrir um novo chat.' : v === 'cancelado' ? 'Atendimento cancelado.' : 'Seu atendimento está em análise.', em: new Date().toISOString(), por: 'NEXUM' };
-        try { await FB.db.doc(`suporte/${prot}`).update({ status: v, msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, atualizadoEm: msg.em }); toast(`Protocolo ${prot}: ${SUP_ST[v]}.`); } catch (er) { toast('Não foi possível mudar: ' + (er.code || er.message), true); } }; } });
+      $('#sc-st', m).onchange = async e => { const v = e.target.value, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: v === 'concluido' ? 'Atendimento concluído. Obrigado pelo contato! Avalie este atendimento aqui embaixo: leva 2 segundos e nos ajuda a melhorar.' : v === 'cancelado' ? 'Atendimento cancelado.' : 'Seu atendimento está em análise.', em: new Date().toISOString(), por: nomeEu(), porEmail: emailEu() };
+        try { await FB.db.doc(`suporte/${prot}`).update({ status: v, msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, atualizadoEm: msg.em, ...(v === 'concluido' ? { concluidoEm: msg.em, concluidoPor: emailEu() } : {}) }); toast(`Protocolo ${prot}: ${SUP_ST[v]}.`); logEq('sup-status', `Protocolo ${prot}: ${SUP_ST[v]}`); } catch (er) { toast('Não foi possível mudar: ' + (er.code || er.message), true); } }; } });
 }
 async function painelIA(el) {
   if ($('#ia-p', el)) return; let k = '', ia = {}; try { ia = (await FB.db.doc('plataforma/ia').get()).data() || {}; k = ia.groqKey || ''; } catch (e) { }
@@ -1180,9 +1180,11 @@ async function vEquipeNx(el) {
   if (A.papel !== 'dono') { el.innerHTML = '<div class="panel empty"><b>Acesso só do proprietário</b></div>'; return; }
   let d = {}; try { const s = await FB.db.doc('plataforma/equipe').get(); d = s.exists ? s.data() : {}; } catch (e) { el.innerHTML = `<section class="panel"><p style="margin:0">Não foi possível ler a equipe (${esc(e.code || e.message)}). Publique as regras novas do Firestore.</p></section>`; return; }
   const m = d.membros || {}, l = Object.entries(m).sort((a, b) => (a[1].nome || a[0]).localeCompare(b[1].nome || b[0]));
-  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:260px"><h2 style="margin:0 0 4px">Equipe da NEXUM</h2><p class="hint" style="margin:0">Dê acesso ao Painel do Dono para quem trabalha com você, cada um vendo só a sua parte. O e-mail e a senha de proprietário continuam só com você.</p></div><button class="btn" id="eq-n">Adicionar pessoa</button></div></section>
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:260px"><h2 style="margin:0 0 4px">Equipe da NEXUM</h2><p class="hint" style="margin:0">Dê acesso para quem trabalha com você, cada um vendo só a sua parte. O e-mail e a senha de proprietário continuam só com você.</p></div><button class="btn" id="eq-n">Adicionar pessoa</button></div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--pri-s,#EEF3FF)"><span style="flex:1;min-width:220px"><b>Link do Portal da Equipe</b><br><span class="hint">${esc(URL_EQUIPE)}</span></span><a class="btn sec sm" href="${esc(URL_EQUIPE)}" target="_blank" rel="noopener">Abrir</a><button class="btn sm" id="eq-cp">Copiar link</button></div></section>
     <section class="panel"><div class="tbl-wrap"><table><thead><tr><th>Pessoa</th><th>Função</th><th>O que vê</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(([e, x]) => `<tr><td><b>${esc(x.nome || e)}</b><div class="hint">${esc(e)}</div></td><td>${esc((PAPEL_NX[x.papel] || [x.papel])[0])}</td><td class="hint">${((PAPEL_NX[x.papel] || [])[1] || []).map(v => (NAV.find(n => n[0] === v) || [])[1] || v).join(', ')}</td><td><span class="pill ${x.ativo === false ? 'bad' : 'ok'}">${x.ativo === false ? 'Bloqueado' : 'Ativo'}</span></td><td class="n" style="white-space:nowrap"><button class="btn ghost sm" data-eqa="${esc(e)}">${x.ativo === false ? 'Reativar' : 'Bloquear'}</button><button class="btn ghost sm" data-eqx="${esc(e)}" style="color:var(--bad)">Remover</button></td></tr>`).join('') || '<tr><td colspan="5" class="hint">Só você tem acesso por enquanto.</td></tr>'}</tbody></table></div>
     <p class="note">Funções: <b>Suporte</b> (chat de suporte e lista de empresas), <b>Seleção terceirizada</b> (pedidos e candidatos apresentados), <b>Comercial</b> (leads do site e pedidos), <b>Financeiro</b> (números do negócio, pagamentos, notas fiscais e pedidos). A pessoa entra no <b>Portal da Equipe</b> (${esc(URL_EQUIPE)}) com o e-mail e a senha que você criar, e vê só a área dela, com mensagens prontas, links e guias para ajudar o cliente.</p></section>`;
+  $('#eq-cp', el).onclick = () => navigator.clipboard.writeText(URL_EQUIPE).then(() => toast('Link copiado.'), () => toast('Copie o link manualmente.', true));
   const grava = async nm => { await FB.db.doc('plataforma/equipe').set({ membros: nm, atualizadoEm: new Date().toISOString() }); vEquipeNx(el); };
   $('#eq-n', el).onclick = () => modal('Adicionar pessoa à equipe', `<div class="grid"><div class="fld"><label for="en-n">Nome</label><input class="inp" id="en-n"></div><div class="fld"><label for="en-e">E-mail</label><input class="inp" type="email" id="en-e"></div><div class="fld"><label for="en-p">Função</label><select class="inp" id="en-p">${opts(Object.entries(PAPEL_NX).map(([k, v]) => [k, v[0]]), 'suporte')}</select></div><div class="fld"><label for="en-s">Senha inicial</label><input class="inp" id="en-s" value="${Math.random().toString(36).slice(2, 10)}"></div></div><p class="hint">Se a pessoa já tiver conta com este e-mail, a senha é ignorada: ela entra com a senha que já usa.</p>`,
     { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="en-ok">Adicionar</button>', onMount: md => $('#en-ok', md).onclick = async () => { const e = $('#en-e', md).value.trim().toLowerCase(), nm = $('#en-n', md).value.trim(), s = $('#en-s', md).value; if (!/^\S+@\S+\.\S+$/.test(e) || nm.length < 2) return toast('Informe nome e e-mail válidos.', true); if (DONO_EMAILS.map(x => x.toLowerCase()).includes(e)) return toast('Este e-mail já é de proprietário.', true);
@@ -1931,8 +1933,8 @@ document.addEventListener('click', async e => { const b = e.target.closest && e.
   $('#sc-anx', m).onclick = () => $('#sc-file', m).click();
   $('#sc-file', m).onchange = async ev => { const f = ev.target.files[0]; ev.target.value = ''; if (!f) return; const b = $('#sc-anx', m); b.disabled = true; b.textContent = '…';
     try { const a = await anexoLer(f), id = Math.random().toString(36).slice(2, 12), em = new Date().toISOString(); await FB.db.doc(`suporte/${prot}/anexos/${id}`).set({ ...a, em, de: 'dono' }); A.anxCache[id] = a;
-      const x = (A.sup || []).find(y => y.protocolo === prot) || {}, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: `📎 ${a.nome}`, em, por: 'NEXUM', anexo: { id, nome: a.nome, tipo: a.tipo } };
-      await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: em, ...(x.status === 'bot' ? { status: 'analise' } : {}) }); toast('Anexo enviado.'); }
+      const x = (A.sup || []).find(y => y.protocolo === prot) || {}, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: `📎 ${a.nome}`, em, por: nomeEu(), porEmail: emailEu(), anexo: { id, nome: a.nome, tipo: a.tipo } };
+      await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: em, ...(x.status === 'bot' ? { status: 'analise' } : {}) }); toast('Anexo enviado.'); logEq('sup-anexo', `Protocolo ${prot}: ${a.nome}`); }
     catch (er) { toast(er.code === 'permission-denied' ? 'Sem permissão: publique o firestore.rules novo.' : (er.message || 'Não foi possível enviar o anexo.'), true); } b.disabled = false; b.textContent = '📎'; };
   const pinta = () => { const c = $('#sc-c'), x = (A.sup || []).find(y => y.protocolo === prot); if (!c || !x) return; const bubs = $$('#sc-c > div > div', m); (x.msgs || []).forEach((mm, i) => { if (mm.anexo && bubs[i] && !bubs[i].querySelector('.sc-anx')) bubs[i].insertAdjacentHTML('beforeend', '<br>' + anexoChip(prot, mm)); }); anexoThumbs(c, prot); };
   const des = A.supAberto; A.supAberto = () => { if (des) des(); pinta(); }; pinta();
@@ -1943,7 +1945,7 @@ document.addEventListener('click', async e => { const b = e.target.closest && e.
    A mesma página vira o Portal da Equipe quando aberta como nexum_equipe.html
    (ou ?equipe), e sempre que quem entra é da equipe e não a proprietária.
    ===================================================================== */
-const URL_EQUIPE = 'https://adm.nexumdp.com.br/nexum_equipe.html';
+const URL_EQUIPE = 'https://adm.nexumdp.com.br/equipe.html';
 const MODO_EQUIPE = /equipe/i.test(location.hostname + location.pathname) || new URLSearchParams(location.search).has('equipe');
 function modoEq() { return MODO_EQUIPE || (!!A.papel && A.papel !== 'dono'); }
 function papelAtual() { return A.papel === 'dono' ? (MODO_EQUIPE ? (A.papelEq || 'suporte') : 'dono') : A.papel; }
@@ -2015,6 +2017,236 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .eq-k.alerta{border-color:#FCA5A5;background:#FFF5F5}.eq-k.alerta b{color:#DC2626}
 .eq-rot{margin:0;padding-left:20px;line-height:1.8}
 </style>`);
+
+/* =====================================================================
+   LOTE 15: a equipe só vê a empresa; bloquear, suspender, liberar e renovar
+   viram um pedido para a proprietária aprovar
+   ===================================================================== */
+const PE_ACOES = { bloquear: 'Bloquear o acesso', suspender: 'Colocar em somente leitura', reativar: 'Desbloquear / reativar o acesso', liberar5: 'Liberar mais 5 dias', teste7: 'Dar mais 7 dias de teste', renovar: 'Renovar / registrar pagamento', plano: 'Trocar o plano', dados: 'Corrigir dados da empresa', excluir: 'Excluir a empresa', outro: 'Outro pedido' };
+const PE_ST = { pendente: ['Aguardando a proprietária', 'warn'], feito: ['Feito', 'ok'], recusado: ['Recusado', 'bad'] };
+function pedirAoAdm(t, acao0) {
+  modal(`Pedir ao administrador · ${t.nome}`, `<p class="hint" style="margin-top:0">Quem bloqueia, suspende, libera prazo ou renova é a proprietária. Seu pedido chega para ela na hora e você acompanha a resposta na sua central.</p>
+    <div class="fld"><label for="pe-a">O que precisa ser feito</label><select class="inp" id="pe-a">${opts(Object.entries(PE_ACOES), acao0 || 'bloquear')}</select></div>
+    <div class="fld"><label for="pe-m">Motivo e detalhes</label><textarea class="inp" id="pe-m" rows="4" placeholder="Ex.: cliente pediu para suspender até o dia 20; comprovante do PIX enviado no chat do protocolo 2610…"></textarea></div>
+    <label class="row" style="gap:8px"><input type="checkbox" id="pe-u"> É urgente</label>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="pe-ok">Enviar pedido</button>', onMount: m => $('#pe-ok', m).onclick = async () => {
+      const motivo = $('#pe-m', m).value.trim(); if (motivo.length < 5) return toast('Explique o motivo do pedido.', true); const b = $('#pe-ok', m); b.disabled = true;
+      try { await FB.db.collection('pedidosEquipe').add({ tid: t.id, empresa: t.nome, acao: $('#pe-a', m).value, motivo: motivo.slice(0, 1000), urgente: $('#pe-u', m).checked, porUid: A.uid, por: A.user.email, nome: (A.membro && A.membro.nome) || A.user.email, papel: papelAtual(), em: new Date().toISOString(), status: 'pendente' });
+        closeModal(); toast('Pedido enviado para a proprietária.'); logEq('pedido', `${PE_ACOES[$('#pe-a', m) ? $('#pe-a', m).value : ''] || 'Pedido'} · ${t.nome}`); } catch (e) { b.disabled = false; toast(e.code === 'permission-denied' ? 'Sem permissão: publique o firestore.rules novo.' : 'Não foi possível enviar: ' + (e.code || e.message), true); } } });
+}
+/* ficha da empresa em modo consulta para a equipe */
+{ const _det = detalhes; detalhes = function (t) { _det(t); if (papelAtual() === 'dono') return; const m = $('.modal'); if (!m) return;
+  ['#dt-s', '#dt-7', '#dt-5', '#dt-sus', '#dt-bq', '#dt-r', '#dt-x'].forEach(s => { const x = $(s, m); if (x) x.remove(); });
+  ['#dt-tel', '#dt-pl', '#dt-o'].forEach(s => { const x = $(s, m); if (x) x.disabled = true; });
+  const pf = $('.modal-f', m); if (pf) pf.insertAdjacentHTML('beforeend', '<button class="btn" id="dt-pe">Pedir ao administrador</button>');
+  const inf = $('#dt-o', m); if (inf) inf.closest('.grid').insertAdjacentHTML('afterend', '<p class="hint" style="margin:8px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-s,#FFF4E5)">Você está em modo consulta. Para bloquear, suspender, liberar prazo, renovar ou trocar o plano, use <b>Pedir ao administrador</b>.</p>');
+  const pe = $('#dt-pe', m); if (pe) pe.onclick = () => pedirAoAdm(t); }; }
+/* na lista de empresas, a equipe não vê os botões de renovar */
+setInterval(() => { try { document.body.classList.toggle('eq-ro', !!A.user && papelAtual() !== 'dono'); } catch (e) { } }, 1000);
+document.head.insertAdjacentHTML('beforeend', '<style>body.eq-ro [data-r],body.eq-ro [data-px]{display:none!important}#pe-alerta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#FFF7E6;border-bottom:1px solid #FCD9A0;color:#8A4B00;padding:10px 24px;font-size:14px;position:sticky;top:0;z-index:19}</style>');
+/* proprietária: recebe e responde os pedidos */
+function peOuvir() {
+  if (A._unPe || !FB_ON || !A.user) return; const dono = A.papel === 'dono';
+  const q = dono ? FB.db.collection('pedidosEquipe') : FB.db.collection('pedidosEquipe').where('porUid', '==', A.uid); let ini = true;
+  const un = q.onSnapshot(s => { const antes = new Map((A.pe || []).map(x => [x.id, x.status])); A.pe = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.em || '').localeCompare(a.em || ''));
+    if (!ini) { if (dono) s.docChanges().filter(c => c.type === 'added').forEach(c => { const x = c.doc.data(); toast(`Pedido da equipe: ${PE_ACOES[x.acao] || x.acao} · ${x.empresa}`); }); else A.pe.forEach(x => { if (antes.get(x.id) === 'pendente' && x.status !== 'pendente') toast(`A proprietária respondeu: ${PE_ACOES[x.acao]} · ${x.empresa} · ${PE_ST[x.status][0]}`); }); }
+    ini = false; peAviso(); if (A.view === 'central' && !$('#modal-root').innerHTML) redesenhar(); }, () => { A.pe = A.pe || []; });
+  A._unPe = un; A.unsub.push(() => { un(); A._unPe = null; });
+}
+function peAviso() {
+  const n = A.papel === 'dono' ? (A.pe || []).filter(x => x.status === 'pendente').length : 0; let bar = $('#pe-alerta'), main = $('.main');
+  if (!n || !main || modoEq()) { if (bar) bar.remove(); return; }
+  const urg = (A.pe || []).some(x => x.status === 'pendente' && x.urgente), tx = `<b>${urg ? '⚠️ ' : ''}${n} pedido${n > 1 ? 's' : ''} da equipe aguardando você</b><span style="flex:1;font-size:13px">${esc((A.pe || []).filter(x => x.status === 'pendente').slice(0, 2).map(x => `${PE_ACOES[x.acao] || x.acao} · ${x.empresa}`).join(' | '))}</span><button class="btn sm" id="pe-ver">Ver pedidos</button>`;
+  if (!bar) { const sa = $('#sup-alerta'); (sa || main.firstElementChild).insertAdjacentHTML(sa ? 'afterend' : 'beforebegin', `<div id="pe-alerta" role="status">${tx}</div>`); bar = $('#pe-alerta'); } else if (bar.dataset.n !== String(n)) bar.innerHTML = tx;
+  bar.dataset.n = n; $('#pe-ver').onclick = pedidosEquipeModal;
+}
+function pedidosEquipeModal() {
+  const l = A.pe || [], pend = l.filter(x => x.status === 'pendente'), fe = l.filter(x => x.status !== 'pendente').slice(0, 15);
+  const li = x => `<li style="display:block;padding:10px 0"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><b>${esc(PE_ACOES[x.acao] || x.acao)}</b><span class="pill">${esc(x.empresa)}</span>${x.urgente ? '<span class="pill bad">Urgente</span>' : ''}<span class="pill ${PE_ST[x.status][1]}">${PE_ST[x.status][0]}</span><span class="sp"></span><span class="hint">${esc(x.nome)} · ${esc((PAPEL_NX[x.papel] || [x.papel])[0])} · ${new Date(x.em).toLocaleString('pt-BR').slice(0, 17)}</span></div>
+    <p style="margin:6px 0;white-space:pre-wrap">${esc(x.motivo)}</p>${x.resposta ? `<p class="hint" style="margin:0 0 6px">Sua resposta: ${esc(x.resposta)}</p>` : ''}
+    ${x.status === 'pendente' ? `<div class="row" style="gap:6px"><button class="btn sec sm" data-peab="${x.id}">Abrir empresa</button><span class="sp"></span><button class="btn ghost sm" data-perc="${x.id}" style="color:var(--bad)">Recusar</button><button class="btn sm" data-peok="${x.id}">Marcar como feito</button></div>` : ''}</li>`;
+  modal('Pedidos da equipe', `${pend.length ? `<ul class="list">${pend.map(li).join('')}</ul>` : '<p class="hint">Nenhum pedido aguardando.</p>'}${fe.length ? `<h3 style="font-size:14px;margin:16px 0 4px">Respondidos</h3><ul class="list">${fe.map(li).join('')}</ul>` : ''}`, { size: 'lg', foot: '<button class="btn" data-close>Fechar</button>', onMount: m => {
+    const resp = async (id, status) => { const r = status === 'recusado' ? prompt('Motivo da recusa (a pessoa da equipe vê):', '') : prompt('Recado para a pessoa da equipe (opcional):', 'Feito!'); if (r === null) return;
+      try { await FB.db.doc(`pedidosEquipe/${id}`).update({ status, resposta: String(r).slice(0, 500), respondidoEm: new Date().toISOString() }); toast(status === 'feito' ? 'Pedido marcado como feito.' : 'Pedido recusado.'); { const x = (A.pe || []).find(y => y.id === id); logEq('pedido-resp', `${status === 'feito' ? 'Feito' : 'Recusado'}: ${x ? (PE_ACOES[x.acao] || x.acao) + ' · ' + x.empresa : id}`); } pedidosEquipeModal(); } catch (e) { toast('Não foi possível responder: ' + (e.code || e.message), true); } };
+    $$('[data-peok]', m).forEach(b => b.onclick = () => resp(b.dataset.peok, 'feito')); $$('[data-perc]', m).forEach(b => b.onclick = () => resp(b.dataset.perc, 'recusado'));
+    $$('[data-peab]', m).forEach(b => b.onclick = () => { const x = l.find(y => y.id === b.dataset.peab), t = tById(x.tid); if (!t) return toast('Empresa não encontrada.', true); closeModal(true); detalhes(t); });
+  } });
+}
+/* equipe: acompanha os próprios pedidos na central */
+{ const _vc = vCentral; vCentral = async function (el) { await _vc(el); if (!(A.pe || []).length) return; const sec = $$('.panel', el).slice(-1)[0];
+  sec.insertAdjacentHTML('beforebegin', `<section class="panel"><h2 style="margin:0 0 8px">Meus pedidos à proprietária</h2><ul class="list">${(A.pe || []).slice(0, 8).map(x => `<li><div class="t"><div><b>${esc(PE_ACOES[x.acao] || x.acao)}</b> · ${esc(x.empresa)}</div><div>${new Date(x.em).toLocaleString('pt-BR').slice(0, 17)}${x.resposta ? ' · Resposta: ' + esc(x.resposta) : ''}</div></div><span class="pill ${PE_ST[x.status][1]}">${PE_ST[x.status][0]}</span></li>`).join('')}</ul></section>`); }; }
+setInterval(() => { try { if (A.user && FB_ON) { peOuvir(); peAviso(); } } catch (e) { } }, 2000);
+
+/* =====================================================================
+   LOTE 16: gestão da equipe — histórico de ações, avaliação do atendimento,
+   tempo de resposta, agenda de retorno, recados, desempenho e plantão
+   ===================================================================== */
+function nomeEu() { return (A.membro && A.membro.nome) || (A.papel === 'dono' ? 'Proprietária' : (A.user && A.user.email) || 'NEXUM'); }
+function emailEu() { return (A.user && A.user.email) || ''; }
+function logEq(acao, txt) { if (!FB_ON || !A.uid) return; FB.db.collection('logEquipe').add({ uid: A.uid, email: emailEu(), nome: nomeEu(), papel: A.papel === 'dono' ? 'dono' : A.papel, acao, txt: String(txt || '').slice(0, 300), em: new Date().toISOString() }).catch(() => { }); }
+const LOG_ROT = { login: 'Entrou no sistema', 'sup-msg': 'Respondeu no suporte', 'sup-status': 'Mudou a situação do suporte', 'sup-anexo': 'Enviou anexo no suporte', 'wa-msg': 'Mensagem no WhatsApp', 'wa-move': 'Transferiu no WhatsApp', pedido: 'Pediu ao administrador', 'pedido-resp': 'Respondeu pedido da equipe', empresa: 'Alterou empresa', retorno: 'Agendou retorno', 'retorno-ok': 'Concluiu retorno', recado: 'Publicou recado' };
+const DIAS_PL = [['dom', 'Dom'], ['seg', 'Seg'], ['ter', 'Ter'], ['qua', 'Qua'], ['qui', 'Qui'], ['sex', 'Sex'], ['sab', 'Sáb']];
+function emHorarioBR(d = new Date()) { const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(d).map(x => [x.type, x.value])); const mn = (+p.hour % 24) * 60 + +p.minute; if (['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(p.weekday)) return mn >= 540 && mn < 1080; if (p.weekday === 'Sat') return mn >= 540 && mn < 780; return false; }
+const minFmt = n => n == null || isNaN(n) ? '—' : n < 60 ? Math.round(n) + ' min' : Math.floor(n / 60) + 'h' + String(Math.round(n % 60)).padStart(2, '0');
+const estrelas = n => '★★★★★'.slice(0, Math.round(n)) + '☆☆☆☆☆'.slice(0, 5 - Math.round(n));
+
+/* ---------- registros automáticos ---------- */
+{ const _we = waEnviar; waEnviar = async function (c, t) { const r = await _we(c, t); if (r) logEq('wa-msg', `${c.nome || c.numero || ''}: ${String(t).slice(0, 90)}`); return r; }; }
+{ const _wm = waMover; waMover = function (c, col, d) { return _wm(c, col, () => { logEq('wa-move', `${c.nome || c.numero || ''} → ${WA_NOME_COL[col] || col}`); if (d) d(); }); }; }
+{ const _at = atualizarTenant; atualizarTenant = async function (t, d, msg) { const r = await _at(t, d, msg); logEq('empresa', `${t.nome}: ${msg || Object.keys(d || {}).join(', ')}`); return r; }; }
+{ const _ra = renderApp; renderApp = function () { _ra(); try { const k = 'nx:login:' + (A.uid || ''); if (A.uid && !sessionStorage.getItem(k)) { sessionStorage.setItem(k, '1'); logEq('login', modoEq() ? 'Portal da Equipe' : 'Painel do Dono'); } } catch (e) { } }; }
+
+/* ---------- dados ao vivo: plantão, membros, retornos, recados ---------- */
+function g16Ouvir() {
+  if (A._g16 || !FB_ON || !A.user) return; A._g16 = true; const un = [], dono = A.papel === 'dono';
+  un.push(FB.db.doc('plataforma/plantao').onSnapshot(s => { A.plantao = s.data() || {}; }, () => { A.plantao = A.plantao || {}; }));
+  FB.db.doc('plataforma/equipe').get().then(s => { A.membros = (s.data() || {}).membros || {}; }).catch(() => { A.membros = A.membros || {}; });
+  let iniR = true; un.push((dono ? FB.db.collection('retornos') : FB.db.collection('retornos').where('uid', '==', A.uid)).onSnapshot(s => { A.ret = s.docs.map(d => ({ id: d.id, ...d.data() })); iniR = false; if (['central', 'gest'].includes(A.view) && !$('#modal-root').innerHTML) redesenhar(); }, () => { A.ret = A.ret || []; }));
+  let iniC = true; un.push(FB.db.collection('recados').onSnapshot(s => { A.rec = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.em || '').localeCompare(a.em || ''));
+    if (!iniC) s.docChanges().filter(c => c.type === 'added').forEach(c => { const x = c.doc.data(); if (x.autorUid !== A.uid && recParaMim(x)) { toast(`Novo recado de ${x.autor}: ${String(x.texto).slice(0, 80)}`); waBeep(); } });
+    iniC = false; if (['central', 'gest'].includes(A.view) && !$('#modal-root').innerHTML) redesenhar(); }, () => { A.rec = A.rec || []; }));
+  A.unsub.push(() => { un.forEach(f => f()); A._g16 = false; });
+}
+const recParaMim = x => A.papel === 'dono' ? x.de === 'equipe' || x.autorUid === A.uid : x.de === 'dono' && (!x.para || x.para === 'todos' || x.para === papelAtual());
+function plantaoHoje(d = new Date()) { return (((A.plantao || {}).dias || {})[DIAS_PL[d.getDay()][0]] || []); }
+const nomeDe = e => e === 'dono' ? 'Proprietária' : ((A.membros || {})[e] || {}).nome || (DONO_EMAILS.map(x => x.toLowerCase()).includes(String(e).toLowerCase()) ? 'Proprietária' : e);
+
+/* ---------- plantão: o chamado novo vai para quem está de plantão hoje ---------- */
+function plantaoAtribuir() {
+  if (!(A.papel === 'dono' || papelAtual() === 'suporte')) return; const pl = plantaoHoje(); if (!pl.length) return;
+  (A.sup || []).filter(x => x.status === 'analise' && !x.atendenteEmail).forEach(x => { const h = String(x.protocolo).split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), e = pl[h % pl.length];
+    if (A._atrib && A._atrib.has(x.protocolo)) return; (A._atrib = A._atrib || new Set()).add(x.protocolo);
+    FB.db.doc(`suporte/${x.protocolo}`).update({ atendente: nomeDe(e), atendenteEmail: e, atribuidoEm: new Date().toISOString() }).catch(() => A._atrib.delete(x.protocolo)); });
+}
+
+/* ---------- tempo de resposta: do cliente escrever até a equipe responder ---------- */
+function temposResposta(lista, ini, fim) {
+  const r = {}; (lista || []).forEach(x => { let t0 = null; (x.msgs || []).forEach(m => { if (m.de === 'rh') { if (!t0) t0 = m.em; } else if (m.de === 'dono' && t0) { if ((!ini || m.em >= ini) && (!fim || m.em < fim)) { const k = m.porEmail || 'nexum'; (r[k] = r[k] || []).push((new Date(m.em) - new Date(t0)) / 60000); } t0 = null; } }); });
+  return r;
+}
+function esperaMin(x) { let t0 = null; (x.msgs || []).forEach(m => { if (m.de === 'rh') { if (!t0) t0 = m.em; } else if (m.de === 'dono') t0 = null; }); return t0 ? (Date.now() - new Date(t0)) / 60000 : 0; }
+function supAtrasoAviso() {
+  const bar = $('#sup-alerta'); if (!bar) return; const pend = supPend(), w = Math.max(0, ...pend.map(esperaMin)); let sp = bar.querySelector('.sa-at');
+  if (w < 60 || !emHorarioBR()) { if (sp) sp.remove(); return; } const txt = `⏰ há ${minFmt(w)} sem resposta`;
+  if (!sp) { bar.querySelector('b').insertAdjacentHTML('afterend', `<span class="sa-at"></span>`); sp = bar.querySelector('.sa-at'); } sp.textContent = txt;
+  const k = pend.filter(x => esperaMin(x) >= 60).map(x => x.protocolo).join(','); if (k && A._atrasoAvisado !== k) { A._atrasoAvisado = k; waBeep(); try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted') new Notification('Suporte NEXUM', { body: `Cliente esperando resposta ${txt.replace('⏰ ', '')}` }); } catch (e) { } }
+}
+
+/* ---------- agenda de retorno ---------- */
+function novoRetorno(pre = {}) {
+  const am = new Date(Date.now() + 864e5); am.setHours(10, 0, 0, 0); const loc = new Date(am - am.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  modal('Agendar retorno', `<div class="grid"><div class="fld"><label for="rt-c">Cliente / empresa</label><input class="inp" id="rt-c" value="${esc(pre.empresa || pre.contato || '')}"></div><div class="fld"><label for="rt-w">WhatsApp (opcional)</label><input class="inp" id="rt-w" inputmode="tel" value="${esc(pre.tel ? fmtTel(String(pre.tel).replace(/^55(?=\d{10,11}$)/, '')) : '')}"></div>
+    <div class="fld"><label for="rt-q">Quando</label><input class="inp" type="datetime-local" id="rt-q" value="${loc}"></div><div class="fld"><label for="rt-a">Atalho</label><select class="inp" id="rt-a"><option value="">—</option><option value="1h">Daqui a 1 hora</option><option value="hoje">Hoje às 17h</option><option value="am">Amanhã às 10h</option><option value="3d">Em 3 dias</option><option value="7d">Em 7 dias</option></select></div>
+    <div class="fld full"><label for="rt-n">O que fazer</label><textarea class="inp" id="rt-n" rows="3" placeholder="Ex.: saber se gostou do teste grátis e oferecer o plano Profissional">${esc(pre.nota || '')}</textarea></div></div>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="rt-ok">Agendar</button>', onMount: m => {
+      $('#rt-a', m).onchange = e => { const v = e.target.value, d = new Date(); if (v === '1h') d.setTime(Date.now() + 36e5); else if (v === 'hoje') d.setHours(17, 0, 0, 0); else if (v === 'am') { d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0); } else if (v === '3d') { d.setDate(d.getDate() + 3); d.setHours(10, 0, 0, 0); } else if (v === '7d') { d.setDate(d.getDate() + 7); d.setHours(10, 0, 0, 0); } else return; $('#rt-q', m).value = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); };
+      $('#rt-ok', m).onclick = async () => { const c = $('#rt-c', m).value.trim(), q = $('#rt-q', m).value, n = $('#rt-n', m).value.trim(); if (c.length < 2) return toast('Informe o cliente ou a empresa.', true); if (!q) return toast('Escolha quando retornar.', true);
+        try { await FB.db.collection('retornos').add({ uid: A.uid, email: emailEu(), nome: nomeEu(), papel: A.papel === 'dono' ? 'dono' : A.papel, empresa: c.slice(0, 120), tid: pre.tid || '', tel: soDig($('#rt-w', m).value), quando: new Date(q).toISOString(), nota: n.slice(0, 500), feito: false, criadoEm: new Date().toISOString() });
+          logEq('retorno', `${c} em ${new Date(q).toLocaleString('pt-BR').slice(0, 17)}`); closeModal(); toast('Retorno agendado. O sistema te avisa na hora.'); } catch (e) { toast(e.code === 'permission-denied' ? 'Sem permissão: publique o firestore.rules novo.' : 'Não foi possível agendar: ' + (e.code || e.message), true); } };
+    } });
+}
+async function retornoFeito(r) { try { await FB.db.doc(`retornos/${r.id}`).update({ feito: true, feitoEm: new Date().toISOString() }); logEq('retorno-ok', r.empresa); toast('Retorno concluído.'); } catch (e) { toast('Não foi possível atualizar: ' + (e.code || e.message), true); } }
+async function retornoAdiar(r) { const d = new Date(Math.max(Date.now(), new Date(r.quando).getTime()) + 864e5); try { await FB.db.doc(`retornos/${r.id}`).update({ quando: d.toISOString() }); toast('Adiado para ' + d.toLocaleString('pt-BR').slice(0, 17) + '.'); } catch (e) { toast('Não foi possível adiar.', true); } }
+function retornosAvisar() {
+  let vis; try { vis = new Set(JSON.parse(localStorage.getItem('nx:retAvis') || '[]')); } catch (e) { vis = new Set(); }
+  (A.ret || []).filter(r => r.uid === A.uid && !r.feito && new Date(r.quando) <= new Date() && !vis.has(r.id + r.quando)).forEach(r => { vis.add(r.id + r.quando); toast(`⏰ Hora de retornar: ${r.empresa}${r.nota ? ' · ' + r.nota.slice(0, 60) : ''}`); waBeep(); try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Retorno agendado', { body: `${r.empresa}${r.nota ? ': ' + r.nota : ''}` }); } catch (e) { } });
+  try { localStorage.setItem('nx:retAvis', JSON.stringify([...vis].slice(-300))); } catch (e) { }
+}
+function retornosHTML(l, comDono) {
+  const agora = new Date().toISOString(), hj = new Date().toISOString().slice(0, 10), it = l.filter(r => !r.feito).sort((a, b) => a.quando.localeCompare(b.quando));
+  if (!it.length) return '<p class="hint" style="margin:0">Nenhum retorno pendente. Use "Agendar retorno" para não esquecer de chamar um cliente.</p>';
+  return `<ul class="list">${it.slice(0, 20).map(r => { const at = r.quando < agora, h = r.quando.slice(0, 10) === hj; return `<li><div class="t"><div><b>${esc(r.empresa)}</b> <span class="pill ${at ? 'bad' : h ? 'warn' : ''}" style="font-size:11.5px">${at ? 'Atrasado' : h ? 'Hoje' : 'Agendado'}</span>${comDono ? ` <span class="hint">· ${esc(r.nome)}</span>` : ''}</div><div>${new Date(r.quando).toLocaleString('pt-BR').slice(0, 17)}${r.nota ? ' · ' + esc(r.nota) : ''}</div></div>${r.tel ? `<a class="btn ghost sm" href="${crmWa(r.tel, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${r.uid === A.uid ? `<button class="btn ghost sm" data-rtad="${r.id}">Adiar 1 dia</button><button class="btn sm" data-rtok="${r.id}">Feito</button>` : ''}</li>`; }).join('')}</ul>`;
+}
+function ligarRetornos(el) { $$('[data-rtok]', el).forEach(b => b.onclick = () => retornoFeito((A.ret || []).find(r => r.id === b.dataset.rtok))); $$('[data-rtad]', el).forEach(b => b.onclick = () => retornoAdiar((A.ret || []).find(r => r.id === b.dataset.rtad))); }
+
+/* ---------- recados ---------- */
+function novoRecado() {
+  const dono = A.papel === 'dono';
+  modal(dono ? 'Novo recado para a equipe' : 'Recado para a proprietária', `${dono ? `<div class="fld"><label for="rc-p">Para</label><select class="inp" id="rc-p">${opts([['todos', 'Toda a equipe'], ...Object.entries(PAPEL_NX).map(([k, v]) => [k, v[0]])], 'todos')}</select></div>` : ''}<div class="fld"><label for="rc-t">Recado</label><textarea class="inp" id="rc-t" rows="4" maxlength="1000" placeholder="${dono ? 'Ex.: promoção de novembro: 1º mês do Profissional por R$ 199 com o cupom NOV199' : 'Ex.: a loja X pediu para ligar só depois das 14h'}"></textarea></div>${dono ? '<label class="row" style="gap:8px"><input type="checkbox" id="rc-f"> Deixar fixado no topo</label>' : ''}`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="rc-ok">Publicar</button>', onMount: m => $('#rc-ok', m).onclick = async () => { const t = $('#rc-t', m).value.trim(); if (t.length < 3) return toast('Escreva o recado.', true);
+      try { await FB.db.collection('recados').add({ texto: t, de: dono ? 'dono' : 'equipe', para: dono ? $('#rc-p', m).value : 'dono', fixo: dono ? $('#rc-f', m).checked : false, autor: nomeEu(), autorUid: A.uid, em: new Date().toISOString() }); logEq('recado', t.slice(0, 80)); closeModal(); toast('Recado publicado.'); }
+      catch (e) { toast(e.code === 'permission-denied' ? 'Sem permissão: publique o firestore.rules novo.' : 'Não foi possível publicar: ' + (e.code || e.message), true); } } });
+}
+function recadosHTML(l, apagar) {
+  if (!l.length) return '<p class="hint" style="margin:0">Nenhum recado ainda.</p>'; const k = 'nx:recVisto:' + A.uid, vis = localStorage.getItem(k) || '';
+  return `<ul class="list">${l.slice(0, 15).map(x => `<li style="align-items:flex-start"><div class="t"><div>${x.fixo ? '📌 ' : ''}<b>${esc(x.autor)}</b>${x.de === 'equipe' ? ' <span class="pill" style="font-size:11px">da equipe</span>' : x.para && x.para !== 'todos' ? ` <span class="pill" style="font-size:11px">para ${esc((PAPEL_NX[x.para] || [x.para])[0])}</span>` : ''}${x.em > vis && x.autorUid !== A.uid ? ' <span class="pill bad" style="font-size:11px">novo</span>' : ''} <span class="hint">· ${new Date(x.em).toLocaleString('pt-BR').slice(0, 17)}</span></div><div style="white-space:pre-wrap;color:var(--ink)">${esc(x.texto)}</div></div>${apagar ? `<button class="btn ghost sm" data-rcx="${x.id}" style="color:var(--bad)">Apagar</button>` : ''}</li>`).join('')}</ul>`;
+}
+const recadosVisto = () => { try { localStorage.setItem('nx:recVisto:' + A.uid, new Date().toISOString()); } catch (e) { } };
+
+/* ---------- Minha central: recados, plantão e retornos ---------- */
+{ const _vc2 = vCentral; vCentral = async function (el) {
+  await _vc2(el); const hero = $('.eq-hero', el); if (!hero) return; const pl = plantaoHoje(), eu = pl.includes(emailEu());
+  hero.insertAdjacentHTML('afterend', `<div class="eq-pl ${eu ? 'eu' : ''}">${eu ? '🟢 <b>Você está de plantão hoje.</b> Os chamados novos do suporte vêm para você.' : pl.length ? `De plantão hoje: <b>${esc(pl.map(nomeDe).join(', '))}</b>` : 'Ninguém escalado no plantão de hoje.'} <span class="hint">· Atendimento humano: ${CRM_HORARIO}</span></div>`);
+  const meusRec = (A.rec || []).filter(recParaMim).sort((a, b) => (b.fixo - a.fixo) || (b.em || '').localeCompare(a.em || ''));
+  const kp = $('.eq-kpis', el); if (kp) { kp.insertAdjacentHTML('beforebegin', `<section class="panel"><div class="row" style="align-items:center;margin-bottom:8px"><h2 style="margin:0;flex:1">Recados da proprietária</h2><button class="btn sec sm" id="eq-rc">Enviar recado à proprietária</button></div>${recadosHTML(meusRec.filter(x => x.de === 'dono'))}</section>`);
+    kp.insertAdjacentHTML('afterend', `<section class="panel"><div class="row" style="align-items:center;margin-bottom:8px"><h2 style="margin:0;flex:1">Meus retornos</h2><button class="btn sm" id="eq-rt">Agendar retorno</button></div>${retornosHTML((A.ret || []).filter(r => r.uid === A.uid))}</section>`);
+    if (papelAtual() === 'suporte') { const meus = (A.sup || []).filter(x => x.atendenteEmail === emailEu() && !['concluido', 'cancelado'].includes(x.status)).length; kp.insertAdjacentHTML('beforeend', `<button class="eq-k${meus ? ' alerta' : ''}" data-eqgo="sup"><b>${meus}</b><span>Chamados atribuídos a mim</span></button>`); $$('[data-eqgo]', kp).forEach(b => b.onclick = () => go(b.dataset.eqgo)); } }
+  const r1 = $('#eq-rc', el); if (r1) r1.onclick = novoRecado; const r2 = $('#eq-rt', el); if (r2) r2.onclick = () => novoRetorno(); ligarRetornos(el); setTimeout(recadosVisto, 4000);
+}; }
+
+/* ---------- botões de retorno na ficha da empresa e no WhatsApp ---------- */
+{ const _det2 = detalhes; detalhes = function (t) { _det2(t); const f = $('.modal .modal-f'); if (!f || $('#dt-rt')) return; f.insertAdjacentHTML('afterbegin', '<button class="btn ghost" id="dt-rt" style="margin-right:auto">Agendar retorno</button>'); $('#dt-rt').onclick = () => { closeModal(true); novoRetorno({ empresa: t.nome, tid: t.id, tel: t.telefone }); }; }; }
+{ const _wc = waChat; waChat = function (id) { _wc(id); const c = WA.convs.find(x => x.id === id), f = $('.modal .modal-f'); if (!c || !f || $('#wc-rt')) return; f.insertAdjacentHTML('afterbegin', '<button class="btn ghost" id="wc-rt">Agendar retorno</button>'); $('#wc-rt').onclick = () => novoRetorno({ empresa: c.empresa || c.nome, contato: c.nome, tel: c.numero }); }; }
+/* chat do suporte mostra quem está atendendo e a avaliação */
+{ const _sc2 = supChat; supChat = function (prot) { _sc2(prot); const x = (A.sup || []).find(y => y.protocolo === prot), m = $('.modal'); if (!x || !m) return; const h = $('.modal-b > p.hint', m);
+  if (h) h.insertAdjacentHTML('beforeend', ` · Atendente: <b>${esc(x.atendente || (x.atendenteEmail ? nomeDe(x.atendenteEmail) : 'ninguém ainda'))}</b>${x.avaliacao ? ` · Avaliação do cliente: <span style="color:#D97706">${estrelas(x.avaliacao.nota)}</span>${x.avaliacao.comentario ? ` "${esc(x.avaliacao.comentario)}"` : ''}` : ''}`); }; }
+
+/* ---------- Gestão da equipe (só a proprietária) ---------- */
+ICO.gest = '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><circle cx="19" cy="5" r="2"/>';
+{ const i = NAV.findIndex(n => n[0] === 'equipe'); NAV.splice(i + 1, 0, ['gest', 'Gestão da equipe']); }
+async function vGest(el) {
+  if (A.papel !== 'dono') { el.innerHTML = '<div class="panel empty"><b>Acesso só da proprietária</b></div>'; return; }
+  g16Ouvir(); const aba = A.gAba || 'desemp', mes = A.gMes || new Date().toISOString().slice(0, 7), [a, mm] = mes.split('-').map(Number), ini = new Date(a, mm - 1, 1).toISOString(), fim = new Date(a, mm, 1).toISOString();
+  if (!A.membros) { try { A.membros = ((await FB.db.doc('plataforma/equipe').get()).data() || {}).membros || {}; } catch (e) { A.membros = {}; } }
+  const pessoas = [['dono', 'Proprietária', 'Proprietária'], ...Object.entries(A.membros).map(([e, x]) => [e, x.nome || e, (PAPEL_NX[x.papel] || [x.papel])[0]])];
+  const tabs = `<div class="ca-tabs" role="tablist">${[['desemp', 'Desempenho'], ['hist', 'Histórico de ações'], ['plantao', 'Escala de plantão'], ['mural', 'Mural de recados'], ['ret', 'Retornos da equipe']].map(([k, t]) => `<button role="tab" aria-selected="${k === aba}" class="${k === aba ? 'on' : ''}" data-ga="${k}">${t}</button>`).join('')}</div>`;
+  let corpo = '';
+  if (aba === 'desemp' || aba === 'hist') {
+    if (A.gLogMes !== mes) { A.gLog = null; A.gLogMes = mes; FB.db.collection('logEquipe').where('em', '>=', ini).where('em', '<', fim).get().then(s => { A.gLog = s.docs.map(d => d.data()).sort((x, y) => (y.em || '').localeCompare(x.em || '')); if (A.view === 'gest') go('gest', true); }).catch(e => { A.gLog = []; A.gLogErro = e.code || e.message; if (A.view === 'gest') go('gest', true); }); }
+  }
+  if (aba === 'desemp') {
+    const tr = temposResposta(A.sup, ini, fim), log = A.gLog || [], donoEm = DONO_EMAILS.map(x => x.toLowerCase());
+    const chave = e => e === 'dono' ? x => donoEm.includes(String(x || '').toLowerCase()) : x => String(x || '').toLowerCase() === e;
+    const linhas = pessoas.map(([e, n, f]) => { const is = chave(e), t = Object.entries(tr).filter(([k]) => is(k)).flatMap(([, v]) => v), med = t.length ? t.reduce((s, v) => s + v, 0) / t.length : null;
+      const conc = (A.sup || []).filter(x => is(x.concluidoPor) && (x.concluidoEm || '') >= ini && (x.concluidoEm || '') < fim).length;
+      const resp = (A.sup || []).reduce((s, x) => s + (x.msgs || []).filter(m => m.de === 'dono' && is(m.porEmail) && m.em >= ini && m.em < fim).length, 0);
+      const av = (A.sup || []).filter(x => x.avaliacao && (is(x.concluidoPor) || is(x.atendenteEmail)) && (x.avaliacao.em || '') >= ini && (x.avaliacao.em || '') < fim), nota = av.length ? av.reduce((s, x) => s + x.avaliacao.nota, 0) / av.length : null;
+      const wa = log.filter(l => is(l.email) && l.acao === 'wa-msg').length, rets = (A.ret || []).filter(r => is(r.email)), rf = rets.filter(r => r.feito && (r.feitoEm || '') >= ini && (r.feitoEm || '') < fim).length, ra = rets.filter(r => !r.feito && r.quando < new Date().toISOString()).length, ped = (A.pe || []).filter(p => is(p.por) && (p.em || '') >= ini && (p.em || '') < fim).length;
+      return `<tr><td><b>${esc(n)}</b><div class="hint">${esc(f)}</div></td><td class="n">${conc}</td><td class="n">${resp}</td><td class="n" style="${med != null && med > 60 ? 'color:var(--bad);font-weight:700' : ''}">${minFmt(med)}</td><td class="n">${nota != null ? `<span style="color:#D97706">${estrelas(nota)}</span> ${nota.toFixed(1).replace('.', ',')} <span class="hint">(${av.length})</span>` : '—'}</td><td class="n">${wa}</td><td class="n">${rf}${ra ? ` <span class="pill bad" style="font-size:11px">${ra} atrasado${ra > 1 ? 's' : ''}</span>` : ''}</td><td class="n">${ped}</td></tr>`; }).join('');
+    const tt = Object.values(tr).flat(), avAll = (A.sup || []).filter(x => x.avaliacao && (x.avaliacao.em || '') >= ini && (x.avaliacao.em || '') < fim);
+    corpo = `<div class="eq-kpis" style="margin:4px 0 16px"><div class="eq-k"><b>${minFmt(tt.length ? tt.reduce((s, v) => s + v, 0) / tt.length : null)}</b><span>Tempo médio de resposta no suporte</span></div><div class="eq-k"><b>${avAll.length ? avAll.reduce((s, x) => s + x.avaliacao.nota, 0) / avAll.length > 0 ? (avAll.reduce((s, x) => s + x.avaliacao.nota, 0) / avAll.length).toFixed(1).replace('.', ',') + ' ★' : '—' : '—'}</b><span>Nota média dos clientes (${avAll.length} avaliações)</span></div><div class="eq-k"><b>${(A.sup || []).filter(x => (x.concluidoEm || '') >= ini && (x.concluidoEm || '') < fim).length}</b><span>Atendimentos concluídos</span></div><div class="eq-k"><b>${(A.ret || []).filter(r => !r.feito && r.quando < new Date().toISOString()).length}</b><span>Retornos atrasados</span></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Pessoa</th><th class="n">Atendimentos concluídos</th><th class="n">Respostas no suporte</th><th class="n">Tempo médio de resposta</th><th class="n">Nota dos clientes</th><th class="n">Mensagens no WhatsApp</th><th class="n">Retornos feitos</th><th class="n">Pedidos a você</th></tr></thead><tbody>${linhas}</tbody></table></div>
+      <p class="hint" style="margin:10px 0 0">Tempo de resposta: do cliente escrever no chat de suporte até alguém da NEXUM responder. Acima de 1 hora fica em vermelho.${A.gLog ? '' : ' Carregando o histórico…'}${A.gLogErro ? ` Histórico indisponível (${esc(A.gLogErro)}): publique o firestore.rules novo.` : ''}</p>`;
+  } else if (aba === 'hist') {
+    const f = A.gPess || '', q = (A.gQ || '').toLowerCase(), l = (A.gLog || []).filter(x => (!f || x.email === f || (f === 'dono' && x.papel === 'dono')) && (!q || `${x.txt} ${x.nome}`.toLowerCase().includes(q)));
+    corpo = `<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:12px"><select class="inp" id="g-p" style="width:auto">${opts([['', 'Todas as pessoas'], ...pessoas.map(([e, n]) => [e, n])], f)}</select><input class="inp" id="g-q" placeholder="Buscar no histórico" value="${esc(A.gQ || '')}" style="flex:1;min-width:200px"></div>
+      ${A.gLog == null ? '<p class="hint">Carregando…</p>' : l.length ? `<div class="tbl-wrap" style="max-height:60vh;overflow:auto"><table><thead><tr><th>Quando</th><th>Quem</th><th>O quê</th><th>Detalhe</th></tr></thead><tbody>${l.slice(0, 400).map(x => `<tr><td style="white-space:nowrap">${new Date(x.em).toLocaleString('pt-BR').slice(0, 17)}</td><td><b>${esc(x.nome)}</b></td><td>${esc(LOG_ROT[x.acao] || x.acao)}</td><td class="hint">${esc(x.txt)}</td></tr>`).join('')}</tbody></table></div>` : `<p class="hint">Nenhuma ação registrada neste mês.${A.gLogErro ? ` (${esc(A.gLogErro)}: publique o firestore.rules novo)` : ''}</p>`}`;
+  } else if (aba === 'plantao') {
+    const d = (A.plantao || {}).dias || {}, hoje = DIAS_PL[new Date().getDay()][0], ps = pessoas.filter(([e]) => e === 'dono' || ((A.membros[e] || {}).ativo !== false)), em = e => e === 'dono' ? emailEu() : e;
+    corpo = `<p class="hint" style="margin-top:0">Marque quem atende em cada dia. Quando um cliente pede atendente no suporte, o chamado vai para uma das pessoas de plantão do dia, de forma equilibrada.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Pessoa</th>${DIAS_PL.map(([k, t]) => `<th class="n" style="${k === hoje ? 'color:var(--pri)' : ''}">${t}</th>`).join('')}</tr></thead><tbody>${ps.map(([e, n, f]) => `<tr><td><b>${esc(n)}</b><div class="hint">${esc(f)}</div></td>${DIAS_PL.map(([k]) => `<td class="n"><input type="checkbox" data-pl="${k}|${esc(em(e))}" ${(d[k] || []).includes(em(e)) ? 'checked' : ''} aria-label="${esc(n)} ${k}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="row" style="margin-top:12px"><span class="hint" style="flex:1">Hoje: <b>${esc(plantaoHoje().map(nomeDe).join(', ') || 'ninguém')}</b></span><button class="btn" id="g-pls">Salvar escala</button></div>`;
+  } else if (aba === 'mural') {
+    corpo = `<div class="row" style="margin-bottom:12px"><span class="hint" style="flex:1">Avisos para a equipe (aparecem na Minha central de cada um) e recados que a equipe mandou para você.</span><button class="btn" id="g-rc">Novo recado</button></div>${recadosHTML((A.rec || []).slice().sort((a, b) => (b.fixo - a.fixo) || (b.em || '').localeCompare(a.em || '')), true)}`;
+  } else {
+    corpo = `<div class="row" style="margin-bottom:12px"><span class="hint" style="flex:1">Retornos que cada pessoa agendou com clientes.</span><button class="btn sec" id="g-rt">Agendar um retorno meu</button></div>${retornosHTML(A.ret || [], true)}`;
+  }
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><div style="flex:1;min-width:240px"><h2 style="margin:0">Gestão da equipe</h2><p class="hint" style="margin:4px 0 0">Desempenho, histórico, plantão, recados e retornos de quem trabalha com você.</p></div>${['desemp', 'hist'].includes(aba) ? `<input class="inp" type="month" id="g-m" value="${mes}" style="width:auto">` : ''}</div>${tabs}${corpo}</section>`;
+  $$('[data-ga]', el).forEach(b => b.onclick = () => { A.gAba = b.dataset.ga; go('gest', true); });
+  const gm = $('#g-m', el); if (gm) gm.onchange = () => { A.gMes = gm.value; go('gest', true); };
+  const gp = $('#g-p', el); if (gp) gp.onchange = () => { A.gPess = gp.value; go('gest', true); };
+  const gq = $('#g-q', el); if (gq) { let t; gq.oninput = () => { clearTimeout(t); t = setTimeout(() => { A.gQ = gq.value; go('gest', true); setTimeout(() => { const i = $('#g-q'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); }, 350); }; }
+  const ps = $('#g-pls', el); if (ps) ps.onclick = async () => { const dias = {}; DIAS_PL.forEach(([k]) => { dias[k] = []; }); $$('[data-pl]', el).forEach(c => { if (c.checked) { const [k, e] = c.dataset.pl.split('|'); dias[k].push(e); } });
+    try { await FB.db.doc('plataforma/plantao').set({ dias, atualizadoEm: new Date().toISOString() }); A.plantao = { dias }; toast('Escala de plantão salva.'); go('gest', true); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
+  const rc = $('#g-rc', el); if (rc) rc.onclick = novoRecado; $$('[data-rcx]', el).forEach(b => b.onclick = async () => { if (!confirm('Apagar este recado?')) return; try { await FB.db.doc(`recados/${b.dataset.rcx}`).delete(); toast('Recado apagado.'); } catch (e) { toast('Não foi possível apagar.', true); } });
+  const rt = $('#g-rt', el); if (rt) rt.onclick = () => novoRetorno(); ligarRetornos(el); if (aba === 'mural') setTimeout(recadosVisto, 3000);
+}
+{ const _go3 = go; go = function (v, ms) { if (v === 'gest' && A.papel === 'dono') { A.view = 'gest'; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === 'gest')); $('#side').classList.remove('open'); $('#t-view').textContent = 'Gestão da equipe'; const el = $('#view'), sc = $('.content').scrollTop; el.innerHTML = ''; vGest(el); $('.content').scrollTop = ms ? sc : 0; return; } return _go3(v, ms); }; }
+document.head.insertAdjacentHTML('beforeend', `<style>
+.eq-pl{margin:-6px 0 20px;padding:10px 14px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:14px}.eq-pl.eu{background:#E8F8F0;border-color:#9FDBBF;color:#0F5132}
+#sup-alerta .sa-at{background:#E11D48;color:#fff;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:700}
+</style>`);
+setInterval(() => { try { if (FB_ON && A.user) { g16Ouvir(); plantaoAtribuir(); supAtrasoAviso(); retornosAvisar(); if (A.papel === 'dono' && !modoEq()) { const b = $('.side .nav button[data-v="gest"]'); if (b) { const n = (A.rec || []).filter(x => x.de === 'equipe' && x.em > (localStorage.getItem('nx:recVisto:' + A.uid) || '')).length + (A.ret || []).filter(r => !r.feito && r.quando < new Date().toISOString()).length; let d = b.querySelector('.bdg'); if (!d) { b.insertAdjacentHTML('beforeend', '<span class="bdg"></span>'); d = b.querySelector('.bdg'); } d.textContent = n || ''; } } } } catch (e) { } }, 3000);
 </script>
 </body>
 </html>
