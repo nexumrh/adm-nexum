@@ -2247,6 +2247,146 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 #sup-alerta .sa-at{background:#E11D48;color:#fff;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:700}
 </style>`);
 setInterval(() => { try { if (FB_ON && A.user) { g16Ouvir(); plantaoAtribuir(); supAtrasoAviso(); retornosAvisar(); if (A.papel === 'dono' && !modoEq()) { const b = $('.side .nav button[data-v="gest"]'); if (b) { const n = (A.rec || []).filter(x => x.de === 'equipe' && x.em > (localStorage.getItem('nx:recVisto:' + A.uid) || '')).length + (A.ret || []).filter(r => !r.feito && r.quando < new Date().toISOString()).length; let d = b.querySelector('.bdg'); if (!d) { b.insertAdjacentHTML('beforeend', '<span class="bdg"></span>'); d = b.querySelector('.bdg'); } d.textContent = n || ''; } } } } catch (e) { } }, 3000);
+/* =====================================================================
+   LOTE 17: Asaas — cobranças com PIX, boleto e cartão e liberação
+   automática. A chave do Asaas fica no conector (Cloudflare Worker),
+   nunca neste arquivo. Links de pagamento também pelo chat do suporte.
+   ===================================================================== */
+const ASAAS_ST = { PENDING: ['warn', 'Aguardando'], RECEIVED: ['ok', 'Pago'], CONFIRMED: ['ok', 'Pago'], OVERDUE: ['bad', 'Vencida'], DELETED: ['', 'Cancelada'], REFUNDED: ['', 'Estornada'] };
+const ASAAS_PRECO = { essencial: 99, profissional: 299, empresa: 499, recrutamento: 289 };
+A.cob = A.cob || null; A.asaasCfg = A.asaasCfg || null;
+function asaasUrl() { let l = ''; try { l = localStorage.getItem('nx:asaasUrl') || ''; } catch (e) { } return ((A.asaasCfg && A.asaasCfg.conector) || l || '').replace(/\/+$/, ''); }
+async function asaasCall(rota, body, url) {
+  const u = String(url || asaasUrl()).replace(/\/+$/, ''); if (!u) throw new Error('O Asaas ainda não foi conectado. A proprietária conecta em Asaas · cobranças.');
+  const tk = FB.auth.currentUser ? await FB.auth.currentUser.getIdToken() : '';
+  let r; try { r = await fetch(u + rota, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(tk ? { Authorization: 'Bearer ' + tk } : {}) }, body: JSON.stringify(body || {}) }); } catch (e) { throw new Error('Não consegui falar com o conector do Asaas. Confira o endereço do conector e a internet.'); }
+  const j = await r.json().catch(() => ({})); if (!r.ok) { const e = new Error(j.erro || 'Erro ' + r.status); e.codigo = j.codigo; throw e; } return j;
+}
+function asaasPrecos() { return { ...ASAAS_PRECO, ...((A.asaasCfg && A.asaasCfg.precos) || {}) }; }
+const asaasPapel = () => A.papel === 'dono' || A.papel === 'financeiro';
+let _cobSt = null;
+function asaasOuvir() {
+  if (!FB_ON || !A.user || A._asaasOn) return; A._asaasOn = true;
+  FB.db.doc('plataforma/asaas').onSnapshot(s => { A.asaasCfg = s.exists ? s.data() : {}; if (A.asaasCfg.conector) try { localStorage.setItem('nx:asaasUrl', A.asaasCfg.conector); } catch (e) { } }, () => { A.asaasCfg = A.asaasCfg || {}; });
+  if (!asaasPapel()) return;
+  FB.db.collection('cobrancas').onSnapshot(s => {
+    A.cob = s.docs.map(d => ({ id: d.id, ...d.data() }));
+    const novo = {}; A.cob.forEach(c => { novo[c.id] = c.status; if (_cobSt && ['RECEIVED', 'CONFIRMED'].includes(c.status) && !['RECEIVED', 'CONFIRMED'].includes(_cobSt[c.id])) { toast(`💰 Pagamento recebido: ${c.empresa || 'cliente'} · ${brl(+c.valor || 0)}${c.tipo === 'rh' || c.tipo === 'ass' || (c.tipo === 'ped' && c.tid) ? ' · licença renovada' : ''}`); try { if (Notification.permission === 'granted') new Notification('Pagamento recebido', { body: `${c.empresa || ''} · ${brl(+c.valor || 0)}` }); } catch (e) { } } });
+    _cobSt = novo; if (A.view === 'asaas' && !$('#modal-root').innerHTML) go('asaas', true);
+  }, () => { A.cob = A.cob || []; });
+  if (A.papel === 'dono') FB.db.collection('pagamentos').where('comissaoPendente', '==', true).onSnapshot(async s => { // comissão do contador parceiro nos pagamentos que entraram pelo Asaas
+    for (const d of s.docs) { const p = d.data(); if ((A._comOk = A._comOk || {})[d.id]) continue; A._comOk[d.id] = 1; const t = A.tenants.find(x => x.id === p.tid);
+      try { if (t && p.revenda) await registrarComissao(p.revenda, t, +p.valor || 0, p.plano, p.obs || 'Pagamento pelo Asaas'); await FB.db.doc(`pagamentos/${d.id}`).update({ comissaoPendente: false }); } catch (e) { } } }, () => { });
+}
+function copiar(txt, ok) { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(ok || 'Copiado.')).catch(() => { prompt('Copie:', txt); }); }
+function cobrancaTexto(r, desc) { return `Segue o link de pagamento${desc ? ' (' + desc + ')' : ''}:\nValor: ${brl(+r.valor || 0)} · vence em ${fd(r.vencimento)}\n${r.fatura}\n\nNo link você paga com PIX, boleto ou cartão. A liberação é automática assim que o pagamento for confirmado.`; }
+function cobrancaPronta(r, o = {}) {
+  const txt = cobrancaTexto(r, o.desc), wa = o.whatsapp ? linkWa(o.whatsapp, txt) : '';
+  modal(r.reaproveitada ? 'Cobrança em aberto' : 'Link de pagamento gerado', `${r.reaproveitada ? '<p class="hint" style="margin-top:0">Já existia uma cobrança em aberto igual a esta: reaproveitei a mesma, para o cliente não pagar duas vezes.</p>' : ''}
+    <div class="kpis" style="margin:0 0 12px"><div class="kpi"><b>${brl(+r.valor || 0)}</b><span>valor</span></div><div class="kpi"><b>${fd(r.vencimento)}</b><span>vencimento</span></div></div>
+    <div class="fld"><label for="cp-l">Link (PIX, boleto ou cartão)</label><div class="row" style="gap:6px"><input class="inp" id="cp-l" readonly value="${esc(r.fatura)}"><button class="btn sec" id="cp-lc">Copiar</button></div></div>
+    ${r.pix && r.pix.copia ? `<div class="fld"><label for="cp-p">PIX copia e cola</label><div class="row" style="gap:6px"><input class="inp" id="cp-p" readonly value="${esc(r.pix.copia)}"><button class="btn sec" id="cp-pc">Copiar</button></div></div>` : ''}
+    <p class="hint">Quando o cliente pagar, o Asaas avisa o NEXUM e a licença é renovada sozinha. Você vê em Asaas · cobranças.</p>`,
+    { foot: `${o.chat ? '' : `<a class="btn sec" href="${esc(r.fatura)}" target="_blank" rel="noopener">Abrir</a>`}${wa ? `<a class="btn sec" href="${wa}" target="_blank" rel="noopener">Enviar no WhatsApp</a>` : ''}<button class="btn" id="cp-tx">Copiar mensagem</button>`, onMount: m => {
+      $('#cp-lc', m).onclick = () => copiar(r.fatura, 'Link copiado.'); const pc = $('#cp-pc', m); if (pc) pc.onclick = () => copiar(r.pix.copia, 'PIX copia e cola copiado.'); $('#cp-tx', m).onclick = () => copiar(txt, 'Mensagem copiada.'); } });
+}
+/* nova cobrança: renovação de plano de uma empresa ou valor avulso. o: { tid, nome, doc, whatsapp, aoGerar } */
+function novaCobranca(o = {}) {
+  const P = asaasPrecos(), t0 = A.tenants.find(t => t.id === o.tid), tipo0 = o.tid || !o.nome ? 'rh' : 'av';
+  modal(o.titulo || 'Nova cobrança', `<div class="fld"><label for="nc-t">O que cobrar</label><select class="inp" id="nc-t">${opts([['rh', 'Renovação do plano de uma empresa'], ['av', 'Valor avulso (implantação, treinamento, outro)']], tipo0)}</select></div>
+    <div id="nc-rh"><div class="grid"><div class="fld full"><label for="nc-e">Empresa</label><select class="inp" id="nc-e">${opts([['', 'Escolha'], ...A.tenants.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(t => [t.id, `${t.nome} (${t.id})`])], o.tid || '')}</select></div>
+      <div class="fld"><label for="nc-p">Plano</label><select class="inp" id="nc-p">${opts(['essencial', 'profissional', 'empresa'].map(k => [k, `${PLANOS[k].nome} · ${brl(P[k])}/mês`]), t0 && PLANOS[t0.plano] ? t0.plano : 'essencial')}</select></div>
+      <div class="fld"><label for="nc-m">Período</label><select class="inp" id="nc-m">${opts([[1, '1 mês'], [3, '3 meses'], [6, '6 meses'], [12, '12 meses']], 1)}</select></div></div>
+      <label class="row" style="gap:8px"><input type="checkbox" id="nc-rs" ${t0 && t0.recrutamento ? 'checked' : ''}> + Recrutamento e Seleção (${brl(P.recrutamento)}/mês)</label><p class="hint" id="nc-tot"></p></div>
+    <div id="nc-av"><div class="grid"><div class="fld full"><label for="nc-n">Nome ou razão social</label><input class="inp" id="nc-n" value="${esc(o.nome || '')}"></div>
+      <div class="fld"><label for="nc-v">Valor (R$)</label><input class="inp" id="nc-v" inputmode="decimal" placeholder="0,00"></div><div class="fld"><label for="nc-vc">Vencimento</label><input class="inp" type="date" id="nc-vc" value="${iso(addD(hoje(), 3))}"></div>
+      <div class="fld full"><label for="nc-ds">Descrição (o cliente vê)</label><input class="inp" id="nc-ds" maxlength="300" placeholder="Ex.: Implantação e treinamento da equipe"></div></div></div>
+    <div class="fld" id="nc-dw"><label for="nc-d">CPF ou CNPJ de quem paga</label><input class="inp" id="nc-d" inputmode="numeric" value="${esc(o.doc || '')}" placeholder="Obrigatório no Asaas"></div>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="nc-ok">Gerar link de pagamento</button>', onMount: m => {
+      const vis = () => { const rh = $('#nc-t', m).value === 'rh'; $('#nc-rh', m).hidden = !rh; $('#nc-av', m).hidden = rh; const t = A.tenants.find(x => x.id === $('#nc-e', m).value); $('#nc-dw', m).hidden = rh && !!(t && soD(t.cnpj).length >= 11);
+        if (rh) { const me = +$('#nc-m', m).value, v = (P[$('#nc-p', m).value] + ($('#nc-rs', m).checked ? P.recrutamento : 0)) * me; $('#nc-tot', m).innerHTML = `Total: <b>${brl(v)}</b>${t ? ` · ${esc(t.nome)} vence em ${fd(t.expira)}; o novo período começa no dia seguinte` : ''}`; } };
+      ['#nc-t', '#nc-e', '#nc-p', '#nc-m', '#nc-rs'].forEach(s => $(s, m).onchange = vis); vis();
+      $('#nc-ok', m).onclick = async () => { const b = $('#nc-ok', m), rh = $('#nc-t', m).value === 'rh', doc = soD($('#nc-d', m).value);
+        const body = rh ? { tipo: 'rh', tid: $('#nc-e', m).value, plano: $('#nc-p', m).value, meses: +$('#nc-m', m).value, rs: $('#nc-rs', m).checked, doc } : { tipo: 'av', nome: $('#nc-n', m).value.trim(), valor: num($('#nc-v', m).value), venc: $('#nc-vc', m).value, descricao: $('#nc-ds', m).value.trim() || 'NEXUM', doc, tid: o.tid || '', telefone: o.whatsapp || '' };
+        if (rh && !body.tid) return toast('Escolha a empresa.', true); if (!rh && body.nome.length < 3) return toast('Informe o nome de quem paga.', true); if (!rh && !(body.valor >= 5)) return toast('O valor mínimo é R$ 5,00.', true);
+        if (!$('#nc-dw', m).hidden && ![11, 14].includes(doc.length)) return toast('Informe o CPF ou CNPJ de quem paga.', true);
+        b.disabled = true; b.textContent = 'Gerando…';
+        try { const r = await asaasCall('/api/cobrar', body), t = A.tenants.find(x => x.id === body.tid), desc = rh ? `${PLANOS[body.plano].nome}${body.rs ? ' + Recrutamento' : ''}, ${body.meses === 1 ? '1 mês' : body.meses + ' meses'}` : body.descricao;
+          logEq('asaas', `Gerou cobrança de ${brl(r.valor)} · ${(t && t.nome) || body.nome}`); closeModal();
+          if (o.aoGerar) await o.aoGerar(r, desc); else cobrancaPronta(r, { desc, whatsapp: o.whatsapp || (t && t.telefone) });
+        } catch (e) { b.disabled = false; b.textContent = 'Gerar link de pagamento'; if (e.codigo === 'sem_doc') { $('#nc-dw', m).hidden = false; $('#nc-d', m).focus(); } toast(e.message, true); } };
+    } });
+}
+async function vAsaas(el) {
+  const dono = A.papel === 'dono', c = A.asaasCfg || {}, l = (A.cob || []).slice().sort((a, b) => (b.criadaEm || '').localeCompare(a.criadaEm || '')), f = A.asF || 'aberto';
+  const pago = x => ['RECEIVED', 'CONFIRMED'].includes(x.status), vis = l.filter(x => f === 'todas' || (f === 'pagas' ? pago(x) : ['PENDING', 'OVERDUE'].includes(x.status)));
+  const mes = iso(hoje()).slice(0, 7), recMes = l.filter(x => pago(x) && String(x.pagoEm || '').slice(0, 7) === mes).reduce((s, x) => s + (+x.valor || 0), 0), aberto = l.filter(x => x.status === 'PENDING').reduce((s, x) => s + (+x.valor || 0), 0), venc = l.filter(x => x.status === 'OVERDUE');
+  const P = asaasPrecos(), TIPO = { rh: 'Renovação', ped: 'Pedido do site', rst: 'Seleção terceirizada', av: 'Avulsa', ass: 'Cartão mensal' };
+  el.innerHTML = `${dono ? `<section class="panel" id="as-cx"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-start"><div style="flex:1;min-width:260px"><h2 style="margin:0 0 4px">Conexão com o Asaas</h2>
+      <p class="hint" style="margin:0">${c.ativo ? `<span class="pill ok">Conectado</span> ${c.ambiente === 'sandbox' ? '<span class="pill warn">Teste (sandbox)</span>' : '<span class="pill">Produção</span>'} chave terminada em <b>…${esc(c.final || '')}</b> · aviso de pagamento ${c.webhookOk ? '<b style="color:var(--ok)">ativo</b>' : '<b style="color:var(--warn)">pendente</b>'}` : '<span class="pill warn">Não conectado</span> Siga os passos abaixo uma vez só.'}</p></div>${c.ativo ? '<button class="btn sec" id="as-st">Ver saldo e testar</button>' : ''}</div>
+      <div class="grid" style="margin-top:12px"><div class="fld full"><label for="as-u">Endereço do conector (Cloudflare Worker)</label><input class="inp" id="as-u" value="${esc(asaasUrl())}" placeholder="https://nexum-asaas.SEU-USUARIO.workers.dev" autocomplete="off"></div>
+        <div class="fld"><label for="as-k">Chave da API do Asaas</label><input class="inp" id="as-k" type="password" autocomplete="new-password" placeholder="${c.ativo ? 'Deixe em branco para manter a atual' : '$aact_prod_…'}"></div>
+        <div class="fld"><label for="as-a">Ambiente</label><select class="inp" id="as-a">${opts([['producao', 'Produção (cobranças reais)'], ['sandbox', 'Teste (sandbox)']], c.ambiente || 'producao')}</select></div></div>
+      <div class="row end"><button class="btn" id="as-ok">${c.ativo ? 'Salvar e reconectar' : 'Conectar ao Asaas'}</button></div><div id="as-r"></div>
+      <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">Como criar o conector (uma vez só, grátis)</summary><ol class="hint" style="line-height:1.7;margin:8px 0 0">
+        <li>Crie uma conta grátis em <b>dash.cloudflare.com</b>. Vá em <b>Workers e Pages &gt; Criar &gt; Worker</b>, dê o nome <b>nexum-asaas</b> e clique em <b>Implantar</b>.</li>
+        <li>Clique em <b>Editar código</b>, apague tudo, cole o conteúdo do arquivo <b>worker.js</b> (pasta asaas-conector) e clique em <b>Implantar</b>.</li>
+        <li>No Firebase (projeto nexum-30044): <b>Configurações do projeto &gt; Contas de serviço &gt; Gerar nova chave privada</b>. Baixa um arquivo .json.</li>
+        <li>No Worker: <b>Configurações &gt; Variáveis e segredos &gt; Adicionar</b>, tipo <b>Segredo</b>, nome <b>GCP_SA</b>, e cole o conteúdo inteiro do .json. Salve.</li>
+        <li>Copie o endereço do Worker (termina em <b>.workers.dev</b>) e cole acima. No Asaas, em <b>Integrações &gt; Chaves de API</b>, gere a chave e cole acima. Clique em <b>Conectar</b>.</li>
+        <li>Pronto: o aviso de pagamento (webhook) é cadastrado no Asaas sozinho, e o site, o RH e o suporte passam a gerar cobranças.</li></ol></details></section>
+    <section class="panel"><h3 style="margin:0 0 4px">Valores cobrados pelo Asaas</h3><p class="hint" style="margin-top:0">O conector calcula o valor sozinho a partir destes preços mensais (o navegador do cliente nunca define o valor). Se mudar aqui, atualize também os textos do site.</p>
+      <div class="grid">${Object.keys(ASAAS_PRECO).map(k => `<div class="fld"><label for="as-p-${k}">${k === 'recrutamento' ? 'Recrutamento e Seleção' : PLANOS[k].nome} (R$/mês)</label><input class="inp" id="as-p-${k}" data-ap="${k}" inputmode="decimal" value="${String(P[k]).replace('.', ',')}"></div>`).join('')}</div><div class="row end"><button class="btn sec" id="as-ps">Salvar valores</button></div></section>` : ''}
+    <div class="kpis" style="margin-bottom:14px"><div class="kpi"><b>${brl(recMes)}</b><span>recebido no mês</span></div><div class="kpi"><b>${brl(aberto)}</b><span>em aberto</span></div><div class="kpi"><b style="color:${venc.length ? 'var(--bad)' : 'inherit'}">${venc.length}</b><span>vencidas</span></div></div>
+    <section class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px"><h2 style="flex:1;margin:0">Cobranças</h2><div class="seg">${[['aberto', 'Em aberto'], ['pagas', 'Pagas'], ['todas', 'Todas']].map(([k, n]) => `<button class="btn ${f === k ? '' : 'ghost'} sm" data-asf="${k}">${n}</button>`).join('')}</div><button class="btn" id="as-n">+ Nova cobrança</button></div>
+    ${A.cob === null ? '<p class="hint">Carregando…</p>' : vis.length ? `<div class="tbl-wrap"><table><thead><tr><th>Criada</th><th>Cliente</th><th>Tipo</th><th class="n">Valor</th><th>Vencimento</th><th>Situação</th><th></th></tr></thead><tbody>${vis.map(x => { const st = ASAAS_ST[x.status] || ['', x.status]; return `<tr><td>${x.criadaEm ? new Date(x.criadaEm).toLocaleDateString('pt-BR') : ''}<div class="hint">${esc(String(x.por || '').split('@')[0])}</div></td><td><b>${esc(x.empresa || '')}</b><div class="hint" style="max-width:320px">${esc(x.descricao || '')}</div></td><td>${TIPO[x.tipo] || ''}</td><td class="n">${brl(+x.valor || 0)}</td><td>${fd(x.vencimento)}</td><td><span class="pill ${st[0]}">${st[1]}</span>${x.pagoEm ? `<div class="hint">${fd(x.pagoEm)} · ${esc(x.forma || '')}</div>` : ''}</td>
+      <td class="n" style="white-space:nowrap">${x.fatura ? `<button class="btn ghost sm" data-asc="${x.id}">Copiar link</button>` : ''}${['PENDING', 'OVERDUE'].includes(x.status) ? `<button class="btn ghost sm" data-asx="${x.id}" style="color:var(--bad)">Cancelar</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>` : `<p class="hint">${f === 'pagas' ? 'Nenhuma cobrança paga ainda.' : f === 'aberto' ? 'Nenhuma cobrança em aberto.' : 'Nenhuma cobrança ainda.'}</p>`}</section>`;
+  $$('[data-asf]', el).forEach(b => b.onclick = () => { A.asF = b.dataset.asf; go('asaas', true); });
+  $('#as-n', el).onclick = () => novaCobranca();
+  $$('[data-asc]', el).forEach(b => b.onclick = () => { const x = l.find(y => y.id === b.dataset.asc); copiar(cobrancaTexto(x, x.descricao), 'Mensagem com o link copiada.'); });
+  $$('[data-asx]', el).forEach(b => b.onclick = () => { const x = l.find(y => y.id === b.dataset.asx); modal('Cancelar cobrança', `<p>Cancelar a cobrança de <b>${brl(+x.valor || 0)}</b> de ${esc(x.empresa || '')}? O link deixa de funcionar.</p>`, { foot: '<button class="btn sec" data-close>Voltar</button><button class="btn" id="ax-ok" style="background:var(--bad)">Cancelar cobrança</button>', onMount: m => $('#ax-ok', m).onclick = async () => { try { await asaasCall('/api/cancelar', { id: x.id }); closeModal(); toast('Cobrança cancelada.'); logEq('asaas', `Cancelou cobrança de ${brl(+x.valor || 0)} · ${x.empresa || ''}`); } catch (e) { toast(e.message, true); } } }); });
+  if (!dono) return;
+  $('#as-ok', el).onclick = async () => { const b = $('#as-ok', el), u = $('#as-u', el).value.trim().replace(/\/+$/, ''), k = $('#as-k', el).value.trim(), a = $('#as-a', el).value;
+    if (!/^https:\/\/[^\s/]+\.[^\s/]+/.test(u)) return toast('Cole o endereço do Worker (começa com https:// e termina em .workers.dev).', true);
+    b.disabled = true; b.textContent = 'Conectando…'; $('#as-r', el).innerHTML = '';
+    try { const r = await asaasCall('/api/config', { chave: k, ambiente: a }, u); $('#as-k', el).value = ''; try { localStorage.setItem('nx:asaasUrl', u); } catch (e) { }
+      await FB.db.doc('plataforma/asaas').set({ conector: u }, { merge: true }).catch(() => { });
+      $('#as-r', el).innerHTML = `<p style="margin:10px 0 0;padding:10px 14px;border-radius:10px;background:#E8F8F0;color:#0F5132">Conectado ao Asaas (${r.ambiente === 'sandbox' ? 'teste' : 'produção'}). Saldo: <b>${brl(+r.saldo || 0)}</b>. Aviso de pagamento: <b>${r.webhook ? 'cadastrado' : 'pendente'}</b>.${r.aviso ? `<br>${esc(r.aviso)}${r.token ? `<br>Token: <code>${esc(r.token)}</code>` : ''}` : ''}</p>`;
+      toast('Asaas conectado.'); logEq('asaas', 'Conectou o Asaas');
+    } catch (e) { $('#as-r', el).innerHTML = `<p style="margin:10px 0 0;padding:10px 14px;border-radius:10px;background:#FDECEF;color:#8A1C2E">${esc(e.message)}</p>`; }
+    b.disabled = false; b.textContent = 'Salvar e reconectar'; };
+  const stb = $('#as-st', el); if (stb) stb.onclick = async () => { stb.disabled = true; try { const r = await asaasCall('/api/status', {}); toast(r.erro ? r.erro : `Saldo no Asaas: ${brl(+r.saldo || 0)}${r.ultimoWebhook ? ' · último aviso ' + new Date(r.ultimoWebhook).toLocaleString('pt-BR').slice(0, 17) : ''}`, !!r.erro); } catch (e) { toast(e.message, true); } stb.disabled = false; };
+  $('#as-ps', el).onclick = async () => { const p = {}; $$('[data-ap]', el).forEach(i => { const v = num(i.value); if (v > 0) p[i.dataset.ap] = v; }); try { await FB.db.doc('plataforma/asaas').set({ precos: p }, { merge: true }); A.asaasCfg = { ...(A.asaasCfg || {}), precos: p }; toast('Valores salvos.'); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
+}
+ICO.asaas = '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>';
+{ const i = NAV.findIndex(n => n[0] === 'pag'); NAV.splice(i + 1, 0, ['asaas', 'Asaas · cobranças']); }
+PAPEL_NX.financeiro[1].push('asaas');
+{ const _go4 = go; go = function (v, ms) { if (v === 'asaas' && podeVer('asaas')) { A.view = 'asaas'; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === 'asaas')); $('#side').classList.remove('open'); $('#t-view').textContent = 'Asaas · cobranças'; const el = $('#view'), sc = $('.content').scrollTop; el.innerHTML = ''; vAsaas(el); $('.content').scrollTop = ms ? sc : 0; return; } return _go4(v, ms); }; }
+
+/* ---- suporte: gerar o link de pagamento e mandar no chat ---- */
+{ const _sc2 = supChat; supChat = function (prot) {
+  _sc2(prot); const m = $('.modal'); if (!m || !$('#sc-t', m) || $('#sc-pag', m)) return;
+  $('#sc-env', m).insertAdjacentHTML('beforebegin', '<button class="btn sec" id="sc-pag" type="button" title="Gerar link de pagamento e mandar no chat" aria-label="Gerar link de pagamento">💳</button>');
+  $('#sc-pag', m).onclick = () => { const x = (A.sup || []).find(y => y.protocolo === prot) || {}, t = A.tenants.find(y => y.id === x.tid);
+    novaCobranca({ titulo: `Link de pagamento · protocolo ${prot}`, tid: t ? t.id : '', nome: t ? '' : (x.empresa || x.nome || ''), aoGerar: async (r, desc) => {
+      const em = new Date().toISOString(), msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: cobrancaTexto(r, desc), em, por: nomeEu(), porEmail: emailEu(), pagamento: { id: r.id, valor: r.valor, vencimento: r.vencimento, fatura: r.fatura, pix: (r.pix && r.pix.copia) || '' } };
+      try { await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: em, ...(x.status === 'bot' ? { status: 'analise' } : {}), ...(!x.atendenteEmail ? { atendente: nomeEu(), atendenteEmail: emailEu() } : {}) }); toast('Link de pagamento enviado no chat.'); logEq('sup-msg', `Mandou link de pagamento no protocolo ${prot} · ${brl(r.valor)}`); }
+      catch (e) { toast('O link foi gerado, mas não foi para o chat: ' + (e.code || e.message), true); cobrancaPronta(r, { desc }); }
+      supChat(prot); } }); };
+  const pinta = () => { const x = (A.sup || []).find(y => y.protocolo === prot); if (!x) return; const bubs = $$('#sc-c > div > div', m); (x.msgs || []).forEach((mm, i) => { if (mm.pagamento && bubs[i] && !bubs[i].querySelector('.sc-pg')) { const c = (A.cob || []).find(y => y.id === mm.pagamento.id), st = ASAAS_ST[c ? c.status : 'PENDING'] || ['', '']; bubs[i].insertAdjacentHTML('beforeend', `<div class="sc-pg" style="margin-top:6px"><span class="pill ${st[0]}" style="background:#fff">${c || A.cob ? '💳 ' + st[1] : '💳 Link de pagamento'}</span></div>`); } }); };
+  const des = A.supAberto; A.supAberto = () => { if (des) des(); pinta(); }; pinta();
+}; }
+
+/* ---- pedidos do site e seleção terceirizada: link do Asaas ao lado de "Confirmar/Registrar pagamento" ---- */
+{ const _vp = vPed; vPed = function (el) { _vp(el); if (!asaasUrl()) return; $$('[data-pp]', el).forEach(b => { const p = (A.ped || []).find(x => x.id === b.dataset.pp); if (!p) return; const c = (A.cob || []).find(x => x.tipo === 'ped' && x.pedido === p.id && ['PENDING', 'OVERDUE'].includes(x.status));
+    b.insertAdjacentHTML('beforebegin', `<button class="btn sec sm" data-pas="${p.id}" title="${c ? 'Já existe um link em aberto' : 'Gerar link de pagamento do Asaas'}">${c ? 'Link Asaas ✓' : 'Link Asaas'}</button>`); });
+  $$('[data-pas]', el).forEach(b => b.onclick = async () => { const p = (A.ped || []).find(x => x.id === b.dataset.pas); b.disabled = true; try { const r = await asaasCall('/api/cobrar', { tipo: 'ped', id: p.id }); cobrancaPronta(r, { desc: `pedido ${p.numero}`, whatsapp: p.whatsapp }); } catch (e) { toast(e.message, true); } b.disabled = false; });
+  $$('tbody tr', el).forEach(tr => { const bt = tr.querySelector('[data-pc]'); if (!bt) return; const p = (A.ped || []).find(x => x.id === bt.dataset.pc); if (p && p.status === 'pago' && (p.liberarRecrutamento || p.liberarManual)) { const td = tr.children[4]; if (td && !td.querySelector('.as-lib')) td.insertAdjacentHTML('beforeend', `<div class="hint as-lib" style="color:var(--warn)">${p.liberarManual ? 'Pago pelo Asaas: vincule à empresa e libere.' : 'Pago: libere o Recrutamento.'}</div>`); } });
+}; }
+{ const _vr = vRst; vRst = async function (el) { await _vr(el); if (!asaasUrl()) return; $$('[data-rsp]', el).forEach(b => b.insertAdjacentHTML('beforebegin', `<button class="btn sec sm" data-rsas="${b.dataset.rsp}">Link Asaas</button>`));
+  $$('[data-rsas]', el).forEach(b => b.onclick = async () => { b.disabled = true; try { const p = (await FB.db.doc(`rsTerceirizado/${b.dataset.rsas}`).get()).data() || {}, r = await asaasCall('/api/cobrar', { tipo: 'rst', id: b.dataset.rsas }); cobrancaPronta(r, { desc: `seleção terceirizada ${p.numero || ''}`, whatsapp: p.whatsapp }); }
+    catch (e) { if (e.codigo === 'sem_doc') { const d = prompt('Informe o CPF ou CNPJ da empresa (obrigatório no Asaas):'); if (d) try { const r = await asaasCall('/api/cobrar', { tipo: 'rst', id: b.dataset.rsas, doc: d }); cobrancaPronta(r, {}); } catch (e2) { toast(e2.message, true); } } else toast(e.message, true); } b.disabled = false; }); }; }
+setInterval(() => { try { if (FB_ON && A.user) asaasOuvir(); } catch (e) { } }, 2500);
 </script>
 </body>
 </html>
