@@ -328,7 +328,7 @@ html[data-theme="dark"] .doc-prev{background:#fff;color:#111}
 .adl-lk{background:none;border:0;color:#4C9BFF;font:inherit;font-size:15px;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
 .adl-seg{display:flex;gap:16px;align-items:center;border-top:1px solid rgba(143,170,230,.22);margin-top:30px;padding-top:24px}.adl-seg svg{width:34px;height:34px;color:#B9C6E4;flex:none}.adl-seg b{display:block;font-size:14px}.adl-seg span{font-size:13px;color:#A9B6D3;line-height:1.45}
 .adl .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media(max-width:960px){.adl-art,.adl-card{zoom:1}.adl-card{width:auto}.adl{background-position:20% center;grid-template-columns:minmax(0,1fr);padding:32px 16px;gap:28px}.adl-sub{letter-spacing:.3em;font-size:12px}.adl-art .adl-sub{margin-bottom:22px}.adl-art p,.adl-tag{display:none}.adl-art h1{font-size:28px}.adl-art .adl-mk img{height:38px}.adl-art .adl-mk i{height:38px}.adl-art .adl-mk span{font-size:32px}.adl-card{padding:30px 22px 24px}.adl-card .adl-mk{display:none}}
+.adl .lg-leg{display:block;margin-top:6px;font-size:13px}.adl .lg-leg a{color:#8FB8FF;text-decoration:underline;text-underline-offset:3px}@media(max-height:820px) and (min-width:961px){.adl{padding:3vh 4vw 3vh 6vw}.adl-card{padding:30px 40px 24px;width:500px}.adl-card .adl-mk{margin-bottom:22px}.adl-card h2{font-size:26px}.adl-p{margin-bottom:18px;font-size:15px}.adl-in{height:52px;margin-bottom:12px}.adl-ent{height:56px}.adl-seg{margin-top:18px;padding-top:16px}.adl-sub{margin:14px 0 28px}.adl-art p{margin:14px 0 26px}}@media(max-width:960px){.adl-art,.adl-card{zoom:1}.adl-card{width:auto}.adl{background-position:20% center;grid-template-columns:minmax(0,1fr);padding:32px 16px;gap:28px}.adl-sub{letter-spacing:.3em;font-size:12px}.adl-art .adl-sub{margin-bottom:22px}.adl-art p,.adl-tag{display:none}.adl-art h1{font-size:28px}.adl-art .adl-mk img{height:38px}.adl-art .adl-mk i{height:38px}.adl-art .adl-mk span{font-size:32px}.adl-card{padding:30px 22px 24px}.adl-card .adl-mk{display:none}}
 </style>
 </head>
 <body>
@@ -426,7 +426,7 @@ const tById = id => A.tenants.find(t => t.id === id);
 function ajustaZoomLogin(raiz, card, obs) {
   const f = () => { const r = document.querySelector(raiz), c = r && r.querySelector(card); if (!r || !c) return removeEventListener('resize', f);
     r.style.setProperty('--z', '1'); if (innerWidth <= 960) return;
-    const cs = getComputedStyle(r), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), z = Math.max(.45, Math.min(1, (innerHeight - pad - 8) / c.offsetHeight, innerWidth / 1500)); r.style.setProperty('--z', z.toFixed(3)); };
+    const cs = getComputedStyle(r), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), z = Math.max(.86, Math.min(1, (innerHeight - pad - 8) / c.offsetHeight, innerWidth / 1440)); r.style.setProperty('--z', z.toFixed(3)); };
   f(); setTimeout(f, 80); addEventListener('resize', f);
   const ab = obs && document.querySelector(raiz + ' ' + obs); if (ab && window.MutationObserver) new MutationObserver(() => setTimeout(f, 0)).observe(ab, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'style'] });
 }
@@ -445,7 +445,7 @@ function renderLogin() {
           <button class="adl-ent" type="submit">${ic('<path d="M5 12h14M13 6l6 6-6 6"/>')}Entrar</button></form>
         <p style="text-align:center;margin:18px 0 0"><button type="button" class="adl-lk" id="a-esq">Esqueceu sua senha?</button></p>`
       : `<h2>Firebase não configurado</h2><p class="adl-p">Cole a configuração do Firebase no início deste arquivo. Enquanto isso, você já pode gerar chaves de ativação para clientes do modo local.</p><button class="adl-ent" id="a-chaves">Abrir gerador de chaves</button>`}
-      <div class="adl-seg">${ic('<path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>')}<div><b>Acesso seguro</b><span>Acesso restrito à equipe da NEXUM. Seus dados estão protegidos com conexão criptografada.</span></div></div>
+      <div class="adl-seg">${ic('<path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>')}<div><b>Acesso seguro</b><span>Acesso restrito à equipe da NEXUM. Seus dados estão protegidos com conexão criptografada.<span class="lg-leg"><a href="https://rh.nexumdp.com.br/termos.html" target="_blank" rel="noopener">Termos de Uso</a> · <a href="https://rh.nexumdp.com.br/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span></span></div></div>
     </section></div>`;
   ajustaZoomLogin('.adl', '.adl-card');
   { const o = $('#a-olho'); if (o) o.onclick = () => { const i = $('#a-senha'), v = i.type === 'password'; i.type = v ? 'text' : 'password'; o.setAttribute('aria-label', v ? 'Esconder senha' : 'Mostrar senha'); o.classList.toggle('on', v); }; }
@@ -754,9 +754,9 @@ function vSup(el) {
 /* ---------- Central de ajuda do suporte: links dos sistemas, respostas prontas e guias ---------- */
 const LINKS_NX = [
   ['Sistema do RH', 'https://rh.nexumdp.com.br/'], ['Portal do Colaborador', 'https://rh.nexumdp.com.br/nexum_portal.html'], ['Recrutamento e Seleção', 'https://recrutamento.nexumdp.com.br/'],
-  ['Site de vendas', 'https://nexumdp.com.br/'], ['Planos e preços', 'https://nexumdp.com.br/#planos'], ['Seleção terceirizada', 'https://nexumdp.com.br/#selecao'],
-  ['Demonstração sem cadastro', 'https://rh.nexumdp.com.br/#demo'], ['Guia trabalhista', 'https://nexumdp.com.br/blog.html'],
-  ['Contrato de prestação de serviços', 'https://nexumdp.com.br/contrato.html'], ['Termos de uso', 'https://nexumdp.com.br/termos.html'], ['Política de privacidade', 'https://nexumdp.com.br/privacidade.html'],
+  ['Site de vendas', 'https://vendas.nexumdp.com.br/'], ['Planos e preços', 'https://vendas.nexumdp.com.br/#planos'], ['Seleção terceirizada', 'https://vendas.nexumdp.com.br/#selecao'],
+  ['Demonstração sem cadastro', 'https://rh.nexumdp.com.br/#demo'], ['Guia trabalhista', 'https://vendas.nexumdp.com.br/blog.html'],
+  ['Contrato de prestação de serviços', 'https://rh.nexumdp.com.br/contrato.html'], ['Termos de uso', 'https://rh.nexumdp.com.br/termos.html'], ['Política de privacidade', 'https://rh.nexumdp.com.br/privacidade.html'],
   ['Painel do Dono', 'https://adm.nexumdp.com.br/'], ['Firebase do NEXUM RH', 'https://console.firebase.google.com/project/nexum-30044/overview'], ['Firebase do Recrutamento', 'https://console.firebase.google.com/project/recrutamento-bed5d/overview']
 ];
 const LINKS_CLIENTE = 11; /* os 11 primeiros podem ser mandados ao cliente; os outros são internos */
@@ -1022,7 +1022,7 @@ async function vCupons(el) {
       if (l.some(c => c.id === cod)) return toast('Já existe um cupom com este código.', true);
       const d = { ativo: true, ...(tp === 'pct' ? { pct: v } : { valor: v }), validoAte: $('#cn-d', m).value || '', maxUsos: parseInt($('#cn-m', m).value) || 0, usos: 0, meses: +$('#cn-me', m).value || 0, planos: $$('[data-cpp]:checked', m).map(x => x.dataset.cpp), obs: $('#cn-o', m).value.trim(), criadoEm: new Date().toISOString() };
       try { await FB.db.doc(`cupons/${cod}`).set(d); closeModal(); toast(`Cupom ${cod} criado.`); vCupons(el); } catch (e) { toast('Não foi possível criar: ' + (e.code || e.message), true); } } });
-  $$('[data-cl]', el).forEach(b => b.onclick = () => { const u = `https://nexumdp.com.br/?cupom=${b.dataset.cl}`; navigator.clipboard && navigator.clipboard.writeText(u); toast('Link copiado: ' + u); });
+  $$('[data-cl]', el).forEach(b => b.onclick = () => { const u = `https://vendas.nexumdp.com.br/?cupom=${b.dataset.cl}`; navigator.clipboard && navigator.clipboard.writeText(u); toast('Link copiado: ' + u); });
   $$('[data-ca]', el).forEach(b => b.onclick = async () => { const c = l.find(x => x.id === b.dataset.ca); await FB.db.doc(`cupons/${c.id}`).update({ ativo: c.ativo === false }); vCupons(el); });
   $$('[data-cx]', el).forEach(b => b.onclick = async () => { if (!confirm(`Excluir o cupom ${b.dataset.cx}?`)) return; await FB.db.doc(`cupons/${b.dataset.cx}`).delete(); vCupons(el); });
 }
@@ -1268,7 +1268,7 @@ const CRM_MSG_PADRAO = {
     ['Boas-vindas', 'Olá, {nome}! Aqui é {atendente}, do suporte do NEXUM Recrutamento e Seleção. Como posso ajudar?'],
     ['Abrir vaga', 'Para abrir uma vaga: no Recrutamento, vá em Vagas > Nova vaga, preencha cargo, loja e requisitos e clique em "Publicar". O link de candidatura aparece logo depois, pronto para divulgar.'],
     ['Link para candidatos', 'Os candidatos se inscrevem por aqui: https://recrutamento.nexumdp.com.br/ (o link de cada vaga fica no botão "Divulgar").'],
-    ['Seleção terceirizada', 'Se preferir, a equipe da NEXUM faz a seleção por você e você só paga quando contratar. Detalhes: https://nexumdp.com.br/#selecao'],
+    ['Seleção terceirizada', 'Se preferir, a equipe da NEXUM faz a seleção por você e você só paga quando contratar. Detalhes: https://vendas.nexumdp.com.br/#selecao'],
     ['Aprovado e admissão', 'Quando você aprova um candidato, ele recebe os parabéns com o endereço da loja no portal dele, e a admissão já chega pronta no NEXUM RH.'],
     ['Encerrar', 'Que bom que resolvemos, {nome}! Qualquer coisa, é só chamar. Atendimento humano: {horario}.']],
   atend: [
@@ -1281,7 +1281,7 @@ const CRM_MSG_PADRAO = {
 const CRM = { cfg: null };
 function crmTexto(txt, c) { return String(txt || '').replace(/\{nome\}/g, String((c && c.nome) || '').split(' ')[0] || 'tudo bem').replace(/\{empresa\}/g, (c && c.empresa) || 'sua empresa').replace(/\{atendente\}/g, (A.user && (A.user.displayName || String(A.user.email || '').split('@')[0])) || 'a equipe').replace(/\{horario\}/g, CRM_HORARIO); }
 function crmCatalogo() {
-  return `*Planos do NEXUM RH* (14 dias grátis, sem cartão)\n${Object.values(PLANOS).map(p => `• ${p.nome}: até ${p.limite > 9999 ? 'funcionários ilimitados' : p.limite + ' funcionários'} · ${brl(p.preco)}/mês`).join('\n')}\n\nTodos têm ponto com reconhecimento facial, folha, férias, 13º, admissão digital, documentos e o Portal do Colaborador.\n\n*NEXUM Recrutamento e Seleção*: ${brl(289)}/mês (vagas, triagem, testes, entrevista por vídeo e banco de talentos).\n*Seleção terceirizada*: a equipe da NEXUM seleciona para você e você paga só quando contratar.\n\nVeja tudo: https://nexumdp.com.br/#planos`;
+  return `*Planos do NEXUM RH* (14 dias grátis, sem cartão)\n${Object.values(PLANOS).map(p => `• ${p.nome}: até ${p.limite > 9999 ? 'funcionários ilimitados' : p.limite + ' funcionários'} · ${brl(p.preco)}/mês`).join('\n')}\n\nTodos têm ponto com reconhecimento facial, folha, férias, 13º, admissão digital, documentos e o Portal do Colaborador.\n\n*NEXUM Recrutamento e Seleção*: ${brl(289)}/mês (vagas, triagem, testes, entrevista por vídeo e banco de talentos).\n*Seleção terceirizada*: a equipe da NEXUM seleciona para você e você paga só quando contratar.\n\nVeja tudo: https://vendas.nexumdp.com.br/#planos`;
 }
 function crmSistemas(fila) {
   const l = LINKS_NX.slice(0, LINKS_CLIENTE).filter(([n]) => fila === 'rs' ? /Recrut|Seleção|Site|Termos|Contrato/.test(n) : fila === 'rh' ? !/Seleção terceirizada|Planos/.test(n) : true);
@@ -1876,6 +1876,68 @@ function vChave(el) {
   });
 })();
 
+
+/* =====================================================================
+   LOTE 13: Suporte em destaque (topo do menu, ponto vermelho, aviso) e anexos no chat
+   ===================================================================== */
+{ const mv = k => { const i = NAV.findIndex(n => n[0] === k); return i > -1 ? NAV.splice(i, 1)[0] : null; }; const sp = mv('sup'), cr = mv('crm'); const g = NAV.findIndex(n => n[0] === 'geral'); NAV.splice(g + 1, 0, ...[sp, cr].filter(Boolean)); }
+const supPend = () => (A.sup || []).filter(x => !['concluido', 'cancelado'].includes(x.status) && (x.naoLidoDono || (x.status === 'analise' && ((x.msgs || []).slice(-1)[0] || {}).de === 'rh')));
+function supDestaque() {
+  const b = $('.side .nav button[data-v="sup"]'); if (!b) return; const l = supPend(), n = l.length;
+  b.classList.add('nav-sup'); let d = b.querySelector('.sup-dot'); if (!d) { b.insertAdjacentHTML('beforeend', '<span class="sup-dot" aria-hidden="true"></span>'); d = b.querySelector('.sup-dot'); }
+  d.textContent = n || ''; d.hidden = !n; b.classList.toggle('pend', n > 0); b.title = n ? `${n} cliente(s) aguardando resposta` : 'Suporte';
+  const ld = $('#bdg-ld-sup'); if (ld) ld.remove();
+  let bar = $('#sup-alerta'); const main = $('.main');
+  if (!n || A.view === 'sup' || !main) { if (bar) bar.remove(); return; }
+  const tx = `<span class="sa-dot"></span><b>${n} cliente${n > 1 ? 's' : ''} aguardando resposta no suporte</b><span class="sa-q">${esc(l.slice(0, 3).map(x => x.empresa || x.nome).join(', '))}${n > 3 ? '…' : ''}</span><button class="btn sm" id="sa-ir">Responder agora</button>`;
+  if (!bar) { main.insertAdjacentHTML('afterbegin', `<div id="sup-alerta" role="status">${tx}</div>`); bar = $('#sup-alerta'); } else if (bar.dataset.n !== String(n)) bar.innerHTML = tx;
+  bar.dataset.n = n; const ir = $('#sa-ir'); if (ir) ir.onclick = () => go('sup');
+}
+setInterval(() => { try { if (A.user) supDestaque(); } catch (e) { } }, 1500);
+document.head.insertAdjacentHTML('beforeend', `<style>
+.side .nav button.nav-sup{position:relative;background:rgba(43,123,255,.14);border:1px solid rgba(90,150,255,.35);margin:4px 0 8px}
+.side .nav button.nav-sup.pend{background:rgba(220,38,38,.16);border-color:rgba(248,113,113,.55)}
+.sup-dot{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#E11D48;color:#fff;font-size:12px;font-weight:800;display:inline-grid;place-items:center;box-shadow:0 0 0 0 rgba(225,29,72,.7);animation:supPulse 1.6s infinite}
+.sup-dot[hidden]{display:none}
+@keyframes supPulse{0%{box-shadow:0 0 0 0 rgba(225,29,72,.65)}70%{box-shadow:0 0 0 9px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
+#sup-alerta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#FFF1F2;border-bottom:1px solid #FECDD3;color:#9F1239;padding:10px 24px;font-size:14px;position:sticky;top:0;z-index:20}
+#sup-alerta .sa-dot{width:11px;height:11px;border-radius:50%;background:#E11D48;animation:supPulse 1.6s infinite;flex:none}#sup-alerta .sa-q{color:#BE123C;flex:1;min-width:120px;font-size:13px}
+#sup-alerta .btn{background:#E11D48;border-color:#E11D48}
+.sc-anx{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.75);color:#14203D;font-size:13px;font-weight:600;cursor:pointer;max-width:100%}
+.sc-anx img{width:120px;max-height:120px;object-fit:cover;border-radius:6px;display:block}
+@media (prefers-reduced-motion:reduce){.sup-dot,#sup-alerta .sa-dot{animation:none}}
+</style>`);
+/* ---------- anexos (foto, PDF, documento) no chat de suporte ---------- */
+async function anexoLer(f) {
+  if (/^image\//.test(f.type)) { const url = URL.createObjectURL(f); const img = await new Promise((ok, er) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => er(new Error('Não foi possível ler a imagem.')); i.src = url; });
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    let q = .82, d = c.toDataURL('image/jpeg', q); while (d.length > 850000 && q > .3) { q -= .12; d = c.toDataURL('image/jpeg', q); } return { nome: String(f.name || 'foto').replace(/\.\w+$/, '') + '.jpg', tipo: 'image/jpeg', data: d }; }
+  if (f.size > 640 * 1024) throw new Error('Arquivo grande demais (máximo 640 KB). Envie uma foto ou um PDF menor.');
+  const d = await new Promise((ok, er) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => er(new Error('Não foi possível ler o arquivo.')); r.readAsDataURL(f); });
+  return { nome: f.name || 'arquivo', tipo: f.type || 'application/octet-stream', data: d };
+}
+function anexoAbrir(data, nome) {
+  const [h, b] = String(data).split(','), mime = (h.match(/data:([^;]+)/) || [])[1] || 'application/octet-stream', bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([u], { type: mime })), a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; if (!/^image\/|pdf/.test(mime)) a.download = nome || 'anexo'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 180000);
+}
+A.anxCache = A.anxCache || {};
+async function anexoBuscar(prot, id) { if (A.anxCache[id]) return A.anxCache[id]; const s = await FB.db.doc(`suporte/${prot}/anexos/${id}`).get(); if (!s.exists) throw new Error('Anexo não encontrado.'); return A.anxCache[id] = s.data(); }
+function anexoChip(prot, m) { const a = m.anexo; if (!a) return ''; const img = /^image\//.test(a.tipo); return `<button type="button" class="sc-anx" data-anx="${esc(prot)}|${esc(a.id)}" title="Abrir ${esc(a.nome)}">${img ? `<span data-thumb="${esc(a.id)}">🖼️ Foto</span>` : '📎'} ${img ? '' : esc(a.nome)}</button>`; }
+function anexoThumbs(box, prot) { $$('[data-thumb]', box).forEach(async sp => { try { const x = await anexoBuscar(prot, sp.dataset.thumb); sp.outerHTML = `<img src="${x.data}" alt="${esc(x.nome)}">`; } catch (e) { } }); }
+document.addEventListener('click', async e => { const b = e.target.closest && e.target.closest('[data-anx]'); if (!b) return; const [prot, id] = b.dataset.anx.split('|'); try { const x = await anexoBuscar(prot, id); anexoAbrir(x.data, x.nome); } catch (er) { toast(er.message || 'Não foi possível abrir o anexo.', true); } });
+/* o chat do suporte ganha o botão de anexo e mostra os anexos */
+{ const _sc = supChat; supChat = function (prot) {
+  _sc(prot); const m = $('.modal'); if (!m || !$('#sc-t', m)) return;
+  $('#sc-env', m).insertAdjacentHTML('beforebegin', '<button class="btn sec" id="sc-anx" type="button" title="Anexar foto ou arquivo" aria-label="Anexar foto ou arquivo">📎</button><input type="file" id="sc-file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" hidden>');
+  $('#sc-anx', m).onclick = () => $('#sc-file', m).click();
+  $('#sc-file', m).onchange = async ev => { const f = ev.target.files[0]; ev.target.value = ''; if (!f) return; const b = $('#sc-anx', m); b.disabled = true; b.textContent = '…';
+    try { const a = await anexoLer(f), id = Math.random().toString(36).slice(2, 12), em = new Date().toISOString(); await FB.db.doc(`suporte/${prot}/anexos/${id}`).set({ ...a, em, de: 'dono' }); A.anxCache[id] = a;
+      const x = (A.sup || []).find(y => y.protocolo === prot) || {}, msg = { id: Math.random().toString(36).slice(2, 10), de: 'dono', t: `📎 ${a.nome}`, em, por: 'NEXUM', anexo: { id, nome: a.nome, tipo: a.tipo } };
+      await FB.db.doc(`suporte/${prot}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: em, ...(x.status === 'bot' ? { status: 'analise' } : {}) }); toast('Anexo enviado.'); }
+    catch (er) { toast(er.code === 'permission-denied' ? 'Sem permissão: publique o firestore.rules novo.' : (er.message || 'Não foi possível enviar o anexo.'), true); } b.disabled = false; b.textContent = '📎'; };
+  const pinta = () => { const c = $('#sc-c'), x = (A.sup || []).find(y => y.protocolo === prot); if (!c || !x) return; const bubs = $$('#sc-c > div > div', m); (x.msgs || []).forEach((mm, i) => { if (mm.anexo && bubs[i] && !bubs[i].querySelector('.sc-anx')) bubs[i].insertAdjacentHTML('beforeend', '<br>' + anexoChip(prot, mm)); }); anexoThumbs(c, prot); };
+  const des = A.supAberto; A.supAberto = () => { if (des) des(); pinta(); }; pinta();
+}; }
 </script>
 </body>
 </html>
