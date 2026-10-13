@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CRM NEXUM</title>
+<meta name="theme-color" content="#0B1638">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--pri:#1A5CFF;--pri-d:#0B47D6;--pri-s:#E8F0FF;--navy:#0B1638;--navy2:#13224F;--ink:#14203D;--mut:#667091;--line:#E3E7F0;--bg:#F4F6FB;--card:#fff;--ok:#16A34A;--warn:#D97706;--bad:#DC2645;--wa:#25D366;--sis:#7C3AED;--lead:#F59E0B;--r:14px}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:Onest,system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14.5px;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.btn{border:0;background:var(--pri);color:#fff;font-weight:600;border-radius:10px;padding:9px 14px;display:inline-flex;align-items:center;gap:6px;justify-content:center;white-space:nowrap}.btn:hover{background:var(--pri-d)}.btn:disabled{opacity:.55;cursor:default}
+.btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.sec:hover{background:#F6F8FD}.btn.ghost{background:none;color:var(--pri);padding:8px 10px}.btn.ghost:hover{background:var(--pri-s)}.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}
+.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff;outline:none}.inp:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-s)}
+.hint{color:var(--mut);font-size:13px}.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EEF1F7;color:var(--mut);white-space:nowrap}
+.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+/* login */
+.lg{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(800px 600px at 80% 10%,#1D4FD0,transparent 60%),linear-gradient(160deg,#071A52,#040C2B)}
+.lg-c{background:#fff;border-radius:20px;padding:34px 30px;width:100%;max-width:400px;box-shadow:0 30px 80px rgba(0,0,0,.35)}.lg-c h1{margin:14px 0 4px;font-size:24px}.lg-c label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+.marca{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:.3px}.marca i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1A5CFF,#5B8CFF);display:flex;align-items:center;justify-content:center;font-style:normal;color:#fff;font-size:17px}.marca span{color:var(--pri)}
+/* layout */
+.app{display:grid;grid-template-columns:232px minmax(300px,380px) minmax(0,1fr) 300px;height:100vh;height:100dvh}
+.emb .app{grid-template-columns:200px minmax(280px,340px) minmax(0,1fr) 280px}
+.nav{background:var(--navy);color:#C9D3F0;display:flex;flex-direction:column;padding:16px 12px;overflow-y:auto}
+.nav .marca{color:#fff;font-size:17px;padding:2px 6px 14px}.nav .marca span{color:#8FB0FF}
+.nav h6{margin:16px 8px 6px;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#7F8DB8}
+.nav button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;color:inherit;padding:8px 10px;border-radius:9px;text-align:left;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.07)}.nav button.on{background:rgba(26,92,255,.28);color:#fff;font-weight:700}
+.nav button .dot{width:9px;height:9px;border-radius:50%;flex:none}.nav button .n{margin-left:auto;font-size:11.5px;font-weight:700;background:rgba(255,255,255,.12);border-radius:99px;padding:1px 8px}.nav button .n.r{background:#E11D48;color:#fff}
+.nav .eu{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.1);font-size:13px}.nav .eu b{display:block;color:#fff}
+.lst{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.lst-h{padding:14px 14px 10px;border-bottom:1px solid var(--line)}.lst-h h2{margin:0 0 10px;font-size:18px;display:flex;align-items:center;gap:8px}
+.tabs{display:flex;gap:4px;background:#F1F3F9;border-radius:10px;padding:3px;margin-top:10px}.tabs button{flex:1;border:0;background:none;padding:6px 4px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--mut)}.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,32,61,.12)}
+.lst-b{overflow-y:auto;flex:1}
+.it{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #F0F2F7;cursor:pointer;position:relative}.it:hover{background:#F8FAFE}.it.on{background:var(--pri-s)}
+.av{width:42px;height:42px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;position:relative}
+.av .cn{position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px}
+.it .tx{flex:1;min-width:0}.it .l1{display:flex;gap:6px;align-items:baseline}.it .l1 b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}.it .l1 time{font-size:11.5px;color:var(--mut);flex:none}
+.it .l2{display:flex;gap:6px;align-items:center;margin-top:2px}.it .l2 span{flex:1;min-width:0;color:var(--mut);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.it .nl{background:var(--wa);color:#fff;font-size:11px;font-weight:800;border-radius:99px;padding:1px 7px;flex:none}
+.it .l3{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}.it.urg::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--bad)}
+.vazio{padding:40px 20px;text-align:center;color:var(--mut)}
+/* chat */
+.ch{display:flex;flex-direction:column;min-width:0;min-height:0;background:#EFEAE2}
+.ch-h{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ch-h .nm{flex:1;min-width:160px}.ch-h .nm b{font-size:16px;display:block}.ch-h .nm span{font-size:12.5px;color:var(--mut)}
+.ch-b{flex:1;overflow-y:auto;padding:18px 6%;background-image:radial-gradient(rgba(20,32,61,.045) 1px,transparent 1px);background-size:18px 18px}
+.m{max-width:72%;margin:6px 0;padding:8px 11px 6px;border-radius:12px;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.08);white-space:pre-wrap;word-wrap:break-word;line-height:1.45;font-size:14.5px}
+.m small{display:block;font-size:11.5px;font-weight:700;color:var(--pri);margin-bottom:2px}.m .h{display:block;text-align:right;font-size:11px;color:var(--mut);margin-top:2px}
+.m.eu{margin-left:auto;background:#D9FDD3}.m.bot{margin-left:auto;background:#E7ECFF}.m.bot small{color:#4A5BD4}
+.m.nota{margin:8px auto;background:#FFF6D6;border:1px dashed #E8C55A;max-width:80%}.m.nota small{color:#9A6B00}
+.m.sis{margin:10px auto;background:rgba(255,255,255,.75);font-size:12.5px;color:var(--mut);text-align:center;max-width:80%;box-shadow:none}
+.m img.fx{display:block;max-width:240px;max-height:240px;border-radius:8px;margin-top:6px;cursor:zoom-in}.m .ax{display:inline-flex;gap:6px;align-items:center;margin-top:6px;padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer}
+.m .pg{margin-top:6px;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #C9D6F2;font-size:13px}
+.dia{text-align:center;margin:12px 0}.dia span{background:#fff;border-radius:8px;padding:4px 10px;font-size:12px;color:var(--mut);box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.cp{background:#fff;border-top:1px solid var(--line);padding:10px 14px}
+.cp-t{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.cp-t select{width:auto;padding:6px 8px;font-size:13px;max-width:200px}
+.cp-r{display:flex;gap:8px;align-items:flex-end}.cp-r textarea{flex:1;resize:none;min-height:44px;max-height:180px}
+.cp.nt textarea{background:#FFFBEA;border-color:#E8C55A}
+.semsel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mut);text-align:center;padding:30px;gap:8px;background:#F4F6FB}
+.semsel .ic{width:70px;height:70px;border-radius:22px;background:var(--pri-s);color:var(--pri);display:flex;align-items:center;justify-content:center;font-size:32px}
+/* perfil */
+.pf{background:#fff;border-left:1px solid var(--line);overflow-y:auto;padding:18px 16px}
+.pf h3{margin:0;font-size:17px}.pf h4{margin:18px 0 8px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut)}
+.pf .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13.5px}.pf .kv span{color:var(--mut)}.pf .kv b{font-weight:600;text-align:right;word-break:break-word}
+.pf .box{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:8px}.pf .tg{display:flex;flex-wrap:wrap;gap:5px}
+.hist div{padding:8px 0;border-bottom:1px solid #F0F2F7;font-size:13px;cursor:pointer}.hist div:hover{color:var(--pri)}
+/* kanban */
+.kb{grid-column:2/5;display:flex;flex-direction:column;min-width:0;min-height:0}
+.kb-top{background:#fff;border-bottom:1px solid var(--line);padding:12px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.kb-c{flex:1;display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;padding:16px;overflow:auto}
+.col{background:#EBEEF5;border-radius:14px;display:flex;flex-direction:column;min-height:0}.col.alvo{outline:2px dashed var(--pri);outline-offset:-2px}
+.col-h{padding:12px 14px;display:flex;align-items:center;gap:8px;font-weight:700;border-top:4px solid;border-radius:14px 14px 0 0}.col-h span{margin-left:auto;font-size:12px;background:#fff;border-radius:99px;padding:1px 9px;color:var(--mut)}
+.col-b{padding:0 10px 10px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+.kc{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(20,32,61,.08);cursor:grab}.kc:active{cursor:grabbing}.kc.arr{opacity:.4}
+.kc .l1{display:flex;gap:6px;align-items:center}.kc .l1 b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kc p{margin:4px 0 6px;color:var(--mut);font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* métricas */
+.mt{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.mt div{background:#F6F8FD;border-radius:10px;padding:8px 10px}.mt b{display:block;font-size:18px}.mt span{font-size:11.5px;color:var(--mut)}
+/* modal e toast */
+.ov{position:fixed;inset:0;background:rgba(10,18,40,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.md{background:#fff;border-radius:18px;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.md-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.md-h h3{margin:0;flex:1;font-size:17px}.md-h button{border:0;background:none;font-size:22px;color:var(--mut)}
+.md-b{padding:16px 20px;overflow-y:auto}.md-f{padding:12px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+#toast div{background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:90vw}#toast div.e{background:var(--bad)}
+.voltar{display:none}
+/* responsivo */
+@media (max-width:1280px){.app,.emb .app{grid-template-columns:200px minmax(260px,330px) minmax(0,1fr)}.pf{display:none}.pf.aberto{display:block;position:fixed;right:0;top:0;bottom:0;width:320px;z-index:40;box-shadow:-10px 0 40px rgba(0,0,0,.15)}.kb{grid-column:2/4}}
+@media (max-width:900px){.app,.emb .app{grid-template-columns:1fr}.nav{display:none}.nav.aberto{display:flex;position:fixed;inset:0 30% 0 0;z-index:45}.lst{border:0}.app.chat .lst{display:none}.app:not(.chat) .ch{display:none}.voltar{display:inline-flex}.kb{grid-column:1}.kb-c{grid-template-columns:repeat(4,85vw)}.m{max-width:88%}.ch-b{padding:14px 10px}.menu-m{display:inline-flex!important}}
+.menu-m{display:none!important}
+</style>
+</head>
+<body>
+<div id="root"></div><div id="mr"></div><div id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+/* =====================================================================
+   CRM NEXUM — atendimento unificado: WhatsApp, chat de suporte dos
+   sistemas (RH e Recrutamento) e leads do site, em caixa de entrada e
+   kanban. Usado sozinho (crm.html) ou dentro do Painel do Adm e do
+   Portal da Equipe (crm.html?embed=1).
+   ===================================================================== */
+const FIREBASE_CONFIG = { apiKey: 'AIzaSyDdcLJdO2qnmiGsR1EsKFu-uJfs4FRNvA4', authDomain: 'nexum-30044.firebaseapp.com', projectId: 'nexum-30044', storageBucket: 'nexum-30044.firebasestorage.app', messagingSenderId: '988792881104', appId: '1:988792881104:web:c0517c2b62b6e9f14603d5' };
+const DONO_EMAILS = ['wevellenerrera21@gmail.com'];
+const EMBED = new URLSearchParams(location.search).has('embed');
+const FILAS = { vendas: { nome: 'Vendas', cor: '#1A5CFF', papeis: ['comercial'] }, rh: { nome: 'Suporte do RH', cor: '#0F8A5F', papeis: ['suporte'] }, rs: { nome: 'Suporte do Recrutamento', cor: '#7C3AED', papeis: ['selecao', 'suporte'] }, atend: { nome: 'Financeiro e outros', cor: '#B45309', papeis: ['financeiro'] } };
+const ETAPAS = [['novo', 'Novos', '#64748B'], ['atendendo', 'Em atendimento', '#1A5CFF'], ['aguardando', 'Aguardando cliente', '#D97706'], ['fim', 'Finalizados', '#16A34A']];
+const CANAIS = { wa: ['WhatsApp', '#25D366', 'W'], sistema: ['Chat do sistema', '#7C3AED', 'S'], lead: ['Lead do site', '#F59E0B', 'L'] };
+const PAPEL_NOME = { dono: 'Proprietária', suporte: 'Suporte', comercial: 'Comercial', financeiro: 'Financeiro', selecao: 'Seleção' };
+const HORARIO = 'segunda a sexta, das 9h às 18h, e sábado, das 9h às 13h';
+const ETIQUETAS = ['Urgente', 'Cliente', 'Novo cliente', 'Inadimplente', 'Indicação', 'Bug', 'Dúvida', 'Elogio', 'Negociação'];
+const RESPOSTAS = [
+  ['Atendimento', [['Saudação', 'Olá, {nome}! Aqui é {atendente}, da NEXUM. Já estou vendo o seu atendimento.'], ['Pedir print', 'Pode me mandar um print da tela com a mensagem que aparece? Assim consigo ver exatamente o que está acontecendo.'], ['Atualizar a página', 'Faça um teste: aperte Ctrl+Shift+R no computador (ou feche e abra o aplicativo no celular) para carregar a versão mais nova, e tente de novo.'], ['Vou verificar', 'Obrigado pelas informações! Vou verificar aqui e te respondo ainda hoje.'], ['Aguardando retorno', 'Conseguiu testar? Fico no aguardo do seu retorno para seguir com o atendimento.']]],
+  ['Vendas', [['Boas-vindas', 'Olá, {nome}! Aqui é {atendente}, do time de vendas da NEXUM. Me conta: quantos funcionários a sua empresa tem hoje e o que mais pesa no RH (ponto, folha, admissão)?'], ['Teste grátis', 'Você pode testar o NEXUM RH por 14 dias, com todos os recursos e sem cartão: https://rh.nexumdp.com.br/#criar'], ['Demonstração', 'Quer ver o sistema funcionando antes de criar a conta? Esta demonstração abre sem cadastro: https://rh.nexumdp.com.br/#demo'], ['Planos', 'Os planos são: Essencial R$ 99/mês (até 10 funcionários), Profissional R$ 299/mês (até 50) e Empresa R$ 499/mês (ilimitado). O Recrutamento e Seleção é R$ 289/mês. Veja: https://vendas.nexumdp.com.br/#planos']]],
+  ['Acesso e senha', [['Esqueci a senha', 'Na tela de entrada do sistema, toque em "Esqueceu sua senha?", digite o seu e-mail e abra o link que chega na sua caixa de entrada (confira também o spam).'], ['Novo usuário', 'Para dar acesso a outra pessoa: Configurações > Usuários > Adicionar. Escolha o papel (RH, gestor ou leitura) e a loja, se for gerente.'], ['Código da empresa', 'O código da sua empresa aparece em Configurações > Plano. É ele que os funcionários usam para entrar no Portal do Colaborador.']]],
+  ['Ponto e folha', [['Ponto não registra', 'Se o ponto não registra, confira no celular do funcionário: permissão da câmera, permissão de localização e se ele está dentro do raio da loja (Configurações > Lojas).'], ['Ajustar batida', 'Para corrigir uma marcação: Cartão Ponto, escolha o funcionário e o dia e ajuste o horário com o motivo. O ajuste fica registrado na auditoria.'], ['Gerar a folha', 'Em Financeiro > Folha mensal: escolha o mês, toque em "Importar do ponto" e confira os valores. Depois, feche a folha e publique os holerites no portal.']]],
+  ['Plano e pagamento', [['Renovar', 'Você renova em Configurações > Plano > Pagar agora, com PIX, boleto ou cartão. A liberação é automática assim que o pagamento é confirmado.'], ['Pagamento confirmado', 'Pagamento confirmado! A sua licença já foi renovada. É só atualizar a página para ver a nova data.'], ['Somente leitura', 'O sistema ficou somente para consulta porque a licença venceu. Assim que o pagamento for confirmado, tudo volta ao normal, sem perder nenhum dado.']]],
+  ['Encerramento', [['Resolvido?', 'Consegui resolver para você? Se estiver tudo certo, vou concluir este atendimento.'], ['Encerramento', 'Obrigado pelo contato, {nome}! Vou concluir este atendimento. Se precisar, é só chamar.']]]
+];
+const LINKS = [['Sistema do RH', 'https://rh.nexumdp.com.br/'], ['Portal do Colaborador', 'https://rh.nexumdp.com.br/nexum_portal.html'], ['Recrutamento e Seleção', 'https://recrutamento.nexumdp.com.br/'], ['Site e planos', 'https://vendas.nexumdp.com.br/#planos'], ['Demonstração', 'https://rh.nexumdp.com.br/#demo'], ['Teste grátis', 'https://rh.nexumdp.com.br/#criar'], ['Contrato', 'https://rh.nexumdp.com.br/contrato.html'], ['Termos de uso', 'https://rh.nexumdp.com.br/termos.html'], ['Privacidade', 'https://rh.nexumdp.com.br/privacidade.html']];
+
+/* ---------------- utilidades ---------------- */
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const soD = v => String(v || '').replace(/\D/g, '');
+const brl = v => 'R$ ' + (+v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const fmtTel = t => { let d = soD(t).replace(/^55(?=\d{10,11}$)/, ''); return d.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : d.length === 10 ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}` : d; };
+const fd = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—';
+const quando = s => { if (!s) return ''; const d = new Date(s), h = new Date(); if (d.toDateString() === h.toDateString()) return d.toLocaleTimeString('pt-BR').slice(0, 5); const o = new Date(h); o.setDate(o.getDate() - 1); if (d.toDateString() === o.toDateString()) return 'ontem'; return d.toLocaleDateString('pt-BR').slice(0, 5); };
+const minDesde = s => s ? Math.max(0, Math.round((Date.now() - new Date(s).getTime()) / 60000)) : 0;
+const minFmt = m => m < 60 ? `${m} min` : m < 1440 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}` : `${Math.floor(m / 1440)}d`;
+const cor = s => { let h = 0; for (const c of String(s || '?')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return ['#1A5CFF', '#0F8A5F', '#7C3AED', '#B45309', '#DC2645', '#0891B2', '#4F46E5', '#BE185D'][h % 8]; };
+const ini = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase() || '?';
+const rid = () => Math.random().toString(36).slice(2, 10);
+function emHorario() { const b = new Date(), dw = b.getDay(), h = b.getHours() + b.getMinutes() / 60; return (dw >= 1 && dw <= 5 && h >= 9 && h < 18) || (dw === 6 && h >= 9 && h < 13); }
+function toast(t, erro) { const d = document.createElement('div'); d.textContent = t; if (erro) d.className = 'e'; $('#toast').appendChild(d); setTimeout(() => d.remove(), erro ? 6000 : 3500); }
+function beep() { try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.value = .06; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .16); setTimeout(() => c.close(), 400); } catch (e) { } }
+function modal(titulo, corpo, { foot = '', onMount, largo } = {}) {
+  $('#mr').innerHTML = `<div class="ov" role="dialog" aria-modal="true" aria-label="${esc(titulo)}"><div class="md" ${largo ? 'style="max-width:720px"' : ''}><div class="md-h"><h3>${esc(titulo)}</h3><button type="button" data-x aria-label="Fechar">×</button></div><div class="md-b">${corpo}</div>${foot ? `<div class="md-f">${foot}</div>` : ''}</div></div>`;
+  const m = $('#mr .md'); $$('[data-x],[data-close]', m).forEach(b => b.onclick = fechar); $('#mr .ov').onclick = e => { if (e.target.classList.contains('ov')) fechar(); }; if (onMount) onMount(m); return m;
+}
+function fechar() { $('#mr').innerHTML = ''; }
+const opts = (l, v) => l.map(([a, b]) => `<option value="${esc(a)}" ${String(a) === String(v) ? 'selected' : ''}>${esc(b)}</option>`).join('');
+
+/* ---------------- estado ---------------- */
+const C = { user: null, uid: '', papel: '', nome: '', wa: [], sup: [], leads: [], tenants: [], waCfg: {}, web: {}, webQr: {}, asaasUrl: '', iaKey: '', minhas: [], filaMsgs: {}, robo: {}, sel: '', view: 'inbox', f: { fila: 'todas', canal: 'todos', etapa: 'abertos', q: '', meus: false }, msgs: [], unMsgs: null, subs: [], visto: {}, nota: false, iniciou: false };
+try { Object.assign(C.f, JSON.parse(localStorage.getItem('crmnx:f') || '{}')); C.view = localStorage.getItem('crmnx:v') || 'inbox'; } catch (e) { }
+const dono = () => C.papel === 'dono';
+const filasMinhas = () => dono() ? Object.keys(FILAS) : Object.keys(FILAS).filter(k => FILAS[k].papeis.includes(C.papel));
+const podeSup = () => dono() || ['suporte', 'selecao'].includes(C.papel), podeLeads = () => dono() || C.papel === 'comercial';
+let FB = null;
+
+/* ---------------- itens unificados ---------------- */
+function itemWA(c) {
+  const col = c.coluna || 'ia', fila = FILAS[col] ? col : (c.fila && FILAS[c.fila] ? c.fila : '');
+  const etapa = c.oculto ? 'oculto' : col === 'fim' ? 'fim' : col === 'ia' ? 'novo' : c.etapaCrm === 'aguardando' || ['equipe', 'bot'].includes(c.ultimaDe) ? (c.ultimaDe === 'cliente' ? 'atendendo' : 'aguardando') : 'atendendo';
+  return { key: 'wa:' + c.id, canal: 'wa', id: c.id, nome: c.nome || fmtTel(c.numero) || 'Contato', sub: fmtTel(c.numero), tel: c.numero, fila, etapa, ultima: c.ultimaMsg || '', ultimaDe: c.ultimaDe === 'cliente' ? 'cliente' : 'nos', em: c.atualizadoEm || c.criadoEm || '', naoLidas: +c.naoLidas || 0, atendente: c.atendente || '', atendenteEmail: c.atendenteEmail || '', tags: c.etiquetas || [], tid: c.tid || '', empresa: c.empresa || '', clienteDesde: c.ultimaDoCliente || '', raw: c };
+}
+function itemSup(x) {
+  const ms = x.msgs || [], ult = ms[ms.length - 1] || {}, fila = x.origem === 'recrutamento' ? 'rs' : 'rh';
+  let nl = 0; for (let i = ms.length - 1; i >= 0 && ms[i].de === 'rh'; i--) nl++;
+  const etapa = ['concluido', 'cancelado'].includes(x.status) ? 'fim' : x.status === 'bot' ? 'novo' : ult.de === 'rh' ? 'atendendo' : (x.etapaCrm === 'atendendo' ? 'atendendo' : 'aguardando');
+  const ultCli = [...ms].reverse().find(m => m.de === 'rh');
+  return { key: 'sp:' + x.protocolo, canal: 'sistema', id: x.protocolo, nome: x.nome || x.empresa || 'Cliente', sub: `${x.empresa || ''} · protocolo ${x.protocolo}`, fila, etapa, ultima: ult.t || '', ultimaDe: ult.de === 'rh' ? 'cliente' : 'nos', em: x.atualizadoEm || x.criadoEm || '', naoLidas: x.naoLidoDono ? Math.max(1, nl) : 0, atendente: x.atendente || '', atendenteEmail: x.atendenteEmail || '', tags: x.etiquetas || [], tid: x.tid || '', empresa: x.empresa || '', email: x.email || '', clienteDesde: ultCli ? ultCli.em : '', raw: x };
+}
+function itemLead(l) {
+  const etapa = { novo: 'novo', contato: 'atendendo', ganho: 'fim', perdido: 'fim' }[l.status || 'novo'] || 'novo';
+  return { key: 'ld:' + l.id, canal: 'lead', id: l.id, nome: l.nome || 'Lead', sub: `${l.empresa || ''}${l.funcionarios ? ' · ' + l.funcionarios + ' funcionários' : ''}`, tel: l.whatsapp, fila: 'vendas', etapa, ultima: l.resumo || 'Pediu contato pelo site', ultimaDe: 'cliente', em: l.em || '', naoLidas: (l.status || 'novo') === 'novo' ? 1 : 0, atendente: l.atendente || '', atendenteEmail: l.atendenteEmail || '', tags: l.etiquetas || [], tid: '', empresa: l.empresa || '', raw: l };
+}
+function itens() { const viraram = new Set(C.wa.map(c => c.leadId).filter(Boolean)); return [...C.wa.map(itemWA), ...C.sup.map(itemSup), ...C.leads.filter(l => !viraram.has(l.id)).map(itemLead)].filter(i => i.etapa !== 'oculto' && (dono() || !i.fila || filasMinhas().includes(i.fila))); }
+function filtrar(l, semEtapa) {
+  const f = C.f, q = f.q.trim().toLowerCase(), hoje7 = new Date(Date.now() - 7 * 864e5).toISOString();
+  return l.filter(i => (f.fila === 'todas' || (f.fila === 'triagem' ? !i.fila : i.fila === f.fila)) && (f.canal === 'todos' || i.canal === f.canal) && (!f.meus || i.atendenteEmail === C.user.email)
+    && (semEtapa || (f.etapa === 'abertos' ? i.etapa !== 'fim' : f.etapa === 'semresp' ? i.etapa !== 'fim' && i.ultimaDe === 'cliente' : f.etapa === 'fim' ? i.etapa === 'fim' && i.em >= hoje7 : true))
+    && (!q || `${i.nome} ${i.sub} ${i.ultima} ${i.empresa} ${soD(i.tel)} ${(i.tags || []).join(' ')}`.toLowerCase().includes(q)));
+}
+const ordenar = l => l.sort((a, b) => ((b.naoLidas > 0) - (a.naoLidas > 0)) || String(b.em).localeCompare(String(a.em)));
+const atual = () => itens().find(i => i.key === C.sel) || null;
+const tenantDe = i => (i.tid && C.tenants.find(t => t.id === i.tid)) || (soD(i.tel).length >= 10 && C.tenants.find(t => soD(t.telefone).slice(-9) === soD(i.tel).slice(-9))) || (i.email && C.tenants.find(t => (t.email || '').toLowerCase() === String(i.email).toLowerCase())) || null;
+
+/* ---------------- login ---------------- */
+function telaLogin(msg) {
+  $('#root').innerHTML = `<div class="lg"><form class="lg-c" id="lg"><div class="marca"><i>N</i>NEXUM <span>CRM</span></div><h1>Central de atendimento</h1><p class="hint" style="margin:0">WhatsApp, chat dos sistemas e leads em um só lugar.</p>
+    <label for="lg-e">E-mail</label><input class="inp" id="lg-e" type="email" autocomplete="username" required><label for="lg-s">Senha</label><input class="inp" id="lg-s" type="password" autocomplete="current-password" required>
+    ${msg ? `<p style="color:var(--bad);font-size:13.5px;margin:12px 0 0">${esc(msg)}</p>` : ''}<button class="btn" style="width:100%;margin-top:18px;padding:12px">Entrar</button><p class="hint" style="text-align:center;margin:14px 0 0">Mesmo acesso do Painel do Adm e do Portal da Equipe.</p></form></div>`;
+  $('#lg').onsubmit = async e => { e.preventDefault(); const b = $('#lg button'); b.disabled = true; try { await FB.auth.signInWithEmailAndPassword($('#lg-e').value.trim(), $('#lg-s').value); } catch (er) { b.disabled = false; telaLogin(/password|credential|not-found/.test(er.code || '') ? 'E-mail ou senha incorretos.' : 'Não foi possível entrar: ' + (er.code || er.message)); } };
+}
+async function papelDe(u) {
+  const em = String(u.email || '').toLowerCase(); if (DONO_EMAILS.includes(em)) return { papel: 'dono', nome: 'Wevellen' };
+  try { const s = await FB.db.doc('plataforma/equipe').get(), m = s.exists ? (s.data().membros || {})[em] : null; if (m && m.ativo !== false && PAPEL_NOME[m.papel]) return { papel: m.papel, nome: m.nome || em.split('@')[0] }; } catch (e) { }
+  return null;
+}
+
+/* ---------------- dados ao vivo ---------------- */
+function ouvir() {
+  C.subs.forEach(u => u()); C.subs = [];
+  const on = (q, fn) => C.subs.push(q.onSnapshot(fn, e => console.warn('[crm]', e.code || e.message)));
+  on(FB.db.collection('wa_conversas').orderBy('atualizadoEm', 'desc').limit(400), s => { C.wa = s.docs.map(d => ({ id: d.id, ...d.data() })); mudou(); });
+  if (podeSup()) on(FB.db.collection('suporte').orderBy('atualizadoEm', 'desc').limit(300), s => { C.sup = s.docs.map(d => d.data()).filter(x => x.protocolo); mudou(); });
+  if (podeLeads()) on(FB.db.collection('leads').orderBy('em', 'desc').limit(200), s => { C.leads = s.docs.map(d => ({ id: d.id, ...d.data() })); mudou(); });
+  on(FB.db.collection('tenants'), s => { C.tenants = s.docs.map(d => { const x = d.data(); return { id: d.id, ...x, expira: x.expiraTs && x.expiraTs.toDate ? new Date(x.expiraTs.toDate().getTime() - 864e5).toISOString().slice(0, 10) : '' }; }); if (C.sel) desenharPerfil(); });
+  on(FB.db.doc('plataforma/whatsapp'), s => { C.waCfg = s.exists ? s.data() : {}; desenharChatTopo(); });
+  on(FB.db.doc('plataforma/waWebStatus'), s => { C.web = s.exists ? s.data() : {}; desenharNav(); desenharChatTopo(); if ($('#qr-box')) pintarQr(); });
+  if (dono()) on(FB.db.doc('segredos/waWeb'), s => { C.webQr = s.exists ? s.data() : {}; if ($('#qr-box')) pintarQr(); });
+  FB.db.doc('plataforma/publico').get().then(s => { C.asaasUrl = String((s.exists && s.data().asaasUrl) || '').replace(/\/+$/, ''); }).catch(() => { });
+  FB.db.doc('plataforma/ia').get().then(s => { C.iaKey = (s.exists && s.data().groqKey) || ''; }).catch(() => { });
+  FB.db.doc('plataforma/suporte').get().then(s => { C.minhas = ((s.exists && s.data().lista) || []); }).catch(() => { });
+  FB.db.doc('plataforma/crm').get().then(s => { const d = s.exists ? s.data() : {}; C.robo = d.robo || {}; C.filaMsgs = d.filas || {}; }).catch(() => { });
+}
+let _primeira = true;
+function mudou() {
+  const l = itens(), novos = [];
+  l.forEach(i => { const ant = C.visto[i.key]; if (!_primeira && i.ultimaDe === 'cliente' && i.etapa !== 'fim' && ant !== undefined && String(i.em) > String(ant) && i.key !== C.sel) novos.push(i); C.visto[i.key] = i.em; });
+  if (novos.length) { beep(); const i = novos[0]; toast(`Nova mensagem de ${i.nome} · ${CANAIS[i.canal][0]}`); try { if (document.hidden && Notification.permission === 'granted') new Notification('CRM NEXUM', { body: `${i.nome}: ${String(i.ultima).slice(0, 80)}` }); } catch (e) { } }
+  _primeira = false;
+  const sr = l.filter(i => i.etapa !== 'fim' && i.ultimaDe === 'cliente').length; document.title = (sr ? `(${sr}) ` : '') + 'CRM NEXUM';
+  try { if (EMBED && parent !== window) parent.postMessage({ crmnx: true, semResposta: sr }, location.origin); } catch (e) { }
+  if ($('.app')) { desenharNav(); if (C.view === 'kanban') desenharKanban(); else { desenharLista(); const a = atual(); if (a && $('#ch') && !$('#ch-h')) return abrir(C.sel); if (a && a.canal === 'sistema') desenharMsgs(); desenharChatTopo(); if (a) desenharPerfil(); } }
+}
+
+/* ---------------- casca ---------------- */
+function desenhar() {
+  $('#root').innerHTML = `<div class="app ${C.sel && C.view === 'inbox' ? 'chat' : ''}"><nav class="nav" id="nav"></nav>${C.view === 'kanban' ? '<section class="kb" id="kb"></section>' : '<section class="lst" id="lst"></section><section class="ch" id="ch"></section><aside class="pf" id="pf"></aside>'}</div>`;
+  desenharNav(); if (C.view === 'kanban') desenharKanban(); else { desenharLista(); desenharChat(); }
+}
+function desenharNav() {
+  const el = $('#nav'); if (!el) return; const l = itens(), ab = l.filter(i => i.etapa !== 'fim'), nResp = i => i.ultimaDe === 'cliente';
+  const cont = fn => { const x = ab.filter(fn); return [x.length, x.filter(nResp).length]; };
+  const b = (k, v, rot, dot, [n, r]) => `<button data-${k}="${v}" class="${C.f[k] === v ? 'on' : ''}">${dot ? `<i class="dot" style="background:${dot}"></i>` : ''}${rot}${n ? `<span class="n ${r ? 'r' : ''}">${r || n}</span>` : ''}</button>`;
+  el.innerHTML = `<div class="marca"><i>N</i>NEXUM <span>CRM</span></div>
+    <button data-vw="inbox" class="${C.view === 'inbox' ? 'on' : ''}">💬 Caixa de entrada</button><button data-vw="kanban" class="${C.view === 'kanban' ? 'on' : ''}">🗂️ Kanban</button>
+    <button id="nv-meus" class="${C.f.meus ? 'on' : ''}">👤 Atribuídos a mim${(() => { const n = ab.filter(i => i.atendenteEmail === C.user.email).length; return n ? `<span class="n">${n}</span>` : ''; })()}</button>
+    <h6>Filas</h6>${b('fila', 'todas', 'Todas', '', cont(() => true))}${b('fila', 'triagem', 'Triagem da assistente', '#94A3B8', cont(i => !i.fila))}${filasMinhas().map(k => b('fila', k, FILAS[k].nome, FILAS[k].cor, cont(i => i.fila === k))).join('')}
+    <h6>Canais</h6>${b('canal', 'todos', 'Todos os canais', '', [0, 0])}${Object.entries(CANAIS).filter(([k]) => (k !== 'sistema' || podeSup()) && (k !== 'lead' || podeLeads())).map(([k, [n, c]]) => b('canal', k, n, c, cont(i => i.canal === k))).join('')}
+    <button id="nv-wa" style="margin-top:14px;border:1px solid rgba(255,255,255,.12)"><i class="dot" style="background:${webOn() ? '#25D366' : C.web.status === 'qr' ? '#F59E0B' : '#64748B'}"></i>${webOn() ? 'WhatsApp conectado' : C.web.status === 'qr' ? 'WhatsApp: ler QR code' : 'WhatsApp desconectado'}</button>
+    <div class="eu"><b>${esc(C.nome)}</b>${esc(PAPEL_NOME[C.papel] || '')} · ${esc(C.user.email)}${!EMBED ? '<br><button id="nv-sair" style="padding:6px 0;color:#8FB0FF">Sair</button>' : ''}</div>`;
+  $$('[data-vw]', el).forEach(x => x.onclick = () => { C.view = x.dataset.vw; try { localStorage.setItem('crmnx:v', C.view); } catch (e) { } desenhar(); });
+  $$('[data-fila],[data-canal]', el).forEach(x => x.onclick = () => { const k = x.dataset.fila ? 'fila' : 'canal'; C.f[k] = x.dataset[k]; salvarF(); el.classList.remove('aberto'); desenhar(); });
+  $('#nv-meus', el).onclick = () => { C.f.meus = !C.f.meus; salvarF(); desenhar(); };
+  const s = $('#nv-sair', el); if (s) s.onclick = () => FB.auth.signOut();
+  $('#nv-wa', el).onclick = conectarWhats;
+}
+function salvarF() { try { localStorage.setItem('crmnx:f', JSON.stringify({ ...C.f, q: '' })); } catch (e) { } }
+function metricas(l) {
+  const ab = l.filter(i => i.etapa !== 'fim'), sr = ab.filter(i => i.ultimaDe === 'cliente'), hoje = new Date().toISOString().slice(0, 10);
+  const espera = sr.length ? Math.max(...sr.map(i => minDesde(i.clienteDesde || i.em))) : 0;
+  return `<div class="mt"><div><b>${ab.length}</b><span>abertos</span></div><div><b style="color:${sr.length ? 'var(--bad)' : 'inherit'}">${sr.length}</b><span>sem resposta</span></div><div><b>${sr.length ? minFmt(espera) : '—'}</b><span>maior espera</span></div><div><b>${l.filter(i => i.etapa === 'fim' && String(i.em).slice(0, 10) === hoje).length}</b><span>finalizados hoje</span></div></div>`;
+}
+function cartaoAv(i, px) { const c = CANAIS[i.canal]; return `<div class="av" style="background:${cor(i.nome)}${px ? `;width:${px}px;height:${px}px;font-size:${Math.round(px * .38)}px` : ''}">${esc(ini(i.nome))}<span class="cn" style="background:${c[1]}" title="${c[0]}">${c[2]}</span></div>`; }
+function tagsHTML(i) { return `${i.fila ? `<span class="pill" style="background:${FILAS[i.fila].cor}1A;color:${FILAS[i.fila].cor}">${FILAS[i.fila].nome}</span>` : '<span class="pill">Triagem</span>'}${i.atendente ? `<span class="pill">👤 ${esc(String(i.atendente).split(' ')[0])}</span>` : ''}${(i.tags || []).map(t => `<span class="pill" style="${t === 'Urgente' ? 'background:#FDECEF;color:#C62D46' : ''}">${esc(t)}</span>`).join('')}`; }
+function desenharLista() {
+  const el = $('#lst'); if (!el) return; const todos = itens(), base = filtrar(todos, true), l = ordenar(filtrar(todos)), sc = $('.lst-b', el) ? $('.lst-b', el).scrollTop : 0, foco = document.activeElement && document.activeElement.id === 'ls-q';
+  const titulo = C.f.fila === 'todas' ? 'Atendimentos' : C.f.fila === 'triagem' ? 'Triagem' : FILAS[C.f.fila].nome;
+  el.innerHTML = `<div class="lst-h"><h2><button class="btn ghost sm menu-m" id="ls-menu" aria-label="Menu">☰</button>${esc(titulo)}<span class="sp"></span><button class="btn sm" id="ls-nova" title="Nova conversa no WhatsApp">+ Nova</button></h2>
+    <input class="inp" id="ls-q" placeholder="Buscar nome, empresa, número ou mensagem" value="${esc(C.f.q)}" autocomplete="off">
+    <div class="tabs" role="tablist">${[['abertos', 'Abertos'], ['semresp', 'Sem resposta'], ['fim', 'Finalizados']].map(([k, n]) => `<button role="tab" data-et="${k}" class="${C.f.etapa === k ? 'on' : ''}" aria-selected="${C.f.etapa === k}">${n}</button>`).join('')}</div>${metricas(base)}</div>
+    <div class="lst-b">${l.length ? l.map(i => { const urg = i.etapa !== 'fim' && i.ultimaDe === 'cliente' && minDesde(i.clienteDesde || i.em) >= 60; return `<div class="it ${i.key === C.sel ? 'on' : ''} ${urg ? 'urg' : ''}" data-it="${esc(i.key)}" tabindex="0" role="button">${cartaoAv(i)}<div class="tx"><div class="l1"><b>${esc(i.nome)}</b><time>${quando(i.em)}</time></div>
+      <div class="l2"><span>${i.ultimaDe === 'nos' ? '✓ ' : ''}${esc(String(i.ultima).replace(/\*/g, ''))}</span>${i.naoLidas ? `<i class="nl">${i.naoLidas}</i>` : ''}</div><div class="l3">${tagsHTML(i)}${urg ? `<span class="pill" style="background:#FDECEF;color:#C62D46">⏰ ${minFmt(minDesde(i.clienteDesde || i.em))}</span>` : ''}</div></div></div>`; }).join('')
+      : `<div class="vazio">${C.iniciou ? (C.f.q ? 'Nada encontrado.' : C.f.etapa === 'semresp' ? '🎉 Ninguém esperando resposta.' : 'Nenhum atendimento aqui.') : 'Carregando…'}</div>`}</div>`;
+  $('.lst-b', el).scrollTop = sc;
+  const q = $('#ls-q', el); let tq; q.oninput = () => { clearTimeout(tq); tq = setTimeout(() => { C.f.q = q.value; desenharLista(); const n = $('#ls-q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); }; if (foco) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  $$('[data-et]', el).forEach(b => b.onclick = () => { C.f.etapa = b.dataset.et; salvarF(); desenharLista(); });
+  $$('[data-it]', el).forEach(d => { d.onclick = () => abrir(d.dataset.it); d.onkeydown = e => { if (e.key === 'Enter') abrir(d.dataset.it); }; });
+  $('#ls-nova', el).onclick = novaConversa; $('#ls-menu', el).onclick = () => $('#nav').classList.toggle('aberto');
+}
+
+/* ---------------- conversa ---------------- */
+function abrir(key) {
+  C.sel = key; C.nota = false; if (C.unMsgs) { C.unMsgs(); C.unMsgs = null; } C.msgs = [];
+  if (C.view !== 'inbox') { C.view = 'inbox'; try { localStorage.setItem('crmnx:v', 'inbox'); } catch (e) { } desenhar(); } else { $('.app').classList.add('chat'); desenharLista(); desenharChat(); }
+  const i = atual(); if (!i) return;
+  if (i.canal === 'wa') { C.unMsgs = FB.db.collection('wa_conversas').doc(i.id).collection('msgs').orderBy('em', 'desc').limit(300).onSnapshot(s => { C.msgs = s.docs.map(d => ({ id: d.id, ...d.data() })).reverse(); desenharMsgs(); }, () => { }); if (i.naoLidas) FB.db.collection('wa_conversas').doc(i.id).set({ naoLidas: 0 }, { merge: true }).catch(() => { }); }
+  if (i.canal === 'sistema' && i.raw.naoLidoDono) FB.db.doc(`suporte/${i.id}`).update({ naoLidoDono: false }).catch(() => { });
+}
+function desenharChat() {
+  const el = $('#ch'), pf = $('#pf'); if (!el) return; const i = atual();
+  if (!i) { el.innerHTML = `<div class="semsel"><div class="ic">💬</div><b style="color:var(--ink);font-size:17px">Escolha um atendimento</b><span>WhatsApp, chat do RH e do Recrutamento e leads do site, tudo aqui.</span>${!emHorario() ? `<span class="pill" style="margin-top:6px">Fora do horário de atendimento (${HORARIO})</span>` : ''}</div>`; if (pf) pf.innerHTML = '<p class="hint">O perfil do cliente aparece aqui.</p>'; return; }
+  el.innerHTML = `<div class="ch-h" id="ch-h"></div><div class="ch-b" id="ch-b"></div><div class="cp" id="cp"></div>`;
+  desenharChatTopo(); desenharMsgs(); desenharComposer(); desenharPerfil();
+}
+function desenharChatTopo() {
+  const el = $('#ch-h'), i = atual(); if (!el || !i) return;
+  const fim = i.etapa === 'fim', meu = i.atendenteEmail === C.user.email;
+  el.innerHTML = `<button class="btn ghost sm voltar" id="ch-v" aria-label="Voltar">←</button>${cartaoAv(i)}<div class="nm"><b>${esc(i.nome)}</b><span>${esc(CANAIS[i.canal][0])} · ${esc(i.sub || '')}${i.canal === 'wa' ? (webOn() ? ' · WhatsApp conectado' : C.waCfg.ativo ? ' · WhatsApp oficial' : ' · envio pelo celular') : ''}</span></div>
+    ${!meu && !fim ? '<button class="btn sec sm" id="ch-as">Assumir</button>' : ''}<select class="inp" id="ch-fila" style="width:auto;padding:6px 8px;font-size:13px" aria-label="Fila">${opts([['', 'Triagem'], ...Object.entries(FILAS).map(([k, f]) => [k, f.nome])], i.fila)}</select>
+    <button class="btn sec sm" id="ch-tg" title="Etiquetas">🏷️</button><button class="btn sec sm" id="ch-rt" title="Agendar retorno">⏰</button><button class="btn sec sm" id="ch-pf" title="Perfil do cliente">ℹ️</button>${fim ? '<button class="btn sec sm" id="ch-re">Reabrir</button>' : `<button class="btn ok sm" id="ch-fim">${i.canal === 'lead' ? 'Concluir lead' : 'Finalizar'}</button>`}`;
+  $('#ch-v', el).onclick = () => { C.sel = ''; desenhar(); };
+  const as = $('#ch-as', el); if (as) as.onclick = () => assumir(i);
+  $('#ch-fila', el).onchange = e => transferir(i, e.target.value);
+  $('#ch-tg', el).onclick = () => etiquetas(i); $('#ch-rt', el).onclick = () => agendarRetorno(i); $('#ch-pf', el).onclick = () => $('#pf') && $('#pf').classList.toggle('aberto');
+  const f = $('#ch-fim', el); if (f) f.onclick = () => finalizar(i); const r = $('#ch-re', el); if (r) r.onclick = () => reabrir(i);
+}
+function bolha(m, i) {
+  const h = m.em ? new Date(m.em).toLocaleTimeString('pt-BR').slice(0, 5) : '';
+  if (m.de === 'sistema') return `<div class="m sis">${esc(m.t)} · ${h}</div>`;
+  if (m.de === 'nota') return `<div class="m nota"><small>📝 Nota interna · ${esc(m.por || '')}</small>${esc(m.t)}<span class="h">${h} · só a equipe vê</span></div>`;
+  const cli = i.canal === 'sistema' ? m.de === 'rh' : m.de === 'cliente', bot = m.de === 'bot';
+  const quem = cli ? '' : bot ? '<small>Assistente</small>' : (m.por ? `<small>${esc(String(m.por).split('@')[0])}</small>` : '');
+  const st = cli ? '' : m.envio === 'pendente' ? ' · enviando…' : m.envio === 'erro' ? ` · <b style="color:var(--bad)">não enviada${m.erro ? ': ' + esc(m.erro) : ''}</b>` : m.envio === 'manual' ? ' · pelo celular' : m.status === 'lida' ? ' <b style="color:#1A5CFF">✓✓</b>' : m.status === 'entregue' ? ' ✓✓' : ' ✓';
+  const a = m.anexo; let ax = '';
+  if (a && a.data && /^image\//.test(a.tipo)) ax = `<img class="fx" src="${a.data}" alt="${esc(a.nome || 'foto')}" data-zoom>`; else if (a && a.data && /^audio\//.test(a.tipo)) ax = `<audio controls src="${a.data}" style="display:block;margin-top:6px;max-width:250px"></audio>`; else if (a && a.data) ax = `<a class="ax" href="${a.data}" download="${esc(a.nome)}">📎 ${esc(a.nome)}</a>`; else if (a && a.id && i.canal === 'sistema') ax = `<button type="button" class="ax" data-anx="${esc(a.id)}">📎 ${esc(a.nome || 'anexo')}</button>`; else if (a) ax = `<div class="hint">📎 ${esc(a.nome || 'arquivo')}</div>`;
+  const pg = m.pagamento ? `<div class="pg">💳 <b>${brl(m.pagamento.valor)}</b> · vence ${fd(m.pagamento.vencimento)}</div>` : '';
+  return `<div class="m ${cli ? '' : bot ? 'bot' : 'eu'}">${quem}${esc(m.t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')}${ax}${pg}<span class="h">${h}${st}</span></div>`;
+}
+function desenharMsgs() {
+  const el = $('#ch-b'), i = atual(); if (!el || !i) return; const fimDaTela = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  let l = []; if (i.canal === 'wa') l = C.msgs; else if (i.canal === 'sistema') l = i.raw.msgs || []; else l = (i.raw.conversa || []).map(x => typeof x === 'string' ? { de: 'cliente', t: x } : { de: x.de === 'bot' || x.role === 'assistant' ? 'bot' : 'cliente', t: x.t || x.content || '', em: x.em });
+  const notas = (i.raw.notasCrm || []).map(n => ({ ...n, de: 'nota' })); l = [...l, ...notas].sort((a, b) => String(a.em || '').localeCompare(String(b.em || '')));
+  let dia = '', h = ''; if (i.canal === 'lead') h += `<div class="m sis">Lead do site em ${i.em ? new Date(i.em).toLocaleString('pt-BR').slice(0, 17) : ''}${i.raw.plano ? ' · interesse: ' + esc(i.raw.plano) : ''}${i.raw.funcionarios ? ' · ' + esc(i.raw.funcionarios) + ' funcionários' : ''}</div>`;
+  l.forEach(m => { const d = m.em ? new Date(m.em).toLocaleDateString('pt-BR') : ''; if (d && d !== dia) { dia = d; h += `<div class="dia"><span>${d === new Date().toLocaleDateString('pt-BR') ? 'Hoje' : d}</span></div>`; } h += bolha(m, i); });
+  el.innerHTML = h || '<div class="m sis">Sem mensagens ainda.</div>'; if (fimDaTela || !el.dataset.k || el.dataset.k !== i.key) el.scrollTop = el.scrollHeight; el.dataset.k = i.key;
+  $$('[data-zoom]', el).forEach(x => x.onclick = () => { const w = window.open(''); if (w) w.document.write(`<img src="${x.src}" style="max-width:100%">`); });
+  $$('[data-anx]', el).forEach(b => b.onclick = async () => { try { const s = await FB.db.doc(`suporte/${i.id}/anexos/${b.dataset.anx}`).get(); const x = s.data(); const a = document.createElement('a'); a.href = x.data; a.download = x.nome || 'anexo'; a.target = '_blank'; a.click(); } catch (e) { toast('Não foi possível abrir o anexo.', true); } });
+}
+function desenharComposer() {
+  const el = $('#cp'), i = atual(); if (!el || !i) return;
+  if (i.canal === 'lead') { const t = soD(i.tel); el.innerHTML = `<div class="row" style="flex-wrap:wrap"><span class="hint" style="flex:1">Lead do site: comece a conversa pelo WhatsApp.</span>${t.length >= 10 ? '<button class="btn" id="cp-wa">Chamar no WhatsApp</button>' : '<span class="hint">Sem WhatsApp informado.</span>'}<select class="inp" id="cp-st" style="width:auto">${opts([['novo', 'Novo'], ['contato', 'Em contato'], ['ganho', 'Virou cliente'], ['perdido', 'Perdido']], i.raw.status || 'novo')}</select></div>`;
+    const w = $('#cp-wa', el); if (w) w.onclick = () => leadParaWhats(i); $('#cp-st', el).onchange = e => FB.db.doc(`leads/${i.id}`).update({ status: e.target.value, atualizadoEm: new Date().toISOString() }).then(() => toast('Lead atualizado.')).catch(er => toast(er.code || er.message, true)); return; }
+  const fim = i.etapa === 'fim' && i.canal === 'sistema';
+  const grupos = [...RESPOSTAS, ...(C.minhas.length ? [['Minhas respostas', C.minhas.map(r => [r.titulo, r.texto])]] : []), ...(i.fila && C.filaMsgs[i.fila] && (C.filaMsgs[i.fila].msgs || []).length ? [[`Fila ${FILAS[i.fila].nome}`, C.filaMsgs[i.fila].msgs.map(m => [m.t, m.txt])]] : [])];
+  let k = 0; const resp = grupos.map(([g, l]) => [g, l.map(([t, x]) => [k++, t, x])]);
+  el.className = 'cp' + (C.nota ? ' nt' : '');
+  el.innerHTML = fim ? '<p class="hint" style="margin:0;text-align:center">Atendimento finalizado. Para responder, toque em <b>Reabrir</b>.</p>' : `<div class="cp-t"><select class="inp" id="cp-r" aria-label="Respostas prontas"><option value="">⚡ Respostas prontas</option>${resp.map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(([n, t]) => `<option value="${n}">${esc(t)}</option>`).join('')}</optgroup>`).join('')}</select>
+      <select class="inp" id="cp-l" aria-label="Links"><option value="">🔗 Links</option>${LINKS.map(([n, u], x) => `<option value="${x}">${esc(n)}</option>`).join('')}</select>
+      ${C.asaasUrl ? '<button class="btn sec sm" id="cp-pg" type="button">💳 Link de pagamento</button>' : ''}${C.iaKey ? '<button class="btn sec sm" id="cp-ia" type="button">✨ Sugerir com IA</button>' : ''}${i.canal === 'sistema' ? '<button class="btn sec sm" id="cp-ax" type="button">📎 Anexo</button><input type="file" id="cp-f" hidden accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt">' : ''}<span class="sp"></span><button class="btn ${C.nota ? '' : 'sec'} sm" id="cp-n" type="button" aria-pressed="${C.nota}">📝 Nota interna</button></div>
+    <div class="cp-r"><textarea class="inp" id="cp-t" rows="1" placeholder="${C.nota ? 'Nota interna: só a equipe vê' : i.canal === 'wa' && !C.waCfg.ativo && !webOn() ? 'Escreva e envie: o WhatsApp abre com a mensagem pronta' : 'Escreva a mensagem (Enter envia, Shift+Enter quebra a linha)'}"></textarea><button class="btn" id="cp-e">${C.nota ? 'Salvar nota' : 'Enviar'}</button></div>`;
+  if (fim) return; const t = $('#cp-t', el), cresce = () => { t.style.height = 'auto'; t.style.height = Math.min(180, t.scrollHeight) + 'px'; };
+  const ins = x => { t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + x.replace(/\{nome\}/g, String(i.nome).split(' ')[0]).replace(/\{empresa\}/g, i.empresa || 'sua empresa').replace(/\{atendente\}/g, String(C.nome).split(' ')[0]); cresce(); t.focus(); };
+  $('#cp-r', el).onchange = e => { const f = resp.flatMap(([, l]) => l).find(([n]) => String(n) === e.target.value); if (f) ins(f[2]); e.target.value = ''; };
+  $('#cp-l', el).onchange = e => { const x = LINKS[+e.target.value]; if (x) ins(`${x[0]}: ${x[1]}`); e.target.value = ''; };
+  t.oninput = cresce; t.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } };
+  $('#cp-e', el).onclick = enviar; $('#cp-n', el).onclick = () => { C.nota = !C.nota; const v = t.value; desenharComposer(); $('#cp-t').value = v; $('#cp-t').focus(); };
+  const pg = $('#cp-pg', el); if (pg) pg.onclick = () => linkPagamento(i);
+  const ia = $('#cp-ia', el); if (ia) ia.onclick = () => sugerirIA(i, ia);
+  const ax = $('#cp-ax', el); if (ax) { ax.onclick = () => $('#cp-f', el).click(); $('#cp-f', el).onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) anexarSup(i, f); }; }
+}
+
+/* ---------------- ações ---------------- */
+const agora = () => new Date().toISOString();
+const quemSou = () => ({ por: C.nome, porEmail: C.user.email });
+async function token() { return FB.auth.currentUser ? FB.auth.currentUser.getIdToken() : ''; }
+async function conector(rota, body) {
+  if (!C.asaasUrl) throw new Error('O conector ainda não foi configurado no Painel do Adm.');
+  let r; try { r = await fetch(C.asaasUrl + rota, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + await token() }, body: JSON.stringify(body) }); } catch (e) { throw new Error('Sem conexão com o conector.'); }
+  const j = await r.json().catch(() => ({})); if (!r.ok) { const e = new Error(j.erro || 'Erro ' + r.status); e.codigo = j.codigo; throw e; } return j;
+}
+async function enviar() {
+  const i = atual(), t = $('#cp-t'), txt = t ? t.value.trim() : ''; if (!i || !txt) return; const b = $('#cp-e'); b.disabled = true;
+  try {
+    if (C.nota) await salvarNota(i, txt);
+    else if (i.canal === 'sistema') await enviarSup(i, txt);
+    else if (i.canal === 'wa') await enviarWA(i, txt);
+    t.value = ''; t.style.height = '';
+  } catch (e) { toast(e.message || String(e), true); } b.disabled = false; if ($('#cp-t')) $('#cp-t').focus();
+}
+async function enviarSup(i, t, extra = {}) {
+  const x = i.raw, m = { id: rid(), de: 'dono', t, em: agora(), ...quemSou(), ...extra };
+  await FB.db.doc(`suporte/${i.id}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(m), naoLidoRh: true, naoLidoDono: false, atualizadoEm: m.em, etapaCrm: 'aguardando', ...(x.status === 'bot' ? { status: 'analise' } : {}), ...(!x.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}) });
+}
+async function enviarWA(i, t, extra = {}) {
+  const ref = FB.db.collection('wa_conversas').doc(i.id), c = i.raw, base = { ...(!c.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}), etapaCrm: 'aguardando' };
+  if (webOn()) { // WhatsApp conectado pelo QR code: o programa da NEXUM envia
+    const em = agora(), m = await ref.collection('msgs').add({ de: 'equipe', t, em, por: C.user.email, envio: 'pendente', ...extra });
+    await FB.db.collection('wa_fila').add({ conv: i.id, texto: t, msg: m.id, por: C.user.email, em });
+    await ref.set({ ultimaMsg: t.slice(0, 160), ultimaDe: 'equipe', atualizadoEm: em, naoLidas: 0, ...base }, { merge: true }); return; }
+  if (C.waCfg.ativo && C.asaasUrl) {
+    try { await conector('/api/wa/enviar', { id: i.id, texto: t }); await ref.set(base, { merge: true }); if (extra.pagamento) { /* o conector já gravou a mensagem */ } return; }
+    catch (e) { if (!/24 horas/.test(e.message)) throw e; toast(e.message + ' Abrindo o WhatsApp do celular.', true); }
+  }
+  const n = soD(c.numero).replace(/^55(?=\d{10,11}$)/, ''); if (n.length < 10) throw new Error('Este contato não tem número de WhatsApp.');
+  window.open(`https://wa.me/55${n}?text=${encodeURIComponent(t)}`, '_blank', 'noopener');
+  await ref.collection('msgs').add({ de: 'equipe', t, em: agora(), por: C.user.email, envio: 'manual', ...extra });
+  await ref.set({ ultimaMsg: t.slice(0, 160), ultimaDe: 'equipe', atualizadoEm: agora(), naoLidas: 0, ...base }, { merge: true });
+}
+async function salvarNota(i, t) {
+  const n = { id: rid(), t: t.slice(0, 1000), em: agora(), por: C.nome };
+  const ref = i.canal === 'wa' ? FB.db.collection('wa_conversas').doc(i.id) : i.canal === 'sistema' ? FB.db.doc(`suporte/${i.id}`) : FB.db.doc(`leads/${i.id}`);
+  await ref.update({ notasCrm: firebase.firestore.FieldValue.arrayUnion(n) }); C.nota = false; desenharComposer(); toast('Nota salva. Só a equipe vê.');
+  if (i.canal === 'wa') { i.raw.notasCrm = [...(i.raw.notasCrm || []), n]; desenharMsgs(); }
+}
+async function atualizar(i, d) {
+  const ref = i.canal === 'wa' ? FB.db.collection('wa_conversas').doc(i.id) : i.canal === 'sistema' ? FB.db.doc(`suporte/${i.id}`) : FB.db.doc(`leads/${i.id}`);
+  try { await ref.set({ ...d }, { merge: true }); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); throw e; }
+}
+async function registro(i, t) { if (i.canal === 'wa') await FB.db.collection('wa_conversas').doc(i.id).collection('msgs').add({ de: 'sistema', t, em: agora() }).catch(() => { }); }
+async function assumir(i) { await atualizar(i, { atendente: C.nome, atendenteEmail: C.user.email, ...(i.etapa === 'novo' && i.canal === 'lead' ? { status: 'contato' } : {}) }); await registro(i, `${C.nome} assumiu o atendimento`); toast('Atendimento atribuído a você.'); }
+async function transferir(i, fila) {
+  const n = fila ? FILAS[fila].nome : 'a triagem', r = C.robo.transf || {};
+  const txt = fila ? String(r[fila] || `Vou te transferir para *${n}*. Já já te respondem por aqui.`).replace(/,?\s*\{nome\}/g, m => ', ' + String(i.nome).split(' ')[0]) : '';
+  modal(`Transferir para ${n}`, `<p class="hint" style="margin-top:0">O histórico vai junto${fila ? ` e a conversa aparece para quem atende <b>${esc(n)}</b>` : ''}.</p>${i.canal === 'wa' && fila ? `<label class="row"><input type="checkbox" id="tr-av" checked> Avisar o cliente</label><textarea class="inp" id="tr-t" rows="3" style="margin-top:8px">${esc(txt)}</textarea>` : ''}<label class="row" style="margin-top:10px"><input type="checkbox" id="tr-lb" checked> Tirar de mim (a próxima pessoa assume)</label>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="tr-ok">Transferir</button>', onMount: m => {
+      $('#tr-ok', m).onclick = async () => { const lb = $('#tr-lb', m).checked, av = $('#tr-av', m), msg = av && av.checked ? $('#tr-t', m).value.trim() : '';
+        try { if (i.canal === 'wa') await atualizar(i, { coluna: fila || 'ia', fila: fila || '', etapa: fila ? 'fila' : 'menu', transferidoEm: agora(), ...(lb ? { atendente: '', atendenteEmail: '' } : {}) });
+          else if (i.canal === 'sistema') await atualizar(i, { origem: fila === 'rs' ? 'recrutamento' : i.raw.origem || 'rh', filaCrm: fila, ...(lb ? { atendente: '', atendenteEmail: '' } : {}) });
+          await registro(i, `Transferido para ${n} por ${C.nome}`); if (msg) await enviarWA(i, msg); fechar(); toast(`Transferido para ${n}.`); } catch (e) { toast(e.message, true); } };
+    } });
+  const s = $('#ch-fila'); if (s) s.value = i.fila;
+}
+function finalizar(i) {
+  const enc = String((C.robo && C.robo.encerrar) || 'Atendimento finalizado. Obrigado pelo contato, {nome}! Se precisar de algo, é só mandar uma mensagem aqui. 💙').replace(/\{nome\}/g, String(i.nome).split(' ')[0]);
+  if (i.canal === 'lead') { modal('Concluir lead', '<p style="margin-top:0">Como terminou?</p>', { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn bad" data-r="perdido">Perdido</button><button class="btn ok" data-r="ganho">Virou cliente 🎉</button>', onMount: m => $$('[data-r]', m).forEach(b => b.onclick = async () => { await atualizar(i, { status: b.dataset.r, atualizadoEm: agora() }); fechar(); toast('Lead concluído.'); }) }); return; }
+  modal('Finalizar atendimento', `${i.canal === 'wa' ? `<label class="row"><input type="checkbox" id="fz-av" checked> Mandar a mensagem de encerramento</label><textarea class="inp" id="fz-t" rows="3" style="margin-top:8px">${esc(enc)}</textarea>` : '<p style="margin-top:0">O cliente recebe o aviso de que o atendimento foi concluído e o convite para avaliar com estrelas.</p>'}`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn ok" id="fz-ok">Finalizar</button>', onMount: m => $('#fz-ok', m).onclick = async () => {
+      try { if (i.canal === 'wa') { const av = $('#fz-av', m); if (av.checked && $('#fz-t', m).value.trim()) await enviarWA(i, $('#fz-t', m).value.trim()); await atualizar(i, { coluna: 'fim', etapa: 'finalizado', finalizadoEm: agora(), naoLidas: 0, etapaCrm: '' }); await registro(i, `Finalizado por ${C.nome}`); }
+        else { const msg = { id: rid(), de: 'dono', t: 'Atendimento concluído. Obrigado pelo contato! Avalie este atendimento aqui embaixo: leva 2 segundos e nos ajuda a melhorar.', em: agora(), ...quemSou() };
+          await FB.db.doc(`suporte/${i.id}`).update({ status: 'concluido', msgs: firebase.firestore.FieldValue.arrayUnion(msg), naoLidoRh: true, naoLidoDono: false, atualizadoEm: msg.em, concluidoEm: msg.em, concluidoPor: C.user.email }); }
+        fechar(); toast('Atendimento finalizado.'); } catch (e) { toast(e.message || e.code, true); } } });
+}
+async function reabrir(i) { if (i.canal === 'wa') await atualizar(i, { coluna: i.fila || 'atend', fila: i.fila || 'atend', etapa: 'fila' }); else if (i.canal === 'sistema') await atualizar(i, { status: 'analise' }); else await atualizar(i, { status: 'contato' }); await registro(i, `Reaberto por ${C.nome}`); toast('Atendimento reaberto.'); }
+function etiquetas(i) {
+  const tem = new Set(i.tags || []);
+  modal('Etiquetas', `<div style="display:flex;flex-wrap:wrap;gap:8px">${[...new Set([...ETIQUETAS, ...tem])].map(t => `<label class="pill" style="padding:7px 12px;font-size:13px;cursor:pointer"><input type="checkbox" value="${esc(t)}" ${tem.has(t) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</div><div class="row" style="margin-top:12px"><input class="inp" id="tg-n" placeholder="Nova etiqueta" maxlength="24"><button class="btn sec" id="tg-a">Adicionar</button></div>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="tg-ok">Salvar</button>', onMount: m => {
+      $('#tg-a', m).onclick = () => { const v = $('#tg-n', m).value.trim(); if (!v) return; m.querySelector('.md-b > div').insertAdjacentHTML('beforeend', `<label class="pill" style="padding:7px 12px;font-size:13px"><input type="checkbox" value="${esc(v)}" checked> ${esc(v)}</label>`); $('#tg-n', m).value = ''; };
+      $('#tg-ok', m).onclick = async () => { await atualizar(i, { etiquetas: $$('input[type=checkbox]:checked', m).map(x => x.value) }); fechar(); toast('Etiquetas salvas.'); }; } });
+}
+function agendarRetorno(i) {
+  const d = new Date(Date.now() + 864e5); d.setHours(10, 0, 0, 0); const v = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  modal('Agendar retorno', `<div class="fld"><label for="rt-q">Quando</label><input class="inp" type="datetime-local" id="rt-q" value="${v}"></div><div class="fld"><label for="rt-n">O que fazer</label><textarea class="inp" id="rt-n" rows="3" placeholder="Ex.: ligar para saber se o ponto voltou a funcionar"></textarea></div><p class="hint">O lembrete aparece em "Meus retornos" no Portal da Equipe e no painel.</p>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="rt-ok">Agendar</button>', onMount: m => $('#rt-ok', m).onclick = async () => { const q = $('#rt-q', m).value; if (!q) return toast('Escolha a data.', true);
+      try { await FB.db.collection('retornos').add({ uid: C.uid, email: C.user.email, nome: C.nome, papel: C.papel, empresa: String(i.empresa || i.nome).slice(0, 120), tid: i.tid || '', tel: soD(i.tel), quando: new Date(q).toISOString(), nota: $('#rt-n', m).value.trim().slice(0, 500), feito: false, criadoEm: agora(), origemCrm: i.key }); fechar(); toast('Retorno agendado.'); } catch (e) { toast(e.code || e.message, true); } } });
+}
+async function anexarSup(i, f) {
+  if (f.size > 8e6) return toast('Arquivo grande demais (máximo 8 MB).', true); toast('Enviando anexo…');
+  try { let data = await new Promise((ok, er) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = er; r.readAsDataURL(f); });
+    if (/^image\//.test(f.type)) data = await new Promise(ok => { const im = new Image(); im.onload = () => { const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', .82)); }; im.onerror = () => ok(data); im.src = data; });
+    if (data.length > 950000) return toast('O arquivo ficou grande demais para o chat. Mande um arquivo menor.', true);
+    const id = rid() + rid(), a = { nome: f.name.slice(0, 120), tipo: /^image\//.test(f.type) ? 'image/jpeg' : f.type || 'application/octet-stream', data }; await FB.db.doc(`suporte/${i.id}/anexos/${id}`).set({ ...a, em: agora(), de: 'dono' });
+    await enviarSup(i, `📎 ${a.nome}`, { anexo: { id, nome: a.nome, tipo: a.tipo } }); toast('Anexo enviado.');
+  } catch (e) { toast('Não foi possível enviar o anexo: ' + (e.code || e.message), true); }
+}
+function linkPagamento(i) {
+  const t = tenantDe(i), P = { essencial: ['Essencial', 99], profissional: ['Profissional', 299], empresa: ['Empresa', 499] };
+  modal('Link de pagamento', `<div class="fld"><label for="lp-t">O que cobrar</label><select class="inp" id="lp-t">${opts([['rh', 'Renovação do plano'], ['av', 'Valor avulso']], t ? 'rh' : 'av')}</select></div>
+    <div id="lp-rh"><div class="fld"><label for="lp-e">Empresa</label><select class="inp" id="lp-e">${opts([['', 'Escolha'], ...C.tenants.slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(x => [x.id, x.nome])], t ? t.id : '')}</select></div><div class="row"><select class="inp" id="lp-p">${opts(Object.entries(P).map(([k, [n, v]]) => [k, `${n} · ${brl(v)}/mês`]), t && P[t.plano] ? t.plano : 'essencial')}</select><select class="inp" id="lp-m">${opts([[1, '1 mês'], [3, '3 meses'], [6, '6 meses'], [12, '12 meses']], 1)}</select></div><label class="row" style="margin-top:8px"><input type="checkbox" id="lp-rs" ${t && t.recrutamento ? 'checked' : ''}> + Recrutamento e Seleção</label></div>
+    <div id="lp-av"><div class="fld"><label for="lp-n">Nome de quem paga</label><input class="inp" id="lp-n" value="${esc(i.empresa || i.nome)}"></div><div class="row"><input class="inp" id="lp-v" inputmode="decimal" placeholder="Valor (R$)"><input class="inp" id="lp-d" placeholder="Descrição"></div></div>
+    <div class="fld" style="margin-top:10px"><label for="lp-doc">CPF ou CNPJ (se a empresa não tiver)</label><input class="inp" id="lp-doc" inputmode="numeric"></div><p class="hint">O link vai direto na conversa. Quando o cliente pagar, a licença renova sozinha.</p>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="lp-ok">Gerar e mandar</button>', onMount: m => {
+      const vis = () => { const rh = $('#lp-t', m).value === 'rh'; $('#lp-rh', m).hidden = !rh; $('#lp-av', m).hidden = rh; }; $('#lp-t', m).onchange = vis; vis();
+      $('#lp-ok', m).onclick = async () => { const b = $('#lp-ok', m), rh = $('#lp-t', m).value === 'rh', doc = soD($('#lp-doc', m).value);
+        const body = rh ? { tipo: 'rh', tid: $('#lp-e', m).value, plano: $('#lp-p', m).value, meses: +$('#lp-m', m).value, rs: $('#lp-rs', m).checked, doc } : { tipo: 'av', nome: $('#lp-n', m).value.trim(), valor: $('#lp-v', m).value, descricao: $('#lp-d', m).value.trim() || 'NEXUM', doc, telefone: soD(i.tel) };
+        if (rh && !body.tid) return toast('Escolha a empresa.', true); b.disabled = true; b.textContent = 'Gerando…';
+        try { const r = await conector('/api/cobrar', body), txt = `Segue o link de pagamento:\nValor: ${brl(r.valor)} · vence em ${fd(r.vencimento)}\n${r.fatura}\n\nNo link você paga com PIX, boleto ou cartão. A liberação é automática assim que o pagamento for confirmado.`, pg = { id: r.id, valor: r.valor, vencimento: r.vencimento, fatura: r.fatura, pix: (r.pix && r.pix.copia) || '' };
+          if (i.canal === 'sistema') await enviarSup(i, txt, { pagamento: pg }); else await enviarWA(i, txt, { pagamento: pg });
+          fechar(); toast('Link de pagamento enviado.'); } catch (e) { b.disabled = false; b.textContent = 'Gerar e mandar'; toast(e.message, true); } };
+    } });
+}
+async function sugerirIA(i, b) {
+  const l = (i.canal === 'wa' ? C.msgs : i.raw.msgs || []).slice(-12).map(m => `${(i.canal === 'sistema' ? m.de === 'rh' : m.de === 'cliente') ? 'Cliente' : 'NEXUM'}: ${m.t}`).join('\n'); if (!l) return toast('Ainda não há mensagens para a IA ler.', true);
+  b.disabled = true; b.textContent = '✨ Pensando…';
+  try { const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + C.iaKey }, body: JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: .3, max_tokens: 350, messages: [{ role: 'system', content: `Você ajuda a equipe de atendimento da NEXUM (sistemas NEXUM RH, Portal do Colaborador e NEXUM Recrutamento e Seleção) a responder clientes. Escreva só a próxima resposta da equipe, em português do Brasil, curta, cordial e prática, sem inventar recursos ou prazos. Planos: Essencial R$ 99, Profissional R$ 299, Empresa R$ 499 por mês; Recrutamento R$ 289/mês; teste grátis de 14 dias. Atendimento humano: ${HORARIO}.` }, { role: 'user', content: l }] }) });
+    const j = await r.json(), t = j.choices && j.choices[0] && j.choices[0].message.content; if (!t) throw new Error('A IA não respondeu.');
+    const ta = $('#cp-t'); ta.value = String(t).trim(); ta.style.height = 'auto'; ta.style.height = Math.min(180, ta.scrollHeight) + 'px'; ta.focus(); toast('Sugestão pronta: revise antes de enviar.');
+  } catch (e) { toast('Não foi possível gerar a sugestão: ' + e.message, true); } b.disabled = false; b.textContent = '✨ Sugerir com IA';
+}
+async function leadParaWhats(i) {
+  const d = soD(i.tel), numero = d.length <= 11 ? '55' + d : d, id = 'n_' + numero, ref = FB.db.collection('wa_conversas').doc(id);
+  try { const s = await ref.get(); if (!s.exists) await ref.set({ numero, nome: i.nome, empresa: i.empresa || '', coluna: 'vendas', fila: 'vendas', etapa: 'fila', origem: 'site', leadId: i.id, criadoEm: agora(), atualizadoEm: agora(), naoLidas: 0, ultimaMsg: 'Lead do site', ultimaDe: 'sistema', atendente: C.nome, atendenteEmail: C.user.email });
+    await FB.db.doc(`leads/${i.id}`).update({ status: 'contato', atendente: C.nome, atendenteEmail: C.user.email }).catch(() => { });
+    C.f.canal = 'todos'; abrir('wa:' + id); setTimeout(() => { const t = $('#cp-t'); if (t) { t.value = `Olá, ${String(i.nome).split(' ')[0]}! Aqui é ${String(C.nome).split(' ')[0]}, da NEXUM. Vi que você pediu informações pelo nosso site${i.raw.plano ? ` sobre o plano ${i.raw.plano}` : ''}. Posso te ajudar?`; t.focus(); } }, 400);
+  } catch (e) { toast(e.code || e.message, true); }
+}
+function novaConversa() {
+  modal('Nova conversa no WhatsApp', `<div class="fld"><label for="nc-t">Cliente (opcional)</label><select class="inp" id="nc-t"><option value="">Não é cliente</option>${C.tenants.slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(t => `<option value="${esc(t.id)}">${esc(t.nome)}</option>`).join('')}</select></div>
+    <div class="row"><div class="fld" style="flex:1"><label for="nc-n">Nome</label><input class="inp" id="nc-n"></div><div class="fld" style="flex:1"><label for="nc-w">WhatsApp com DDD</label><input class="inp" id="nc-w" inputmode="tel" placeholder="(45) 99999-9999"></div></div>
+    <div class="fld"><label for="nc-f">Fila</label><select class="inp" id="nc-f">${opts(filasMinhas().map(k => [k, FILAS[k].nome]), filasMinhas()[0])}</select></div>${C.waCfg.ativo ? '<p class="hint">Pelo WhatsApp oficial, a primeira mensagem para quem não escreveu nas últimas 24 horas sai pelo celular (regra da Meta).</p>' : ''}`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="nc-ok">Criar</button>', onMount: m => {
+      $('#nc-t', m).onchange = e => { const t = C.tenants.find(x => x.id === e.target.value); if (!t) return; if (!$('#nc-n', m).value) $('#nc-n', m).value = t.responsavel || t.nome; if (!$('#nc-w', m).value) $('#nc-w', m).value = fmtTel(t.telefone || ''); };
+      $('#nc-ok', m).onclick = async () => { const nome = $('#nc-n', m).value.trim(), d = soD($('#nc-w', m).value); if (nome.length < 2) return toast('Informe o nome.', true); if (d.length < 10 || d.length > 13) return toast('Informe o WhatsApp com DDD.', true);
+        const numero = d.length <= 11 ? '55' + d : d, id = 'n_' + numero, f = $('#nc-f', m).value, t = C.tenants.find(x => x.id === $('#nc-t', m).value);
+        try { const ref = FB.db.collection('wa_conversas').doc(id), s = await ref.get(); if (!s.exists || (s.data().coluna === 'fim')) await ref.set({ numero, nome, coluna: f, fila: f, etapa: 'fila', origem: 'equipe', criadoEm: agora(), atualizadoEm: agora(), naoLidas: 0, ultimaMsg: 'Conversa iniciada pela equipe', ultimaDe: 'sistema', atendente: C.nome, atendenteEmail: C.user.email, oculto: false, ...(t ? { tid: t.id, empresa: t.nome } : {}) }, { merge: true });
+          fechar(); abrir('wa:' + id); } catch (e) { toast(e.code || e.message, true); } };
+    } });
+}
+
+/* ---------------- WhatsApp pelo QR code (programa NEXUM WhatsApp) ---------------- */
+function webVivo() { return !!(C.web.vivoEm && Date.now() - new Date(C.web.vivoEm).getTime() < 3 * 60e3); }
+function webOn() { return C.web.status === 'conectado' && webVivo(); }
+function conectarWhats() {
+  if (!dono()) return toast(webOn() ? `WhatsApp conectado: ${fmtTel(C.web.numero)}` : 'O WhatsApp está desconectado. Avise a proprietária.', !webOn());
+  modal('Conectar o WhatsApp', `<div id="qr-box" style="text-align:center"></div>`, { foot: '<button class="btn sec" data-close>Fechar</button>', onMount: () => pintarQr() });
+}
+function pintarQr() {
+  const el = $('#qr-box'); if (!el) return; const w = C.web, q = C.webQr || {};
+  const robo = `<label class="row" style="justify-content:center;margin-top:14px"><input type="checkbox" id="qr-robo" ${w.robo === false ? '' : 'checked'}> Robô de triagem responde quem chega (menu e transferência)</label>`;
+  if (!w.vivoEm) el.innerHTML = `<div class="ic" style="font-size:44px">🖥️</div><h3 style="margin:6px 0">Falta ligar o programa NEXUM WhatsApp</h3><p class="hint" style="text-align:left;line-height:1.6">O QR code é gerado por um programa que fica ligado 24 horas (num computador da loja ou numa VPS):<br>1. Instale o <b>Node.js</b> (versão 20 ou mais nova) em nodejs.org.<br>2. Copie a pasta <b>nexum-whatsapp-qr</b> e coloque nela o arquivo <b>conta-servico.json</b> (o mesmo .json da conta de serviço do Firebase usado no Cloudflare).<br>3. No Windows, dê dois cliques em <b>iniciar.bat</b>. Numa VPS: <code>npm install</code> e <code>npm start</code>.<br>4. Volte aqui: o QR code aparece sozinho.</p>`;
+  else if (!webVivo()) el.innerHTML = `<div class="ic" style="font-size:44px">⚠️</div><h3 style="margin:6px 0">O programa NEXUM WhatsApp está desligado</h3><p class="hint">Último sinal: ${new Date(w.vivoEm).toLocaleString('pt-BR').slice(0, 17)}. Ligue o computador ou a VPS e abra o programa de novo (iniciar.bat).</p>`;
+  else if (w.status === 'conectado') el.innerHTML = `<div class="ic" style="font-size:44px">✅</div><h3 style="margin:6px 0">WhatsApp conectado</h3><p style="margin:0"><b>${esc(fmtTel(w.numero))}</b>${w.nome ? ' · ' + esc(w.nome) : ''}</p><p class="hint">Desde ${w.conectadoEm ? new Date(w.conectadoEm).toLocaleString('pt-BR').slice(0, 17) : '—'}. As mensagens entram e saem pelo CRM e continuam no celular.</p>${robo}<div class="row" style="justify-content:center;margin-top:14px"><button class="btn bad sm" id="qr-desc">Desconectar este número</button></div>`;
+  else if (q.qr) el.innerHTML = `<h3 style="margin:0 0 4px">Leia o QR code com o celular da empresa</h3><p class="hint" style="margin:0 0 10px">No WhatsApp: <b>⋮ (ou Configurações) › Aparelhos conectados › Conectar um aparelho</b>.</p><img src="${q.qr}" alt="QR code do WhatsApp" width="260" height="260" style="border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff"><p class="hint">O código muda a cada 20 segundos, sozinho. ${esc(w.status === 'reconectando' ? 'Reconectando…' : '')}</p>${robo}<p class="hint" style="margin-top:12px;text-align:left;background:#FFF6D6;border-radius:10px;padding:10px 12px">⚠️ Conexão não oficial: para evitar bloqueio do número, não mande mensagens em massa para quem não chamou e prefira que o cliente escreva primeiro.</p>`;
+  else el.innerHTML = `<p class="hint">Conectando ao WhatsApp… (${esc(w.status || 'aguardando')})</p><button class="btn sec sm" id="qr-novo">Gerar um QR code novo</button>`;
+  const d = $('#qr-desc', el); if (d) d.onclick = () => { if (confirm('Desconectar o WhatsApp do CRM? Depois é só ler um QR code novo.')) comandoWeb('desconectar'); };
+  const n = $('#qr-novo', el); if (n) n.onclick = () => comandoWeb('novoqr');
+  const r = $('#qr-robo', el); if (r) r.onchange = () => FB.db.doc('plataforma/waWebStatus').set({ robo: r.checked }, { merge: true }).then(() => toast(r.checked ? 'Robô de triagem ligado.' : 'Robô desligado: as mensagens só entram no CRM.')).catch(e => toast(e.code || e.message, true));
+}
+async function comandoWeb(cmd) { try { await FB.db.doc('plataforma/waWebCmd').set({ cmd, em: agora(), por: C.user.email }); toast(cmd === 'desconectar' ? 'Desconectando… um QR code novo vai aparecer.' : 'Gerando um QR code novo…'); } catch (e) { toast(e.code || e.message, true); } }
+
+/* ---------------- perfil do cliente ---------------- */
+function desenharPerfil() {
+  const el = $('#pf'), i = atual(); if (!el || !i) return; const t = tenantDe(i), hoje = new Date().toISOString().slice(0, 10);
+  const sit = t ? (t.bloqueado ? ['Bloqueado', 'var(--bad)'] : t.suspenso ? ['Suspenso', 'var(--bad)'] : t.trial ? ['Teste grátis', 'var(--warn)'] : t.expira && t.expira < hoje ? ['Vencido', 'var(--bad)'] : ['Ativo', 'var(--ok)']) : null;
+  const outros = itens().filter(x => x.key !== i.key && ((t && (x.tid === t.id || tenantDe(x) === t)) || (soD(i.tel).length >= 10 && soD(x.tel).slice(-9) === soD(i.tel).slice(-9)))).sort((a, b) => String(b.em).localeCompare(String(a.em))).slice(0, 8);
+  el.innerHTML = `<div class="row" style="align-items:flex-start"><div class="av" style="width:52px;height:52px;font-size:18px;background:${cor(i.nome)}">${esc(ini(i.nome))}</div><div style="flex:1;min-width:0"><h3>${esc(i.nome)}</h3><span class="hint">${esc(CANAIS[i.canal][0])}</span></div><button class="btn ghost sm" id="pf-x" aria-label="Fechar perfil">×</button></div>
+    <div class="box"><div class="kv">${i.tel ? `<span>WhatsApp</span><b><a href="https://wa.me/55${soD(i.tel).replace(/^55(?=\d{10,11}$)/, '')}" target="_blank" rel="noopener">${esc(fmtTel(i.tel))}</a></b>` : ''}${i.email || (i.raw && i.raw.email) ? `<span>E-mail</span><b>${esc(i.email || i.raw.email)}</b>` : ''}<span>Fila</span><b>${i.fila ? FILAS[i.fila].nome : 'Triagem'}</b><span>Responsável</span><b>${esc(i.atendente || '—')}</b>${i.canal === 'sistema' ? `<span>Protocolo</span><b>${esc(i.id)}</b>` : ''}${i.raw && i.raw.avaliacao ? `<span>Avaliação</span><b style="color:#F59E0B">${'★'.repeat(i.raw.avaliacao.nota)}${'☆'.repeat(5 - i.raw.avaliacao.nota)}</b>` : ''}</div></div>
+    <h4>Empresa</h4>${t ? `<div class="box"><b style="display:block;margin-bottom:6px">${esc(t.nome)}</b><div class="kv"><span>Situação</span><b style="color:${sit[1]}">${sit[0]}</b><span>Plano</span><b>${esc({ essencial: 'Essencial', profissional: 'Profissional', empresa: 'Empresa' }[t.plano] || t.plano || '—')}${t.recrutamento ? ' + Recrutamento' : ''}</b><span>Vence</span><b>${fd(t.expira)}</b>${t.cnpj ? `<span>CNPJ/CPF</span><b>${esc(t.cnpj)}</b>` : ''}<span>Código</span><b>${esc(t.id)}</b>${t.cobrancaAberta ? `<span>Cobrança</span><b><a href="${esc(t.cobrancaAberta.fatura)}" target="_blank" rel="noopener">${brl(t.cobrancaAberta.valor)} em aberto</a></b>` : ''}</div>
+      ${C.asaasUrl && i.canal !== 'lead' ? '<button class="btn sec sm" id="pf-pg" style="width:100%;margin-top:10px">💳 Mandar link de pagamento</button>' : ''}</div>` : `<p class="hint">${i.canal === 'wa' ? 'Este número não está ligado a nenhuma empresa cliente.' : 'Sem empresa cadastrada.'}</p>${i.canal === 'wa' ? '<button class="btn sec sm" id="pf-lg">Ligar a uma empresa</button>' : ''}`}
+    <h4>Etiquetas</h4><div class="tg">${(i.tags || []).map(x => `<span class="pill">${esc(x)}</span>`).join('') || '<span class="hint">Nenhuma.</span>'}</div>
+    <h4>Outros atendimentos</h4><div class="hist">${outros.map(x => `<div data-ab="${esc(x.key)}"><b>${esc(CANAIS[x.canal][0])}</b> · ${quando(x.em)} · ${x.etapa === 'fim' ? 'finalizado' : 'aberto'}<br><span class="hint">${esc(String(x.ultima).slice(0, 70))}</span></div>`).join('') || '<p class="hint">Nenhum outro.</p>'}</div>`;
+  $('#pf-x', el).onclick = () => el.classList.remove('aberto');
+  const pg = $('#pf-pg', el); if (pg) pg.onclick = () => linkPagamento(i);
+  const lg = $('#pf-lg', el); if (lg) lg.onclick = () => modal('Ligar a uma empresa', `<select class="inp" id="lg-t">${opts([['', 'Escolha'], ...C.tenants.slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(x => [x.id, x.nome])], '')}</select>`, { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="lg-ok">Ligar</button>', onMount: m => $('#lg-ok', m).onclick = async () => { const t2 = C.tenants.find(x => x.id === $('#lg-t', m).value); if (!t2) return; await atualizar(i, { tid: t2.id, empresa: t2.nome }); fechar(); toast('Conversa ligada à empresa.'); } });
+  $$('[data-ab]', el).forEach(d => d.onclick = () => abrir(d.dataset.ab));
+}
+
+/* ---------------- kanban ---------------- */
+function desenharKanban() {
+  const el = $('#kb'); if (!el) return; const todos = filtrar(itens(), true), sc = $('.kb-c', el) ? $('.kb-c', el).scrollLeft : 0;
+  el.innerHTML = `<div class="kb-top"><button class="btn ghost sm menu-m" id="kb-menu">☰</button><h2 style="margin:0;font-size:18px">Kanban de atendimento</h2><span class="sp"></span><input class="inp" id="kb-q" placeholder="Buscar" value="${esc(C.f.q)}" style="max-width:260px"><button class="btn sm" id="kb-nova">+ Nova</button></div>
+    <div class="kb-c">${ETAPAS.map(([k, n, c]) => { const l = ordenar(todos.filter(i => i.etapa === k && (k !== 'fim' || String(i.em) >= new Date(Date.now() - 7 * 864e5).toISOString()))); return `<div class="col" data-col="${k}"><div class="col-h" style="border-top-color:${c}">${n}<span>${l.length}</span></div><div class="col-b">${l.map(i => `<div class="kc" draggable="true" data-kc="${esc(i.key)}" tabindex="0"><div class="l1">${cartaoAv(i, 30)}<b>${esc(i.nome)}</b>${i.naoLidas ? `<i class="nl" style="background:var(--wa);color:#fff;font-style:normal;font-size:11px;font-weight:800;border-radius:99px;padding:1px 7px">${i.naoLidas}</i>` : ''}</div><p>${esc(String(i.ultima).replace(/\*/g, ''))}</p><div class="l3" style="display:flex;gap:4px;flex-wrap:wrap">${tagsHTML(i)}<span class="hint" style="margin-left:auto">${quando(i.em)}</span></div></div>`).join('') || '<p class="hint" style="text-align:center;margin:20px 0">Arraste um cartão para cá.</p>'}</div></div>`; }).join('')}</div>`;
+  $('.kb-c', el).scrollLeft = sc; $('#kb-nova', el).onclick = novaConversa; $('#kb-menu', el).onclick = () => $('#nav').classList.toggle('aberto');
+  let tq; $('#kb-q', el).oninput = e => { clearTimeout(tq); tq = setTimeout(() => { C.f.q = e.target.value; desenharKanban(); const q = $('#kb-q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 250); };
+  $$('.kc', el).forEach(k => { k.onclick = () => abrir(k.dataset.kc); k.onkeydown = e => { if (e.key === 'Enter') abrir(k.dataset.kc); }; k.ondragstart = e => { e.dataTransfer.setData('text/plain', k.dataset.kc); k.classList.add('arr'); }; k.ondragend = () => k.classList.remove('arr'); });
+  $$('.col', el).forEach(c => { c.ondragover = e => { e.preventDefault(); c.classList.add('alvo'); }; c.ondragleave = e => { if (!c.contains(e.relatedTarget)) c.classList.remove('alvo'); }; c.ondrop = e => { e.preventDefault(); c.classList.remove('alvo'); moverEtapa(e.dataTransfer.getData('text/plain'), c.dataset.col); }; });
+}
+async function moverEtapa(key, et) {
+  const i = itens().find(x => x.key === key); if (!i || i.etapa === et) return;
+  if (et === 'fim') { C.sel = key; return finalizar(i); }
+  try {
+    if (i.canal === 'wa') await atualizar(i, et === 'novo' ? { coluna: 'ia', etapa: 'menu', fila: '' } : { coluna: i.fila || (i.raw.coluna !== 'ia' && i.raw.coluna !== 'fim' ? i.raw.coluna : 'atend'), fila: i.fila || 'atend', etapa: 'fila', etapaCrm: et });
+    else if (i.canal === 'sistema') await atualizar(i, { status: et === 'novo' ? 'bot' : 'analise', etapaCrm: et });
+    else await atualizar(i, { status: et === 'novo' ? 'novo' : 'contato' });
+    await registro(i, `Movido para ${ETAPAS.find(x => x[0] === et)[1]} por ${C.nome}`);
+  } catch (e) { }
+}
+
+/* ---------------- início ---------------- */
+(function init() {
+  if (EMBED) document.documentElement.classList.add('emb');
+  if (typeof firebase === 'undefined') { $('#root').innerHTML = '<p style="padding:30px">Não foi possível carregar o sistema. Confira a internet e atualize a página.</p>'; return; }
+  /* mesmo nome de app do Painel do Adm: quem já entrou no painel (ou no Portal da Equipe) entra direto aqui */
+  const app = firebase.initializeApp(FIREBASE_CONFIG, 'nexum-admin'); FB = { auth: app.auth(), db: app.firestore() };
+  FB.auth.onAuthStateChanged(async u => {
+    C.subs.forEach(x => x()); C.subs = [];
+    if (!u) { C.user = null; return telaLogin(); }
+    const p = await papelDe(u); if (!p) { await FB.auth.signOut(); return telaLogin('Este e-mail não tem acesso ao CRM. Peça acesso à proprietária.'); }
+    C.user = { email: String(u.email || '').toLowerCase() }; C.uid = u.uid; C.papel = p.papel; C.nome = p.nome; C.iniciou = false;
+    desenhar(); ouvir(); setTimeout(() => { C.iniciou = true; if (C.view === 'inbox') desenharLista(); }, 1500);
+    try { if ('Notification' in window && Notification.permission === 'default') setTimeout(() => Notification.requestPermission().catch(() => { }), 4000); } catch (e) { }
+  });
+  setInterval(() => { if (C.user && $('#lst') && !document.hidden) { const a = document.activeElement; if (!(a && a.closest && a.closest('#lst'))) desenharLista(); } }, 60000);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mr').innerHTML) fechar(); });
+})();
+</script>
+</body>
+</html>
