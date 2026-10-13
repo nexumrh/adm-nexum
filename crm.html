@@ -56,6 +56,7 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .vazio{padding:48px 24px;text-align:center;color:var(--mut)}.vazio svg.i{width:34px;height:34px;color:#B9B7CC;margin-bottom:8px}
 /* conversa */
 .ch{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.ch{container-type:inline-size}.ch-acoes{flex:none}@container (max-width:760px){.ch-acoes .tx-b{display:none}.ch .ch-h select{min-width:0;max-width:130px}}@container (max-width:580px){.ch .ch-h select{min-width:0;max-width:100px}.ch .ch-h .nm{min-width:70px}.ch .ch-acoes{gap:4px}}@container (max-width:480px){.ch .ch-h{flex-wrap:wrap;row-gap:8px;padding-bottom:8px}.ch .ch-acoes{width:100%}.ch .ch-h select{flex:1;max-width:none}}
 .ch-h{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;min-height:64px}
 .ch-h .nm{flex:1;min-width:0}.ch-h .nm b{font-size:15.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ch-h .nm span{font-size:12.5px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}.ch-h .nm span i{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
 .ch-h select{width:auto;min-width:150px;padding:7px 10px;font-size:13px}
@@ -81,6 +82,8 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .semsel .ic{width:72px;height:72px;border-radius:20px;background:#fff;box-shadow:var(--sh2);color:var(--pri);display:flex;align-items:center;justify-content:center;margin-bottom:8px}.semsel .ic svg.i{width:32px;height:32px}
 /* perfil */
 .pf{background:#fff;border-left:1px solid var(--line);overflow-y:auto;padding:0}
+.app{position:relative}.pf-aba{display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;width:24px;height:68px;padding:0;border:1px solid var(--line);border-right:0;border-radius:12px 0 0 12px;background:#fff;color:var(--mut);align-items:center;justify-content:center;cursor:pointer;box-shadow:-6px 0 18px rgba(10,23,51,.09)}.pf-aba:hover{color:var(--pri);width:28px}.pf-aba svg{width:15px;height:15px;transform:rotate(180deg)}
+@media (min-width:1281px){.app{transition:grid-template-columns .28s ease}.app.sem-pf{grid-template-columns:248px minmax(320px,380px) minmax(0,1fr) 0}.emb .app.sem-pf{grid-template-columns:220px minmax(290px,340px) minmax(0,1fr) 0}.app.sem-pf .pf{border-left:0;overflow:hidden}.pf>*{min-width:290px}.app.sem-pf .pf:not(:empty)~.pf-aba{display:flex}}
 .pf-top{padding:22px 18px 16px;text-align:center;border-bottom:1px solid var(--line2);position:relative}.pf-top .av{width:64px;height:64px;font-size:22px;margin:0 auto 10px}.pf-top h3{margin:0;font-size:17px}.pf-top .x{position:absolute;right:10px;top:10px}
 .pf-sec{padding:14px 18px;border-bottom:1px solid var(--line2)}.pf-sec h4{margin:0 0 10px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:700}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:13.5px}.kv span{color:var(--mut)}.kv b{font-weight:600;text-align:right;word-break:break-word}.kv a{color:var(--pri);text-decoration:none}
@@ -136,6 +139,30 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 /* responsivo */
 @media (max-width:1280px){.app,.emb .app{grid-template-columns:220px minmax(280px,340px) minmax(0,1fr)}.pf{display:none}.pf.aberto{display:block;position:fixed;right:0;top:0;bottom:0;width:330px;z-index:40;box-shadow:-10px 0 40px rgba(10,23,51,.15)}.kb{grid-column:2/4}}
 @media (max-width:900px){.app,.emb .app{grid-template-columns:1fr}.nav{display:none}.nav.aberto{display:flex;position:fixed;inset:0 25% 0 0;z-index:45;box-shadow:20px 0 50px rgba(0,0,0,.3)}.lst{border:0}.app.chat .lst{display:none}.app:not(.chat) .ch{display:none}.voltar{display:inline-flex}.kb{grid-column:1}.kb-c{grid-template-columns:repeat(4,86vw);padding:12px}.m{max-width:86%}.ch-b{padding:14px 10px}.menu-m{display:inline-flex!important}.ch-h select{min-width:0;max-width:120px}.ch-acoes .tx-b{display:none}.lg{grid-template-columns:1fr}.lg-art{display:none}}
+
+.pill svg.i{width:12px;height:12px}.pill.risco{background:var(--bad-s);color:var(--bad)}.pill.fu{background:var(--pri-s);color:var(--pri)}
+.cp{position:relative}.cp-r .ib.mic{border:0;background:none;width:36px;height:36px}.cp-r .ib.mic:hover{color:var(--pri);background:var(--pri-s)}
+.sug{position:absolute;left:16px;right:16px;bottom:calc(100% - 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 50px rgba(10,23,51,.18);max-height:330px;overflow:auto;z-index:20;padding:6px}
+.sug-h{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:6px 8px 4px}.sug-h span{text-transform:none;letter-spacing:0;font-weight:500}
+.sug-i{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;padding:8px 10px;border-radius:8px;cursor:pointer}.sug-i b{color:var(--pri);font-size:13px}.sug-i span{font-weight:600;font-size:13px}.sug-i p{grid-column:1/-1;margin:0;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sug-i.on,.sug-i:hover{background:var(--pri-s)}
+.grv{display:flex;align-items:center;gap:10px;border:1px solid #F3B4BE;background:#FFF5F6;border-radius:12px;padding:9px 12px}.grv-p{width:10px;height:10px;border-radius:50%;background:var(--bad);animation:pul 1s infinite}@keyframes pul{50%{opacity:.25}}#grv-t{font-variant-numeric:tabular-nums;color:var(--mut)}
+.ch.drop{outline:3px dashed var(--pri);outline-offset:-8px}
+.rt-g{margin:18px 0 8px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);display:flex;gap:6px;align-items:center}.rt-g:first-child{margin-top:0}.rt-g span{background:var(--soft);border:1px solid var(--line2);border-radius:99px;padding:0 7px;color:var(--mut);letter-spacing:0}
+.rt-c{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;margin-bottom:8px;background:#fff}.rt-c.atr{border-color:#F3B4BE;background:#FFF8F9}.rt-c.feito{opacity:.6}
+.rt-q{width:56px;flex:none;text-align:center;border-right:1px solid var(--line2);padding-right:10px}.rt-q b{display:block;font-size:15px}.rt-q span{font-size:12px;color:var(--mut)}.rt-c.atr .rt-q b{color:var(--bad)}
+.rt-t{flex:1;min-width:0}.rt-t p{margin:2px 0;font-size:13px;color:var(--mut)}.rt-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lbr{position:fixed;right:18px;bottom:18px;z-index:80;display:flex;flex-direction:column;gap:10px;width:350px;max-width:calc(100vw - 24px)}
+.lbr-c{position:relative;background:#fff;border-radius:14px;box-shadow:0 22px 60px rgba(10,23,51,.28);border:1px solid var(--line);border-left:4px solid var(--pri);padding:14px 16px;animation:sobe .25s ease}@keyframes sobe{from{transform:translateY(12px);opacity:0}}
+.lbr-c h5{margin:0 0 6px;display:flex;gap:7px;align-items:center;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--pri)}.lbr-c h5 svg.i{width:15px;height:15px}.lbr-c p{margin:3px 0 12px;color:var(--mut);font-size:13px}.lbr-c .row{gap:6px;flex-wrap:wrap}
+.lbr-x{position:absolute;right:8px;top:8px;border:0;background:none;color:var(--mut);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center}.lbr-x:hover{background:var(--hover)}
+.sd{display:flex;flex-direction:column;gap:6px}.sd div{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:8px 10px;border-radius:9px;background:var(--bad-s);color:var(--bad);line-height:1.35}.sd div svg.i{width:15px;height:15px;flex:none;margin-top:1px}.sd div.media{background:var(--warn-s);color:#8A5A00}.sd div.okk{background:var(--ok-s);color:var(--ok)}
+.fu-st{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:13px}.fu-st span{display:flex;gap:6px;align-items:center}.fu-st svg.i{width:14px;height:14px;color:var(--pri);flex:none}
+.fu-r{border:1px solid var(--line2);border-radius:12px;padding:10px 12px;margin-top:10px}.fu-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.fu-n{font-weight:700;font-size:13px}
+.aviso{background:var(--warn-s);color:#7A5200;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.at-n{display:grid;grid-template-columns:190px 1fr;gap:8px}.at-i{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line2)}.at-i>b{color:var(--pri);min-width:90px}.at-i div{flex:1;min-width:0}.at-i span{font-weight:600;font-size:13px}.at-i p{margin:2px 0 0;font-size:13px;color:var(--mut);white-space:pre-wrap}.at-p{display:flex;flex-wrap:wrap;gap:6px}
+.rs-load{display:flex;gap:8px;align-items:center;color:var(--mut);padding:10px 0}.rs-l{padding:11px 0;border-bottom:1px solid var(--line2)}.rs-l:last-child{border:0}.rs-l span{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:700}.rs-l p{margin:3px 0 0;line-height:1.5}
+@media (max-height:960px){.nav button{padding:6px 10px}.nav h6{margin:10px 10px 4px}.nav .wa-st{margin-top:8px}}
+@media (max-width:600px){.at-n{grid-template-columns:1fr}.rt-c{flex-wrap:wrap}.rt-a{width:100%}.lbr{right:12px;bottom:12px}}
 </style>
 </head>
 <body>
@@ -196,7 +223,7 @@ function fechar() { $('#mr').innerHTML = ''; }
 const opts = (l, v) => l.map(([a, b]) => `<option value="${esc(a)}" ${String(a) === String(v) ? 'selected' : ''}>${esc(b)}</option>`).join('');
 
 /* ---------------- estado ---------------- */
-const C = { user: null, uid: '', papel: '', nome: '', wa: [], sup: [], leads: [], tenants: [], waCfg: {}, web: {}, webQr: {}, asaasUrl: '', iaKey: '', minhas: [], filaMsgs: {}, robo: {}, sel: '', view: 'inbox', f: { fila: 'todas', canal: 'todos', etapa: 'abertos', q: '', meus: false }, msgs: [], unMsgs: null, subs: [], visto: {}, nota: false, iniciou: false };
+const C = { user: null, uid: '', papel: '', nome: '', wa: [], sup: [], leads: [], tenants: [], waCfg: {}, web: {}, webQr: {}, asaasUrl: '', iaKey: '', minhas: [], filaMsgs: {}, robo: {}, sel: '', view: 'inbox', f: { fila: 'todas', canal: 'todos', etapa: 'abertos', q: '', meus: false }, msgs: [], unMsgs: null, subs: [], visto: {}, nota: false, iniciou: false, retornos: [], avisados: new Set(), atalhos: [], followup: null, pfOculto: (() => { try { return localStorage.getItem('crmPfOculto') === '1'; } catch (e) { return false; } })() };
 try { Object.assign(C.f, JSON.parse(localStorage.getItem('crmnx:f') || '{}')); C.view = localStorage.getItem('crmnx:v') || 'inbox'; } catch (e) { }
 const dono = () => C.papel === 'dono';
 const filasMinhas = () => dono() ? Object.keys(FILAS) : Object.keys(FILAS).filter(k => FILAS[k].papeis.includes(C.papel));
@@ -223,7 +250,7 @@ function itemLead(l) {
 function itens() { const viraram = new Set(C.wa.map(c => c.leadId).filter(Boolean)); return [...C.wa.map(itemWA), ...C.sup.map(itemSup), ...C.leads.filter(l => !viraram.has(l.id)).map(itemLead)].filter(i => i.etapa !== 'oculto' && (dono() || !i.fila || filasMinhas().includes(i.fila))); }
 function filtrar(l, semEtapa) {
   const f = C.f, q = f.q.trim().toLowerCase(), hoje7 = new Date(Date.now() - 7 * 864e5).toISOString();
-  return l.filter(i => (f.fila === 'todas' || (f.fila === 'triagem' ? !i.fila : i.fila === f.fila)) && (f.canal === 'todos' || i.canal === f.canal) && (!f.meus || i.atendenteEmail === C.user.email)
+  return l.filter(i => (f.fila === 'todas' || (f.fila === 'triagem' ? !i.fila : i.fila === f.fila)) && (f.canal === 'todos' || i.canal === f.canal) && (!f.meus || i.atendenteEmail === C.user.email) && (!f.risco || riscoDe(i).length > 0)
     && (semEtapa || (f.etapa === 'abertos' ? i.etapa !== 'fim' : f.etapa === 'semresp' ? i.etapa !== 'fim' && i.ultimaDe === 'cliente' : f.etapa === 'fim' ? i.etapa === 'fim' && i.em >= hoje7 : true))
     && (!q || `${i.nome} ${i.sub} ${i.ultima} ${i.empresa} ${soD(i.tel)} ${(i.tags || []).join(' ')}`.toLowerCase().includes(q)));
 }
@@ -269,7 +296,8 @@ function ouvir() {
   FB.db.doc('plataforma/publico').get().then(s => { C.asaasUrl = String((s.exists && s.data().asaasUrl) || '').replace(/\/+$/, ''); }).catch(() => { });
   FB.db.doc('plataforma/ia').get().then(s => { C.iaKey = (s.exists && s.data().groqKey) || ''; }).catch(() => { });
   FB.db.doc('plataforma/suporte').get().then(s => { C.minhas = ((s.exists && s.data().lista) || []); }).catch(() => { });
-  FB.db.doc('plataforma/crm').get().then(s => { const d = s.exists ? s.data() : {}; C.robo = d.robo || {}; C.filaMsgs = d.filas || {}; }).catch(() => { });
+  on(FB.db.doc('plataforma/crm'), s => { const d = s.exists ? s.data() : {}; C.robo = d.robo || {}; C.filaMsgs = d.filas || {}; C.atalhos = d.atalhos || []; C.followup = d.followup || null; if (C.sel && $('#pf')) desenharPerfil(); });
+  on(FB.db.collection('retornos').where('uid', '==', C.uid), s => { C.retornos = s.docs.map(d => ({ id: d.id, ...d.data() })); if ($('#rt-lista')) pintarRetornos(); if (C.sel && $('#pf')) desenharPerfil(); checarRetornos(); });
 }
 let _primeira = true;
 function mudou() {
@@ -284,27 +312,38 @@ function mudou() {
 
 /* ---------------- casca ---------------- */
 function desenhar() {
-  $('#root').innerHTML = `<div class="app ${C.sel && C.view === 'inbox' ? 'chat' : ''}"><nav class="nav" id="nav"></nav>${C.view === 'kanban' ? '<section class="kb" id="kb"></section>' : '<section class="lst" id="lst"></section><section class="ch" id="ch"></section><aside class="pf" id="pf"></aside>'}</div>`;
+  $('#root').innerHTML = `<div class="app ${C.sel && C.view === 'inbox' ? 'chat' : ''} ${C.pfOculto ? 'sem-pf' : ''}"><nav class="nav" id="nav"></nav>${C.view === 'kanban' ? '<section class="kb" id="kb"></section>' : '<section class="lst" id="lst"></section><section class="ch" id="ch"></section><aside class="pf" id="pf"></aside><button class="pf-aba" id="pf-aba" title="Mostrar perfil do cliente" aria-label="Mostrar perfil do cliente">' + I('seta') + '</button>'}</div>`;
+  const aba = $('#pf-aba'); if (aba) aba.onclick = () => alternarPerfil(true);
   desenharNav(); if (C.view === 'kanban') desenharKanban(); else { desenharLista(); desenharChat(); }
+}
+/* painel do perfil: em tela grande esconde para o lado (e lembra a escolha); em tela menor abre por cima */
+function alternarPerfil(mostrar) {
+  const pf = $('#pf'), app = $('.app'); if (!pf || !app) return;
+  if (matchMedia('(min-width:1281px)').matches) { C.pfOculto = mostrar === undefined ? !C.pfOculto : !mostrar; app.classList.toggle('sem-pf', C.pfOculto); try { localStorage.setItem('crmPfOculto', C.pfOculto ? '1' : '0'); } catch (e) { } }
+  else pf.classList.toggle('aberto', mostrar === undefined ? !pf.classList.contains('aberto') : mostrar);
 }
 function desenharNav() {
   const el = $('#nav'); if (!el) return; const l = itens(), ab = l.filter(i => i.etapa !== 'fim'), nResp = i => i.ultimaDe === 'cliente';
   const cont = fn => { const x = ab.filter(fn); return [x.length, x.filter(nResp).length]; };
   const b = (k, v, rot, ic, [n, r]) => `<button data-${k}="${v}" class="${C.f[k] === v ? 'on' : ''}">${ic}<span>${rot}</span>${n ? `<span class="n ${r ? 'r' : ''}" title="${r ? r + ' sem resposta' : n + ' abertos'}">${r || n}</span>` : ''}</button>`;
-  const dot = c => `<i class="dot" style="background:${c}"></i>`, meus = ab.filter(i => i.atendenteEmail === C.user.email).length;
+  const dot = c => `<i class="dot" style="background:${c}"></i>`, meus = ab.filter(i => i.atendenteEmail === C.user.email).length, nRisco = ab.filter(i => riscoDe(i).length).length, [nRt, atrRt] = contaRetornos();
   const waSt = webOn() ? ['#2BD576', 'WhatsApp conectado'] : C.web.status === 'qr' && webVivo() ? ['#F5B700', 'Ler QR code do WhatsApp'] : ['#8E8BA8', 'WhatsApp desconectado'];
   el.innerHTML = `<div class="brand"><img src="${LOGO}" alt="NEXUM"><span>CRM</span></div>
     <button data-vw="inbox" class="${C.view === 'inbox' ? 'on' : ''}">${I('inbox')}<span>Caixa de entrada</span></button><button data-vw="kanban" class="${C.view === 'kanban' ? 'on' : ''}">${I('kanban')}<span>Kanban</span></button>
     <button id="nv-meus" class="${C.f.meus ? 'on' : ''}">${I('assumir')}<span>Atribuídos a mim</span>${meus ? `<span class="n">${meus}</span>` : ''}</button>
+    <button id="nv-rt">${I('calendario')}<span>Retornos</span>${nRt ? `<span class="n ${atrRt ? 'r' : ''}" title="${atrRt ? 'Tem retorno atrasado' : 'Retornos de hoje'}">${nRt}</span>` : ''}</button>
+    <button id="nv-risco" class="${C.f.risco ? 'on' : ''}">${I('alerta')}<span>Clientes em risco</span>${nRisco ? `<span class="n r">${nRisco}</span>` : ''}</button>
     <h6>Filas</h6>${b('fila', 'todas', 'Todas', I('camadas'), cont(() => true))}${b('fila', 'triagem', 'Triagem', I('robo'), cont(i => !i.fila))}${filasMinhas().map(k => b('fila', k, FILAS[k].nome, dot(FILAS[k].cor), cont(i => i.fila === k))).join('')}
     <h6>Canais</h6>${b('canal', 'todos', 'Todos os canais', I('camadas'), [0, 0])}${Object.entries(CANAIS).filter(([k]) => (k !== 'sistema' || podeSup()) && (k !== 'lead' || podeLeads())).map(([k, [n]]) => b('canal', k, n, I(CANAL_ICN[k]), cont(i => i.canal === k))).join('')}
+    <button id="nv-cfg" style="margin-top:12px">${I('engrenagem')}<span>Configurações</span></button>
     <button id="nv-wa" class="wa-st">${dot(waSt[0])}<span>${waSt[1]}</span>${I('qr')}</button>
     <div class="eu"><div class="av" style="background:${cor(C.nome)}">${esc(ini(C.nome))}</div><div style="min-width:0"><b>${esc(C.nome)}</b><small>${esc(PAPEL_NOME[C.papel] || '')}</small></div>${!EMBED ? `<button id="nv-sair" title="Sair" aria-label="Sair">${I('sair')}</button>` : ''}</div>`;
   $$('[data-vw]', el).forEach(x => x.onclick = () => { C.view = x.dataset.vw; try { localStorage.setItem('crmnx:v', C.view); } catch (e) { } desenhar(); });
   $$('[data-fila],[data-canal]', el).forEach(x => x.onclick = () => { const k = x.dataset.fila ? 'fila' : 'canal'; C.f[k] = x.dataset[k]; salvarF(); el.classList.remove('aberto'); desenhar(); });
   $('#nv-meus', el).onclick = () => { C.f.meus = !C.f.meus; salvarF(); desenhar(); };
   const s = $('#nv-sair', el); if (s) s.onclick = () => FB.auth.signOut();
-  $('#nv-wa', el).onclick = conectarWhats;
+  $('#nv-wa', el).onclick = conectarWhats; $('#nv-cfg', el).onclick = () => configuracoes();
+  $('#nv-rt', el).onclick = () => { el.classList.remove('aberto'); abrirRetornos(); }; $('#nv-risco', el).onclick = () => { C.f.risco = !C.f.risco; salvarF(); el.classList.remove('aberto'); desenhar(); };
 }
 function salvarF() { try { localStorage.setItem('crmnx:f', JSON.stringify({ ...C.f, q: '' })); } catch (e) { } }
 function metricas(l) {
@@ -313,7 +352,7 @@ function metricas(l) {
   return `<div class="mt"><div><b>${ab.length}</b><span>abertos</span></div><div><b style="color:${sr.length ? 'var(--bad)' : 'inherit'}">${sr.length}</b><span>sem resposta</span></div><div><b style="color:${espera >= 60 ? 'var(--bad)' : 'inherit'}">${sr.length ? minFmt(espera) : '—'}</b><span>maior espera</span></div><div><b style="color:var(--ok)">${l.filter(i => i.etapa === 'fim' && String(i.em).slice(0, 10) === hoje).length}</b><span>finalizados hoje</span></div></div>`;
 }
 function cartaoAv(i, px) { const c = CANAIS[i.canal]; return `<div class="av" style="background:${cor(i.nome)}${px ? `;width:${px}px;height:${px}px;font-size:${Math.round(px * .38)}px` : ''}">${esc(ini(i.nome))}<span class="cn" style="background:${c[1]}" title="${c[0]}">${I(CANAL_ICN[i.canal])}</span></div>`; }
-function tagsHTML(i) { return `${i.fila ? `<span class="pill" style="background:${FILAS[i.fila].cor}14;color:${FILAS[i.fila].cor}">${FILAS[i.fila].nome}</span>` : '<span class="pill">Triagem</span>'}${i.atendente ? `<span class="pill">${esc(String(i.atendente).split(' ')[0])}</span>` : ''}${(i.tags || []).map(t => `<span class="pill" style="${t === 'Urgente' ? 'background:var(--bad-s);color:var(--bad)' : ''}">${esc(t)}</span>`).join('')}`; }
+function tagsHTML(i) { const rk = riscoDe(i); return `${rk.length ? `<span class="pill risco" title="${esc(rk.map(x => x[0]).join(' · '))}">${I('alerta')}Em risco</span>` : ''}${i.canal === 'wa' && +i.raw.followupN && i.ultimaDe === 'nos' && i.etapa !== 'fim' ? `<span class="pill fu" title="Lembretes automáticos enviados">${I('repetir')}Follow-up ${+i.raw.followupN}</span>` : ''}${i.fila ? `<span class="pill" style="background:${FILAS[i.fila].cor}14;color:${FILAS[i.fila].cor}">${FILAS[i.fila].nome}</span>` : '<span class="pill">Triagem</span>'}${i.atendente ? `<span class="pill">${esc(String(i.atendente).split(' ')[0])}</span>` : ''}${(i.tags || []).map(t => `<span class="pill" style="${t === 'Urgente' ? 'background:var(--bad-s);color:var(--bad)' : ''}">${esc(t)}</span>`).join('')}`; }
 function desenharLista() {
   const el = $('#lst'); if (!el) return; const todos = itens(), base = filtrar(todos, true), l = ordenar(filtrar(todos)), sc = $('.lst-b', el) ? $('.lst-b', el).scrollTop : 0, foco = document.activeElement && document.activeElement.id === 'ls-q';
   const titulo = C.f.fila === 'todas' ? 'Atendimentos' : C.f.fila === 'triagem' ? 'Triagem' : FILAS[C.f.fila].nome;
@@ -341,6 +380,9 @@ function desenharChat() {
   const el = $('#ch'), pf = $('#pf'); if (!el) return; const i = atual();
   if (!i) { el.innerHTML = `<div class="semsel"><div class="ic">${I('wa')}</div><b style="color:var(--txt);font-size:18px">Selecione um atendimento</b><span>WhatsApp, chat do RH e do Recrutamento e leads do site, tudo em um só lugar.</span>${!emHorario() ? `<span class="pill" style="margin-top:10px">${I('relogio').replace('class="i"', 'class="i" style="width:13px;height:13px"')}Fora do horário de atendimento · ${HORARIO}</span>` : ''}</div>`; if (pf) pf.innerHTML = `<div class="vazio">${I('user')}<div>O perfil do cliente aparece aqui.</div></div>`; return; }
   el.innerHTML = `<div class="ch-h" id="ch-h"></div><div class="ch-b" id="ch-b"></div><div class="cp" id="cp"></div>`;
+  const temArq = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  el.ondragover = e => { if (temArq(e) && ['wa', 'sistema'].includes(i.canal)) { e.preventDefault(); el.classList.add('drop'); } }; el.ondragleave = e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drop'); };
+  el.ondrop = e => { if (!temArq(e)) return; e.preventDefault(); el.classList.remove('drop'); const f = e.dataTransfer.files[0], a = atual(); if (f && a && a.etapa !== 'fim') anexar(a, f); };
   desenharChatTopo(); desenharMsgs(); desenharComposer(); desenharPerfil();
 }
 function desenharChatTopo() {
@@ -354,7 +396,7 @@ function desenharChatTopo() {
   $('#ch-v', el).onclick = () => { C.sel = ''; desenhar(); };
   const as = $('#ch-as', el); if (as) as.onclick = () => assumir(i);
   $('#ch-fila', el).onchange = e => transferir(i, e.target.value);
-  $('#ch-tg', el).onclick = () => etiquetas(i); $('#ch-rt', el).onclick = () => agendarRetorno(i); $('#ch-pf', el).onclick = () => $('#pf') && $('#pf').classList.toggle('aberto');
+  $('#ch-tg', el).onclick = () => etiquetas(i); $('#ch-rt', el).onclick = () => agendarRetorno(i); $('#ch-pf', el).onclick = () => alternarPerfil();
   const f = $('#ch-fim', el); if (f) f.onclick = () => finalizar(i); const r = $('#ch-re', el); if (r) r.onclick = () => reabrir(i);
 }
 function bolha(m, i) {
@@ -362,7 +404,7 @@ function bolha(m, i) {
   if (m.de === 'sistema') return `<div class="m sis">${esc(m.t)} · ${h}</div>`;
   if (m.de === 'nota') return `<div class="m nota"><small>Nota interna · ${esc(m.por || '')}</small>${esc(m.t)}<span class="h">${h} · só a equipe vê</span></div>`;
   const cli = i.canal === 'sistema' ? m.de === 'rh' : m.de === 'cliente', bot = m.de === 'bot';
-  const quem = cli ? '' : bot ? '<small>Assistente virtual</small>' : m.de === 'celular' || m.por === 'celular' ? '<small>Pelo celular</small>' : (m.por ? `<small>${esc(String(m.por).split('@')[0])}</small>` : '');
+  const quem = cli ? '' : bot ? '<small>Assistente virtual</small>' : m.por === 'followup' ? '<small>Follow-up automático</small>' : m.de === 'celular' || m.por === 'celular' ? '<small>Pelo celular</small>' : (m.por ? `<small>${esc(String(m.por).split('@')[0])}</small>` : '');
   const st = cli ? '' : m.envio === 'pendente' ? ' · enviando…' : m.envio === 'erro' ? ` · <b style="color:#FFD1D1">não enviada${m.erro ? ': ' + esc(m.erro) : ''}</b>` : m.envio === 'manual' ? ' · pelo celular' : m.status === 'lida' ? ' <b class="lido">✓✓</b>' : m.status === 'entregue' ? ' ✓✓' : ' ✓';
   const a = m.anexo; let ax = '';
   if (a && a.data && /^image\//.test(a.tipo)) ax = `<img class="fx" src="${a.data}" alt="${esc(a.nome || 'foto')}" data-zoom>`; else if (a && a.data && /^audio\//.test(a.tipo)) ax = `<audio controls src="${a.data}" style="display:block;margin-top:6px;max-width:250px"></audio>`; else if (a && a.data) ax = `<a class="ax" href="${a.data}" download="${esc(a.nome)}">${I('clipe')}${esc(a.nome)}</a>`; else if (a && a.id && i.canal === 'sistema') ax = `<button type="button" class="ax" data-anx="${esc(a.id)}">${I('clipe')}${esc(a.nome || 'anexo')}</button>`; else if (a) ax = `<div class="hint">${esc(a.nome || 'arquivo')} (grande demais para mostrar)</div>`;
@@ -380,6 +422,7 @@ function desenharMsgs() {
   $$('[data-anx]', el).forEach(b => b.onclick = async () => { try { const s = await FB.db.doc(`suporte/${i.id}/anexos/${b.dataset.anx}`).get(); const x = s.data(); const a = document.createElement('a'); a.href = x.data; a.download = x.nome || 'anexo'; a.target = '_blank'; a.click(); } catch (e) { toast('Não foi possível abrir o anexo.', true); } });
 }
 function desenharComposer() {
+  if (GRV) { GRV.cancelado = true; try { GRV.rec.stop(); } catch (e) { } }
   const el = $('#cp'), i = atual(); if (!el || !i) return;
   if (i.canal === 'lead') { const t = soD(i.tel); el.className = 'cp'; el.innerHTML = `<div class="row" style="flex-wrap:wrap"><span class="hint" style="flex:1;min-width:200px">Lead do site. Comece a conversa pelo WhatsApp: o histórico fica todo aqui.</span><select class="inp" id="cp-st" style="width:auto" aria-label="Situação do lead">${opts([['novo', 'Novo'], ['contato', 'Em contato'], ['ganho', 'Virou cliente'], ['perdido', 'Perdido']], i.raw.status || 'novo')}</select>${t.length >= 10 ? `<button class="btn" id="cp-wa">${I('wa')}Chamar no WhatsApp</button>` : '<span class="hint">Sem WhatsApp informado.</span>'}</div>`;
     const w = $('#cp-wa', el); if (w) w.onclick = () => leadParaWhats(i); $('#cp-st', el).onchange = e => FB.db.doc(`leads/${i.id}`).update({ status: e.target.value, atualizadoEm: new Date().toISOString() }).then(() => toast('Lead atualizado.')).catch(er => toast(er.code || er.message, true)); return; }
@@ -390,18 +433,22 @@ function desenharComposer() {
   el.innerHTML = fim ? `<p class="hint" style="margin:4px 0;text-align:center">Atendimento finalizado. Para responder, use <b>Reabrir</b>.</p>` : `<div class="cp-t">
       <label class="ferr" title="Respostas prontas">${I('raio')}Respostas<select id="cp-r" aria-label="Respostas prontas"><option value="">Respostas prontas</option>${resp.map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(([n, t]) => `<option value="${n}">${esc(t)}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <label class="ferr" title="Links">${I('link')}Links<select id="cp-l" aria-label="Links"><option value="">Links</option>${LINKS.map(([n, u], x) => `<option value="${x}">${esc(n)}</option>`).join('')}</select></label>
-      ${C.asaasUrl ? `<button class="ferr" id="cp-pg" type="button">${I('cartao')}Cobrança</button>` : ''}${C.iaKey ? `<button class="ferr" id="cp-ia" type="button">${I('ia')}Sugerir com IA</button>` : ''}${i.canal === 'sistema' ? `<button class="ferr" id="cp-ax" type="button">${I('clipe')}Anexo</button><input type="file" id="cp-f" hidden accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt">` : ''}
+      ${C.asaasUrl ? `<button class="ferr" id="cp-pg" type="button">${I('cartao')}Cobrança</button>` : ''}${C.iaKey ? `<button class="ferr" id="cp-ia" type="button">${I('ia')}Sugerir com IA</button><button class="ferr" id="cp-rs" type="button" title="Resumo da conversa com IA">${I('resumo')}Resumir</button>` : ''}<button class="ferr" id="cp-ax" type="button" title="Foto ou documento (ou arraste o arquivo para a conversa)">${I('clipe')}Anexo</button><input type="file" id="cp-f" hidden accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt${i.canal === 'wa' ? ',audio/*,video/mp4' : ''}">
       <span class="sp"></span><button class="ferr ${C.nota ? 'on' : ''}" id="cp-n" type="button" aria-pressed="${C.nota}">${I('nota')}Nota interna</button></div>
-    <div class="cp-r"><textarea id="cp-t" rows="1" placeholder="${C.nota ? 'Nota interna: só a equipe vê' : i.canal === 'wa' && !C.waCfg.ativo && !webOn() ? 'Escreva e envie: o WhatsApp abre com a mensagem pronta' : 'Escreva a mensagem · Enter envia, Shift+Enter quebra a linha'}"></textarea><button class="btn" id="cp-e" aria-label="${C.nota ? 'Salvar nota' : 'Enviar'}">${C.nota ? I('nota') + 'Salvar' : I('enviar') + 'Enviar'}</button></div>`;
+    <div class="cp-r"><textarea id="cp-t" rows="1" placeholder="${C.nota ? 'Nota interna: só a equipe vê' : i.canal === 'wa' && !C.waCfg.ativo && !webOn() ? 'Escreva e envie: o WhatsApp abre com a mensagem pronta' : 'Mensagem · digite / para respostas rápidas'}" aria-label="Mensagem"></textarea>${i.canal === 'wa' && !C.nota ? `<button class="ib mic" id="cp-mic" type="button" title="Gravar áudio" aria-label="Gravar áudio">${I('mic')}</button>` : ''}<button class="btn" id="cp-e" aria-label="${C.nota ? 'Salvar nota' : 'Enviar'}">${C.nota ? I('nota') + 'Salvar' : I('enviar') + 'Enviar'}</button></div>`;
   if (fim) return; const t = $('#cp-t', el), cresce = () => { t.style.height = 'auto'; t.style.height = Math.min(180, t.scrollHeight) + 'px'; };
-  const ins = x => { t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + x.replace(/\{nome\}/g, String(i.nome).split(' ')[0]).replace(/\{empresa\}/g, i.empresa || 'sua empresa').replace(/\{atendente\}/g, String(C.nome).split(' ')[0]); cresce(); t.focus(); };
+  const ins = x => { t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + preencher(x, i); cresce(); t.focus(); };
   $('#cp-r', el).onchange = e => { const f = resp.flatMap(([, l]) => l).find(([n]) => String(n) === e.target.value); if (f) ins(f[2]); e.target.value = ''; };
   $('#cp-l', el).onchange = e => { const x = LINKS[+e.target.value]; if (x) ins(`${x[0]}: ${x[1]}`); e.target.value = ''; };
   t.oninput = cresce; t.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } };
   $('#cp-e', el).onclick = enviar; $('#cp-n', el).onclick = () => { C.nota = !C.nota; const v = t.value; desenharComposer(); $('#cp-t').value = v; $('#cp-t').focus(); };
   const pg = $('#cp-pg', el); if (pg) pg.onclick = () => linkPagamento(i);
   const ia = $('#cp-ia', el); if (ia) ia.onclick = () => sugerirIA(i, ia);
-  const ax = $('#cp-ax', el); if (ax) { ax.onclick = () => $('#cp-f', el).click(); $('#cp-f', el).onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) anexarSup(i, f); }; }
+  const ax = $('#cp-ax', el); if (ax) { ax.onclick = () => { if (i.canal === 'wa' && !midiaPronta()) return; $('#cp-f', el).click(); }; $('#cp-f', el).onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) anexar(i, f); }; }
+  const rs = $('#cp-rs', el); if (rs) rs.onclick = () => resumirIA(i);
+  const mic = $('#cp-mic', el); if (mic) mic.onclick = () => gravarAudio(i);
+  t.onpaste = e => { const f = e.clipboardData && e.clipboardData.files && e.clipboardData.files[0]; if (f) { e.preventDefault(); anexar(i, f); } };
+  ligarAtalhos(t, i, cresce);
 }
 /* ---------------- ações ---------------- */
 const agora = () => new Date().toISOString();
@@ -426,7 +473,7 @@ async function enviarSup(i, t, extra = {}) {
   await FB.db.doc(`suporte/${i.id}`).update({ msgs: firebase.firestore.FieldValue.arrayUnion(m), naoLidoRh: true, naoLidoDono: false, atualizadoEm: m.em, etapaCrm: 'aguardando', ...(x.status === 'bot' ? { status: 'analise' } : {}), ...(!x.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}) });
 }
 async function enviarWA(i, t, extra = {}) {
-  const ref = FB.db.collection('wa_conversas').doc(i.id), c = i.raw, base = { ...(!c.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}), etapaCrm: 'aguardando' };
+  const ref = FB.db.collection('wa_conversas').doc(i.id), c = i.raw, base = { ...(!c.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}), etapaCrm: 'aguardando', followupN: 0 };
   if (webOn()) { // WhatsApp conectado pelo QR code: o programa da NEXUM envia
     const em = agora(), m = await ref.collection('msgs').add({ de: 'equipe', t, em, por: C.user.email, envio: 'pendente', ...extra });
     await FB.db.collection('wa_fila').add({ conv: i.id, texto: t, msg: m.id, por: C.user.email, em });
@@ -484,7 +531,7 @@ function etiquetas(i) {
 }
 function agendarRetorno(i) {
   const d = new Date(Date.now() + 864e5); d.setHours(10, 0, 0, 0); const v = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
-  modal('Agendar retorno', `<div class="fld"><label for="rt-q">Quando</label><input class="inp" type="datetime-local" id="rt-q" value="${v}"></div><div class="fld"><label for="rt-n">O que fazer</label><textarea class="inp" id="rt-n" rows="3" placeholder="Ex.: ligar para saber se o ponto voltou a funcionar"></textarea></div><p class="hint">O lembrete aparece em "Meus retornos" no Portal da Equipe e no painel.</p>`,
+  modal('Agendar retorno', `<div class="fld"><label for="rt-q">Quando</label><input class="inp" type="datetime-local" id="rt-q" value="${v}"></div><div class="fld"><label for="rt-n">O que fazer</label><textarea class="inp" id="rt-n" rows="3" placeholder="Ex.: ligar para saber se o ponto voltou a funcionar"></textarea></div><p class="hint">Na hora marcada o CRM te avisa com som e notificação. Todos os retornos ficam em <b>Retornos</b>, no menu.</p>`,
     { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="rt-ok">Agendar</button>', onMount: m => $('#rt-ok', m).onclick = async () => { const q = $('#rt-q', m).value; if (!q) return toast('Escolha a data.', true);
       try { await FB.db.collection('retornos').add({ uid: C.uid, email: C.user.email, nome: C.nome, papel: C.papel, empresa: String(i.empresa || i.nome).slice(0, 120), tid: i.tid || '', tel: soD(i.tel), quando: new Date(q).toISOString(), nota: $('#rt-n', m).value.trim().slice(0, 500), feito: false, criadoEm: agora(), origemCrm: i.key }); fechar(); toast('Retorno agendado.'); } catch (e) { toast(e.code || e.message, true); } } });
 }
@@ -575,14 +622,17 @@ function desenharPerfil() {
   const sit = t ? (t.bloqueado ? ['Bloqueado', 'var(--bad)', 'var(--bad-s)'] : t.suspenso ? ['Suspenso', 'var(--bad)', 'var(--bad-s)'] : t.trial ? ['Teste grátis', 'var(--warn)', 'var(--warn-s)'] : t.expira && t.expira < hoje ? ['Vencido', 'var(--bad)', 'var(--bad-s)'] : ['Ativo', 'var(--ok)', 'var(--ok-s)']) : null;
   const outros = itens().filter(x => x.key !== i.key && ((t && (x.tid === t.id || tenantDe(x) === t)) || (soD(i.tel).length >= 10 && soD(x.tel).slice(-9) === soD(i.tel).slice(-9)))).sort((a, b) => String(b.em).localeCompare(String(a.em))).slice(0, 8);
   const mail = i.email || (i.raw && i.raw.email);
-  el.innerHTML = `<div class="pf-top"><button class="ib x" id="pf-x" aria-label="Fechar perfil">${I('x')}</button>${cartaoAv(i, 64)}<h3>${esc(i.nome)}</h3><div style="margin-top:6px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap">${tagsHTML(i)}</div></div>
+  el.innerHTML = `<div class="pf-top"><button class="ib x" id="pf-x" title="Esconder perfil" aria-label="Esconder perfil">${I('seta')}</button>${cartaoAv(i, 64)}<h3>${esc(i.nome)}</h3><div style="margin-top:6px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap">${tagsHTML(i)}</div></div>
     <div class="pf-sec"><h4>Contato</h4><div class="kv">${i.tel ? `<span>WhatsApp</span><b><a href="https://wa.me/55${soD(i.tel).replace(/^55(?=\d{10,11}$)/, '')}" target="_blank" rel="noopener">${esc(fmtTel(i.tel))}</a></b>` : ''}${mail ? `<span>E-mail</span><b>${esc(mail)}</b>` : ''}<span>Canal</span><b>${esc(CANAIS[i.canal][0])}</b><span>Responsável</span><b>${esc(i.atendente || '—')}</b>${i.canal === 'sistema' ? `<span>Protocolo</span><b>${esc(i.id)}</b>` : ''}${i.raw && i.raw.avaliacao ? `<span>Avaliação</span><b style="color:#E8A400">${'★'.repeat(i.raw.avaliacao.nota)}${'☆'.repeat(5 - i.raw.avaliacao.nota)}</b>` : ''}</div></div>
     <div class="pf-sec"><h4>Empresa</h4>${t ? `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><div class="ib" style="background:var(--pri-s);color:var(--pri);border:0">${I('predio')}</div><div style="min-width:0"><b style="display:block">${esc(t.nome)}</b><span class="pill" style="background:${sit[2]};color:${sit[1]};margin-top:2px">${sit[0]}</span></div></div>
       <div class="kv"><span>Plano</span><b>${esc({ essencial: 'Essencial', profissional: 'Profissional', empresa: 'Empresa' }[t.plano] || t.plano || '—')}${t.recrutamento ? ' + Recrutamento' : ''}</b><span>Vencimento</span><b>${fd(t.expira)}</b>${t.cnpj ? `<span>CNPJ/CPF</span><b>${esc(t.cnpj)}</b>` : ''}<span>Código</span><b>${esc(t.id)}</b>${t.cobrancaAberta ? `<span>Cobrança</span><b><a href="${esc(t.cobrancaAberta.fatura)}" target="_blank" rel="noopener">${brl(t.cobrancaAberta.valor)} em aberto</a></b>` : ''}</div>
       ${C.asaasUrl && i.canal !== 'lead' ? `<button class="btn sec sm" id="pf-pg" style="width:100%;margin-top:12px">${I('cartao')}Mandar link de pagamento</button>` : ''}` : `<p class="hint" style="margin:0 0 8px">${i.canal === 'wa' ? 'Este número não está ligado a nenhuma empresa cliente.' : 'Sem empresa cadastrada.'}</p>${i.canal === 'wa' ? `<button class="btn sec sm" id="pf-lg">${I('link')}Ligar a uma empresa</button>` : ''}`}</div>
+    ${saudeHTML(i)}${fuPerfilHTML(i)}${retornosPerfilHTML(i)}
     <div class="pf-sec"><h4>Outros atendimentos</h4><div class="hist">${outros.map(x => `<div data-ab="${esc(x.key)}"><b>${esc(CANAIS[x.canal][0])}</b> <span class="hint">· ${quando(x.em)} · ${x.etapa === 'fim' ? 'finalizado' : 'aberto'}</span><br><span class="hint">${esc(String(x.ultima).slice(0, 70))}</span></div>`).join('') || '<p class="hint" style="margin:0">Nenhum outro atendimento.</p>'}</div></div>`;
-  $('#pf-x', el).onclick = () => el.classList.remove('aberto');
+  $('#pf-x', el).onclick = () => alternarPerfil(false);
   const pg = $('#pf-pg', el); if (pg) pg.onclick = () => linkPagamento(i);
+  const fu = $('#pf-fu', el); if (fu) fu.onclick = async () => { await atualizar(i, { followupPausado: !i.raw.followupPausado }); toast(i.raw.followupPausado ? 'Follow-up retomado nesta conversa.' : 'Follow-up pausado nesta conversa.'); };
+  const prt = $('#pf-rt', el); if (prt) prt.onclick = () => agendarRetorno(i);
   const lg = $('#pf-lg', el); if (lg) lg.onclick = () => modal('Ligar a uma empresa', `<select class="inp" id="lg-t">${opts([['', 'Escolha'], ...C.tenants.slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(x => [x.id, x.nome])], '')}</select>`, { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="lg-ok">Ligar</button>', onMount: m => $('#lg-ok', m).onclick = async () => { const t2 = C.tenants.find(x => x.id === $('#lg-t', m).value); if (!t2) return; await atualizar(i, { tid: t2.id, empresa: t2.nome }); fechar(); toast('Conversa ligada à empresa.'); } });
   $$('[data-ab]', el).forEach(d => d.onclick = () => abrir(d.dataset.ab));
 }
@@ -607,6 +657,234 @@ async function moverEtapa(key, et) {
   } catch (e) { }
 }
 
+/* ======================= novidades: atalhos, resumo, retornos, risco, follow-up e mídia ======================= */
+Object.assign(ICN, {
+  engrenagem: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  mic: '<rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5 10.5a7 7 0 0 0 14 0M12 17.5v4M8.5 21.5h7"/>',
+  lixo: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+  resumo: '<path d="M4 6h16M4 12h9M4 18h6"/><path d="M18 13l1.1 2.4L21.5 16.5l-2.4 1.1L18 20l-1.1-2.4-2.4-1.1 2.4-1.1z"/>',
+  calendario: '<rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  sino: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  repetir: '<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>'
+});
+const webVersao = () => parseFloat(C.web.versao || '0') || 0;
+const hojeISO = () => new Date().toISOString().slice(0, 10);
+const dataHora = s => s ? new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : '';
+const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+
+/* ---------- cliente em risco: calculado na hora, com os motivos ---------- */
+function riscoDe(i) {
+  const t = tenantDe(i); if (!t) return [];
+  const r = [], hoje = hojeISO(), d30 = new Date(Date.now() - 30 * 864e5).toISOString(), d90 = new Date(Date.now() - 90 * 864e5).toISOString(), ca = t.cobrancaAberta;
+  if (t.bloqueado || t.suspenso) r.push(['Conta bloqueada ou suspensa', 'alta']);
+  else if (t.expira && t.expira < hoje) r.push([t.trial ? 'Teste grátis terminou sem contratar' : `Licença vencida desde ${fd(t.expira)}`, t.trial ? 'media' : 'alta']);
+  if (ca && ca.vencimento && ca.vencimento < hoje) r.push([`Cobrança de ${brl(ca.valor)} vencida em ${fd(ca.vencimento)}`, 'alta']);
+  const ch = C.sup.filter(x => x.tid === t.id), ruins = ch.filter(x => x.avaliacao && +x.avaliacao.nota <= 2 && String(x.concluidoEm || x.atualizadoEm || '') >= d90);
+  if (ruins.length) r.push([ruins.length > 1 ? `${ruins.length} avaliações baixas do atendimento` : `Avaliou o atendimento com ${ruins[0].avaliacao.nota} estrela${+ruins[0].avaliacao.nota > 1 ? 's' : ''}`, 'media']);
+  const rec = ch.filter(x => String(x.criadoEm || '') >= d30).length; if (rec >= 3) r.push([`${rec} chamados nos últimos 30 dias`, 'media']);
+  return r;
+}
+function saudeHTML(i) {
+  if (!tenantDe(i)) return ''; const r = riscoDe(i);
+  return `<div class="pf-sec"><h4>Saúde do cliente</h4><div class="sd">${r.length ? r.map(([x, n]) => `<div class="${n}">${I('alerta')}<span>${esc(x)}</span></div>`).join('') : `<div class="okk">${I('okc')}<span>Tudo certo com este cliente</span></div>`}</div></div>`;
+}
+
+/* ---------- respostas rápidas com atalho (digite / no campo de mensagem) ---------- */
+function listaAtalhos(i) {
+  const m = new Map(), add = (a, titulo, texto, grupo) => { const k = slug(a || titulo); if (k && texto && !m.has(k)) m.set(k, { a: k, titulo: titulo || k, texto, grupo }); };
+  (C.atalhos || []).forEach(x => add(x.atalho, x.titulo, x.texto, 'Da equipe'));
+  RESPOSTAS.forEach(([g, l]) => l.forEach(([t, x]) => add(t, t, x, g)));
+  (C.minhas || []).forEach(r => add(r.titulo, r.titulo, r.texto, 'Minhas respostas'));
+  if (i && i.fila && C.filaMsgs[i.fila]) (C.filaMsgs[i.fila].msgs || []).forEach(x => add(x.t, x.t, x.txt, 'Fila ' + FILAS[i.fila].nome));
+  return [...m.values()];
+}
+function preencher(x, i) {
+  const t = tenantDe(i), P = { essencial: 'Essencial', profissional: 'Profissional', empresa: 'Empresa' };
+  return String(x).replace(/\{nome\}/g, String(i.nome).split(' ')[0]).replace(/\{empresa\}/g, i.empresa || (t && t.nome) || 'sua empresa').replace(/\{atendente\}/g, String(C.nome).split(' ')[0])
+    .replace(/\{plano\}/g, t ? (P[t.plano] || t.plano || '') : '').replace(/\{vencimento\}/g, t && t.expira ? fd(t.expira) : '');
+}
+function ligarAtalhos(t, i, cresce) {
+  const cp = $('#cp'); let box = null, sel = 0, achados = [], ini = -1;
+  const fecharS = () => { if (box) box.remove(); box = null; achados = []; };
+  const escolher = k => { const x = achados[k]; if (!x) return; const fim = t.selectionStart, txt = preencher(x.texto, i); t.value = t.value.slice(0, ini) + txt + t.value.slice(fim); const p = ini + txt.length; fecharS(); t.focus(); t.setSelectionRange(p, p); cresce(); };
+  const pintar = () => {
+    if (!achados.length) return fecharS();
+    if (!box) { box = document.createElement('div'); box.className = 'sug'; box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', 'Respostas rápidas'); cp.appendChild(box); }
+    box.innerHTML = `<div class="sug-h">Respostas rápidas<span>↑↓ escolher · Enter inserir · Esc fechar</span></div>${achados.map((x, k) => `<div class="sug-i ${k === sel ? 'on' : ''}" data-k="${k}" role="option" aria-selected="${k === sel}"><b>/${esc(x.a)}</b><span>${esc(x.titulo)}</span><p>${esc(preencher(x.texto, i).slice(0, 120))}</p></div>`).join('')}`;
+    $$('.sug-i', box).forEach(d => d.onmousedown = e => { e.preventDefault(); escolher(+d.dataset.k); });
+    const on = $('.sug-i.on', box); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+  };
+  const ver = () => {
+    const antes = t.value.slice(0, t.selectionStart), mm = antes.match(/(^|\s)\/([\wÀ-ÿ-]{0,24})$/); if (!mm) return fecharS();
+    ini = antes.length - mm[2].length - 1; const q = slug(mm[2]), l = listaAtalhos(i);
+    achados = (q ? [...l.filter(x => x.a.startsWith(q)), ...l.filter(x => !x.a.startsWith(q) && (x.a.includes(q) || slug(x.titulo).includes(q)))] : l).slice(0, 8); sel = 0; pintar();
+  };
+  t.addEventListener('input', ver); t.addEventListener('blur', () => setTimeout(fecharS, 150));
+  t.addEventListener('keydown', e => {
+    if (!box) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + achados.length) % achados.length; pintar(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopImmediatePropagation(); escolher(sel); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fecharS(); }
+  }, true);
+}
+
+/* ---------- resumo da conversa com IA ---------- */
+function linhasConversa(i, n) {
+  const cli = m => i.canal === 'sistema' ? m.de === 'rh' : m.de === 'cliente';
+  const src = i.canal === 'wa' ? C.msgs : i.canal === 'sistema' ? (i.raw.msgs || []) : (i.raw.conversa || []).map(x => typeof x === 'string' ? { de: 'cliente', t: x } : { de: x.de === 'bot' || x.role === 'assistant' ? 'bot' : 'cliente', t: x.t || x.content || '' });
+  return src.filter(m => m.t && m.de !== 'sistema').slice(-n).map(m => `${cli(m) ? 'Cliente' : m.de === 'bot' ? 'Assistente virtual' : 'Equipe NEXUM'}: ${String(m.t).slice(0, 600)}`).join('\n');
+}
+function resumirIA(i) {
+  const l = linhasConversa(i, 80); if (!l) return toast('Ainda não há mensagens para resumir.', true);
+  modal('Resumo da conversa', `<div id="rs-b" class="rs-b"><div class="rs-load">${I('ia')}<span>Lendo a conversa…</span></div></div>`, { largo: true, foot: '<button class="btn sec" data-close>Fechar</button><button class="btn sec" id="rs-cp" disabled>Copiar</button><button class="btn" id="rs-nt" disabled>Salvar como nota interna</button>', onMount: async m => {
+    const t = await groq([{ role: 'system', content: 'Você resume atendimentos da NEXUM (sistemas NEXUM RH, Portal do Colaborador e NEXUM Recrutamento e Seleção) para a equipe interna. Responda em português do Brasil, com 4 linhas curtas, exatamente neste formato:\nAssunto: ...\nO que já foi feito: ...\nSituação: ...\nPróximo passo: ...\nNa Situação, diga se está resolvido, aguardando o cliente ou aguardando a equipe. Não invente nada que não esteja na conversa.' }, { role: 'user', content: `Cliente: ${i.nome}${i.empresa ? ' (' + i.empresa + ')' : ''}\n\n${l}` }], 320);
+    const b = $('#rs-b', m); if (!b) return;
+    if (!t) { b.innerHTML = '<p class="hint">A IA não respondeu. Confira a chave da IA no Painel do Adm e tente de novo.</p>'; return; }
+    b.innerHTML = t.split('\n').filter(x => x.trim()).map(x => { const k = x.replace(/\*\*/g, '').match(/^\s*[-•]?\s*([^:]{3,30}):\s*(.*)$/); return k ? `<div class="rs-l"><span>${esc(k[1])}</span><p>${esc(k[2])}</p></div>` : `<p>${esc(x)}</p>`; }).join('');
+    const cp = $('#rs-cp', m), nt = $('#rs-nt', m); cp.disabled = nt.disabled = false;
+    cp.onclick = () => { try { navigator.clipboard.writeText(t).then(() => toast('Resumo copiado.')); } catch (e) { } };
+    nt.onclick = async () => { nt.disabled = true; try { await salvarNota(i, 'Resumo (IA)\n' + t.replace(/\*\*/g, '')); fechar(); } catch (e) { nt.disabled = false; toast(e.code || e.message, true); } };
+  } });
+}
+
+/* ---------- agenda de retornos com aviso na hora ---------- */
+const pendentes = () => (C.retornos || []).filter(r => !r.feito && r.quando).sort((a, b) => String(a.quando).localeCompare(String(b.quando)));
+function contaRetornos() { const f = new Date(); f.setHours(23, 59, 59, 999); const l = pendentes().filter(r => new Date(r.quando) <= f); return [l.length, l.some(r => new Date(r.quando) < new Date())]; }
+function abrirRetornos() { modal('Agenda de retornos', '<div id="rt-lista"></div>', { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: pintarRetornos }); }
+function cartaoRetorno(r) {
+  const d = new Date(r.quando), atr = !r.feito && d < new Date(), tem = r.origemCrm && itens().some(x => x.key === r.origemCrm);
+  return `<div class="rt-c ${r.feito ? 'feito' : ''} ${atr ? 'atr' : ''}" data-rt="${esc(r.id)}"><div class="rt-q"><b>${d.toLocaleDateString('pt-BR').slice(0, 5)}</b><span>${d.toLocaleTimeString('pt-BR').slice(0, 5)}</span></div>
+    <div class="rt-t"><b>${esc(r.empresa || 'Retorno')}</b>${r.nota ? `<p>${esc(r.nota)}</p>` : ''}${r.tel ? `<span class="hint">${esc(fmtTel(r.tel))}</span>` : ''}</div>
+    <div class="rt-a">${r.feito ? '<span class="pill" style="background:var(--ok-s);color:var(--ok)">Feito</span>' : `${tem ? '<button class="btn sec sm" data-rta="abrir">Abrir conversa</button>' : ''}<button class="btn sec sm" data-rta="amanha" title="Adiar para amanhã às 10h">Amanhã</button><button class="btn ok sm" data-rta="ok">${I('ok')}Feito</button>`}</div></div>`;
+}
+function pintarRetornos() {
+  const el = $('#rt-lista'); if (!el) return; const ag = new Date(), f = new Date(); f.setHours(23, 59, 59, 999); const l = pendentes();
+  const g = [['Atrasados', l.filter(r => new Date(r.quando) < ag), 'var(--bad)'], ['Hoje', l.filter(r => new Date(r.quando) >= ag && new Date(r.quando) <= f), 'var(--pri)'], ['Próximos dias', l.filter(r => new Date(r.quando) > f), 'var(--mut)']];
+  const feitos = (C.retornos || []).filter(r => r.feito).sort((a, b) => String(b.feitoEm || b.quando).localeCompare(String(a.feitoEm || a.quando))).slice(0, 5);
+  el.innerHTML = (l.length ? g.filter(x => x[1].length).map(([n, x, c]) => `<h4 class="rt-g" style="color:${c}">${n}<span>${x.length}</span></h4>${x.map(cartaoRetorno).join('')}`).join('')
+    : `<div class="vazio" style="padding:26px 0">${I('calendario')}<div>Nenhum retorno pendente.<br>Agende dentro da conversa, no botão do relógio.</div></div>`) + (feitos.length ? `<h4 class="rt-g">Concluídos recentemente</h4>${feitos.map(cartaoRetorno).join('')}` : '');
+  $$('[data-rt]', el).forEach(c => $$('[data-rta]', c).forEach(b => b.onclick = () => mexerRetorno(c.dataset.rt, b.dataset.rta)));
+}
+async function mexerRetorno(id, acao) {
+  const r = (C.retornos || []).find(x => x.id === id); if (!r) return; const ref = FB.db.doc(`retornos/${id}`);
+  try {
+    if (acao === 'ok') { await ref.update({ feito: true, feitoEm: agora() }); toast('Retorno concluído.'); }
+    else if (acao === 'amanha' || acao === '15') { const d = acao === '15' ? new Date(Date.now() + 15 * 6e4) : new Date(Date.now() + 864e5); if (acao === 'amanha') d.setHours(10, 0, 0, 0); await ref.update({ quando: d.toISOString(), avisadoEm: null }); C.avisados.delete(id); toast(acao === '15' ? 'Vou te lembrar de novo em 15 minutos.' : 'Adiado para amanhã às 10h.'); }
+    else if (acao === 'abrir' && r.origemCrm) { fechar(); abrir(r.origemCrm); }
+  } catch (e) { toast(e.code || e.message, true); }
+}
+function mostrarLembrete(r) {
+  let box = $('#lbr'); if (!box) { box = document.createElement('div'); box.id = 'lbr'; box.className = 'lbr'; box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+  const tem = r.origemCrm && itens().some(x => x.key === r.origemCrm), c = document.createElement('div'); c.className = 'lbr-c'; c.setAttribute('role', 'alert');
+  c.innerHTML = `<button class="lbr-x" aria-label="Fechar aviso">${I('x')}</button><h5>${I('sino')}Hora do retorno · ${new Date(r.quando).toLocaleTimeString('pt-BR').slice(0, 5)}</h5><b>${esc(r.empresa || 'Retorno agendado')}</b><p>${esc(r.nota || 'Retorno agendado por você.')}</p>
+    <div class="row">${tem ? '<button class="btn sm" data-l="abrir">Abrir conversa</button>' : ''}<button class="btn sec sm" data-l="15">Daqui 15 min</button><button class="btn ok sm" data-l="ok">${I('ok')}Feito</button></div>`;
+  $('.lbr-x', c).onclick = () => c.remove(); $$('[data-l]', c).forEach(b => b.onclick = () => { c.remove(); mexerRetorno(r.id, b.dataset.l); });
+  box.appendChild(c); beep(); setTimeout(beep, 380);
+  try { if (Notification.permission === 'granted') new Notification('Hora do retorno · CRM NEXUM', { body: `${r.empresa || ''}${r.nota ? ' — ' + r.nota : ''}`.slice(0, 140) }); } catch (e) { }
+}
+function checarRetornos() {
+  if (!C.user) return; const ag = Date.now();
+  pendentes().filter(r => { const q = new Date(r.quando).getTime(); return q <= ag && ag - q < 12 * 3600e3 && !r.avisadoEm && !C.avisados.has(r.id); }).slice(0, 3)
+    .forEach(r => { C.avisados.add(r.id); mostrarLembrete(r); FB.db.doc(`retornos/${r.id}`).update({ avisadoEm: agora() }).catch(() => { }); });
+  if ($('#nav')) desenharNav();
+}
+function retornosPerfilHTML(i) {
+  const l = pendentes().filter(r => r.origemCrm === i.key);
+  return `<div class="pf-sec"><h4>Retornos</h4>${l.length ? `<div class="kv" style="margin-bottom:10px">${l.map(r => `<span style="${new Date(r.quando) < new Date() ? 'color:var(--bad)' : ''}">${dataHora(r.quando)}</span><b>${esc(r.nota || 'Retorno')}</b>`).join('')}</div>` : '<p class="hint" style="margin:0 0 10px">Nenhum retorno agendado.</p>'}<button class="btn sec sm" id="pf-rt">${I('calendario')}Agendar retorno</button></div>`;
+}
+
+/* ---------- follow-up automático (quem envia é o programa NEXUM WhatsApp, a partir da versão 1.2) ---------- */
+const FU_PADRAO = { ativo: false, soHorario: true, regras: [{ horas: 24, texto: 'Oi, {nome}! Passando para saber se conseguiu ver a minha última mensagem. Posso te ajudar em mais alguma coisa? 😊' }, { horas: 48, texto: 'Oi, {nome}! Vou deixar este atendimento em aberto por aqui. Quando quiser continuar, é só responder esta mensagem. 💙' }] };
+function fuPerfilHTML(i) {
+  const f = C.followup; if (i.canal !== 'wa' || !f || !f.ativo) return '';
+  const c = i.raw, n = +c.followupN || 0, rg = f.regras || [], tot = rg.length; let st;
+  if (c.followupPausado) st = 'Pausado nesta conversa';
+  else if (i.etapa === 'fim') st = 'Conversa finalizada';
+  else if (n >= tot) st = `Os ${tot} lembretes já foram enviados`;
+  else if (c.ultimaDe !== 'equipe') st = c.ultimaDe === 'cliente' ? 'Aguardando a equipe responder' : 'Começa depois da próxima mensagem da equipe';
+  else { const falta = Math.round((Date.parse(c.atualizadoEm || '') + rg[n].horas * 3600e3 - Date.now()) / 6e4); st = falta > 0 ? `${n + 1}º lembrete em ${minFmt(falta)}${f.soHorario !== false ? ' (no horário de atendimento)' : ''}` : `${n + 1}º lembrete sai na próxima verificação`; }
+  return `<div class="pf-sec"><h4>Follow-up automático</h4><div class="fu-st"><span>${I('repetir')}${esc(st)}</span><button class="btn sec sm" id="pf-fu">${c.followupPausado ? 'Retomar' : 'Pausar'}</button></div>${n ? `<p class="hint" style="margin:6px 0 0">${n} lembrete${n > 1 ? 's' : ''} já enviado${n > 1 ? 's' : ''} nesta conversa.</p>` : ''}</div>`;
+}
+function configuracoes(aba) {
+  modal('Configurações do CRM', `<div class="tabs" role="tablist"><button role="tab" data-cab="atalhos">Respostas rápidas</button>${dono() ? '<button role="tab" data-cab="followup">Follow-up automático</button>' : ''}</div><div id="cfg-b" style="margin-top:14px"></div>`, { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => {
+    const ir = a => { $$('[data-cab]', m).forEach(b => { b.classList.toggle('on', b.dataset.cab === a); b.setAttribute('aria-selected', b.dataset.cab === a); }); (a === 'followup' ? cfgFollowup : cfgAtalhos)($('#cfg-b', m)); };
+    $$('[data-cab]', m).forEach(b => b.onclick = () => ir(b.dataset.cab)); ir(dono() && aba === 'followup' ? 'followup' : 'atalhos');
+  } });
+}
+function cfgAtalhos(el) {
+  const meus = C.atalhos || [];
+  el.innerHTML = `<p class="hint" style="margin-top:0">No campo de mensagem, digite <b>/</b> e o começo do atalho (ex.: <b>/pix</b>) para inserir a resposta pronta. Use <b>{nome}</b>, <b>{empresa}</b>, <b>{plano}</b>, <b>{vencimento}</b> e <b>{atendente}</b>: o CRM troca pelos dados do cliente.</p>
+    <div class="at-n"><input class="inp" id="at-a" placeholder="Atalho (ex.: pix)" maxlength="24" aria-label="Atalho"><input class="inp" id="at-t" placeholder="Título (ex.: Chave PIX)" maxlength="60" aria-label="Título"></div>
+    <textarea class="inp" id="at-x" rows="3" placeholder="Texto da resposta" maxlength="1500" style="margin-top:8px" aria-label="Texto da resposta"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm" id="at-s">${I('mais')}Salvar atalho</button></div>
+    <h4 class="rt-g">Atalhos da equipe<span>${meus.length}</span></h4>${meus.length ? meus.map((x, k) => `<div class="at-i"><b>/${esc(x.atalho)}</b><div><span>${esc(x.titulo || '')}</span><p>${esc(x.texto)}</p></div><button class="ib" data-atd="${k}" title="Apagar" aria-label="Apagar o atalho ${esc(x.atalho)}">${I('lixo')}</button></div>`).join('') : '<p class="hint">Nenhum atalho criado ainda.</p>'}
+    <h4 class="rt-g">Atalhos prontos</h4><div class="at-p">${listaAtalhos(null).filter(x => x.grupo !== 'Da equipe').map(x => `<span class="pill" title="${esc(x.texto)}">/${esc(x.a)}</span>`).join('')}</div>`;
+  const salvar = async l => { await FB.db.doc('plataforma/crm').set({ atalhos: l }, { merge: true }); C.atalhos = l; cfgAtalhos(el); };
+  $('#at-s', el).onclick = async () => { const a = slug($('#at-a', el).value), x = $('#at-x', el).value.trim(); if (!a) return toast('Escreva o atalho.', true); if (!x) return toast('Escreva o texto da resposta.', true);
+    try { await salvar([...meus.filter(y => y.atalho !== a), { atalho: a, titulo: $('#at-t', el).value.trim() || a, texto: x, por: C.nome }]); toast(`Atalho /${a} salvo.`); } catch (e) { toast(e.code || e.message, true); } };
+  $$('[data-atd]', el).forEach(b => b.onclick = async () => { try { await salvar(meus.filter((_, k) => k !== +b.dataset.atd)); toast('Atalho apagado.'); } catch (e) { toast(e.code || e.message, true); } });
+}
+function cfgFollowup(el) {
+  const f = { ...FU_PADRAO, ...(C.followup || {}) }, rg = (f.regras && f.regras.length ? f.regras : FU_PADRAO.regras).slice(0, 3);
+  const aviso = !webOn() ? '<div class="aviso">O follow-up sai pelo WhatsApp conectado pelo QR code. Deixe o programa NEXUM WhatsApp ligado e o número conectado.</div>' : webVersao() < 1.2 ? '<div class="aviso">Atualize o programa NEXUM WhatsApp no computador para a versão 1.2. A versão atual não manda follow-up.</div>' : '';
+  el.innerHTML = `${aviso}<p class="hint" style="margin-top:0">Quando a equipe manda uma mensagem e o cliente não responde, o CRM manda um lembrete sozinho. Se o cliente responder, a contagem zera. Dá para pausar em cada conversa, no perfil do cliente.</p>
+    <label class="row sw"><input type="checkbox" id="fu-on" ${f.ativo ? 'checked' : ''}> <b>Ligar o follow-up automático</b></label>
+    ${[0, 1, 2].map(k => { const r = rg[k] || { horas: '', texto: '' }; return `<div class="fu-r"><div class="fu-h"><span class="fu-n">${k + 1}º lembrete</span><span class="hint">depois de</span><input class="inp" type="number" min="1" max="720" id="fu-h${k}" value="${esc(r.horas)}" placeholder="—" style="width:76px" aria-label="Horas do ${k + 1}º lembrete"><span class="hint">horas sem resposta${k ? ', contando do lembrete anterior' : ''}${k === 2 ? ' (opcional)' : ''}</span></div><textarea class="inp" id="fu-t${k}" rows="2" aria-label="Texto do ${k + 1}º lembrete">${esc(r.texto)}</textarea></div>`; }).join('')}
+    <label class="row" style="margin-top:12px"><input type="checkbox" id="fu-hr" ${f.soHorario !== false ? 'checked' : ''}> Mandar só no horário de atendimento (${HORARIO})</label>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="fu-s">Salvar</button></div>`;
+  $('#fu-s', el).onclick = async () => {
+    const regras = [0, 1, 2].map(k => ({ horas: Math.min(720, Math.round(+$(`#fu-h${k}`, el).value || 0)), texto: $(`#fu-t${k}`, el).value.trim().slice(0, 1000) })).filter(r => r.horas > 0 && r.texto);
+    const on = $('#fu-on', el).checked; if (on && !regras.length) return toast('Preencha pelo menos o 1º lembrete (horas e texto).', true);
+    const d = { ativo: on, soHorario: $('#fu-hr', el).checked, regras, atualizadoEm: agora(), por: C.nome };
+    try { await FB.db.doc('plataforma/crm').set({ followup: d }, { merge: true }); C.followup = d; toast(on ? 'Follow-up automático ligado.' : 'Follow-up automático desligado.'); } catch (e) { toast(e.code || e.message, true); }
+  };
+}
+
+/* ---------- foto, documento e áudio pelo WhatsApp (programa NEXUM WhatsApp 1.2) ---------- */
+const lerArquivo = f => new Promise((ok, er) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = er; r.readAsDataURL(f); });
+const reduzirImg = data => new Promise(ok => { const im = new Image(); im.onload = () => { const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', .82)); }; im.onerror = () => ok(data); im.src = data; });
+function midiaPronta() {
+  if (!webOn()) { toast('Para mandar fotos, áudios e documentos, conecte o WhatsApp pelo QR code (botão WhatsApp, no menu).', true); return false; }
+  if (webVersao() < 1.2) { toast('Atualize o programa NEXUM WhatsApp no computador para a versão 1.2 para mandar fotos, áudios e documentos.', true); return false; }
+  return true;
+}
+async function anexarWA(i, f, legenda = '') {
+  if (!midiaPronta()) return; if (f.size > 8e6) return toast('Arquivo grande demais (máximo 8 MB).', true);
+  try {
+    let data = await lerArquivo(f), tipo = (f.type || 'application/octet-stream').split(';')[0];
+    if (/^image\/(jpeg|png|webp|bmp)$/.test(tipo)) { data = await reduzirImg(data); tipo = 'image/jpeg'; }
+    if (data.length > 900000) return toast('Arquivo grande demais para mandar pelo CRM (máximo de uns 650 KB). Mande um arquivo menor.', true);
+    const nome = String(f.name || (tipo.startsWith('audio/') ? 'audio' : 'arquivo')).slice(0, 120), rot = tipo.startsWith('image/') ? '📷 Foto' : tipo.startsWith('audio/') ? '🎤 Áudio' : tipo.startsWith('video/') ? '🎬 Vídeo' : '📄 ' + nome;
+    const ref = FB.db.collection('wa_conversas').doc(i.id), em = agora(), t = legenda || rot;
+    const m = await ref.collection('msgs').add({ de: 'equipe', t, em, por: C.user.email, envio: 'pendente', anexo: { nome, tipo, data } });
+    await FB.db.collection('wa_fila').add({ conv: i.id, texto: legenda, msg: m.id, por: C.user.email, em, anexo: true });
+    await ref.set({ ultimaMsg: t.slice(0, 160), ultimaDe: 'equipe', atualizadoEm: em, naoLidas: 0, followupN: 0, etapaCrm: 'aguardando', ...(!i.raw.atendenteEmail ? { atendente: C.nome, atendenteEmail: C.user.email } : {}) }, { merge: true });
+  } catch (e) { toast('Não foi possível mandar o arquivo: ' + (e.code || e.message), true); }
+}
+function anexar(i, f) {
+  if (!i || !f) return; if (i.canal === 'sistema') return anexarSup(i, f); if (i.canal !== 'wa') return;
+  const t = $('#cp-t'), leg = t && !C.nota && !/^audio\//.test(f.type) ? t.value.trim() : ''; if (leg) { t.value = ''; t.style.height = ''; }
+  return anexarWA(i, f, leg);
+}
+let GRV = null;
+async function gravarAudio(i) {
+  if (!midiaPronta()) return; if (!navigator.mediaDevices || !window.MediaRecorder) return toast('Este navegador não grava áudio. Use o Chrome ou o Edge.', true);
+  let st; try { st = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { return toast('Libere o microfone no navegador para gravar áudio.', true); }
+  const tipo = ['audio/ogg;codecs=opus', 'audio/webm;codecs=opus', 'audio/webm'].find(x => MediaRecorder.isTypeSupported(x)) || '';
+  const rec = new MediaRecorder(st, { ...(tipo ? { mimeType: tipo } : {}), audioBitsPerSecond: 24000 }), partes = [], ini = Date.now();
+  GRV = { rec, cancelado: false, tm: 0 };
+  rec.ondataavailable = e => { if (e.data && e.data.size) partes.push(e.data); };
+  rec.onstop = async () => {
+    st.getTracks().forEach(x => x.stop()); clearInterval(GRV && GRV.tm); const canc = !GRV || GRV.cancelado; GRV = null; desenharComposer(); if (canc) return;
+    const tp = (rec.mimeType || tipo || 'audio/webm').split(';')[0], b = new Blob(partes, { type: tp }); if (b.size < 1200) return toast('Áudio muito curto.', true);
+    await anexarWA(i, new File([b], 'audio.' + (tp.includes('ogg') ? 'ogg' : 'webm'), { type: tp }));
+  };
+  rec.start(250);
+  const cp = $('#cp'); cp.className = 'cp';
+  cp.innerHTML = `<div class="grv" role="status"><span class="grv-p"></span><b>Gravando áudio</b><span id="grv-t">0:00</span><span class="sp"></span><button class="btn sec sm" id="grv-x">${I('lixo')}Cancelar</button><button class="btn sm" id="grv-ok">${I('enviar')}Enviar</button></div>`;
+  GRV.tm = setInterval(() => { const s = Math.round((Date.now() - ini) / 1000), e = $('#grv-t'); if (e) e.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; if (s >= 120 && rec.state === 'recording') rec.stop(); }, 500);
+  $('#grv-x').onclick = () => { if (GRV) GRV.cancelado = true; rec.stop(); }; $('#grv-ok').onclick = () => rec.stop();
+}
+
 /* ---------------- início ---------------- */
 (function init() {
   if (EMBED) document.documentElement.classList.add('emb');
@@ -623,6 +901,7 @@ async function moverEtapa(key, et) {
   });
   setInterval(() => { if (C.user && $('#lst') && !document.hidden) { const a = document.activeElement; if (!(a && a.closest && a.closest('#lst'))) desenharLista(); } }, 60000);
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mr').innerHTML) fechar(); });
+  setInterval(checarRetornos, 30000);
 })();
 </script>
 </body>
