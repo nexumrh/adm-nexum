@@ -1310,13 +1310,17 @@ if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav =
 
 
 
+
+
+
+
 <script>
 /* =====================================================================
    LINK DE AULA PELO CRM: manda para o colaborador só as aulas do Portal,
    e para quem faz a seleção só as aulas de Recrutamento. O link abre
    rh.nexumdp.com.br/aula.html?t=... e o progresso fica em treinoLinks/{t}.
    ===================================================================== */
-try { if (typeof LINKS !== 'undefined' && !LINKS.some(l => /demo\.html/.test(l[1]))) LINKS.push(['Agendar demonstração', 'https://vendas.nexumdp.com.br/demo.html'], ['Status do sistema', 'https://rh.nexumdp.com.br/status.html']); } catch (e) { }
+try { if (typeof LINKS !== 'undefined' && !LINKS.some(l => /demo\.html/.test(l[1]))) LINKS.push(['Treinamento em vídeo (guia e videoaulas)', 'https://nexumrh.github.io/treinamento/'], ['Agendar demonstração', 'https://vendas.nexumdp.com.br/demo.html'], ['Status do sistema', 'https://rh.nexumdp.com.br/status.html'], ['Guia de reunião (slides)', 'https://rh.nexumdp.com.br/guia.html']); } catch (e) { }
 const AULA_URL = 'https://rh.nexumdp.com.br/aula.html?t=';
 const AULA_MODS = { portal: ['Portal do Colaborador', 18, 'para o funcionário'], rs: ['Recrutamento e Seleção', 26, 'para quem faz a seleção'] };
 function aulaToken() { const a = new Uint8Array(18), c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); }
