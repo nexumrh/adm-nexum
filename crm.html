@@ -1294,5 +1294,51 @@ if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav =
 (function () { const st = document.createElement('style'); st.textContent = `.mp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}.mp-o{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}.mp-o:has(input:checked){border-color:#B42318;background:#FFF5F4}
   .fn{display:grid;gap:8px}.fn-e{display:grid;gap:4px}.fn-b{height:14px;border-radius:8px}.fn-e span{font-size:14px}.fn-m{display:grid;gap:6px}.fn-m>div{display:grid;grid-template-columns:minmax(120px,240px) 1fr auto;gap:10px;align-items:center;font-size:14px}.fn-mb{height:10px;background:var(--bg,#F1F3F8);border-radius:6px;overflow:hidden}.fn-mb i{display:block;height:100%;background:#B42318;border-radius:6px}`; document.head.appendChild(st); })();
 </script>
+
+
+
+
+
+
+
+<script>
+/* =====================================================================
+   LINK DE AULA PELO CRM: manda para o colaborador só as aulas do Portal,
+   e para quem faz a seleção só as aulas de Recrutamento. O link abre
+   rh.nexumdp.com.br/aula.html?t=... e o progresso fica em treinoLinks/{t}.
+   ===================================================================== */
+const AULA_URL = 'https://rh.nexumdp.com.br/aula.html?t=';
+const AULA_MODS = { portal: ['Portal do Colaborador', 18, 'para o funcionário'], rs: ['Recrutamento e Seleção', 26, 'para quem faz a seleção'] };
+function aulaToken() { const a = new Uint8Array(18), c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); }
+function linkAula(i) {
+  const t = typeof tenantDe === 'function' ? tenantDe(i) : null;
+  modal('Mandar aulas em vídeo', `<p class="hint" style="margin-top:0">A pessoa recebe um link que mostra <b>só</b> as aulas escolhidas, em ordem e sem poder adiantar. Você acompanha quem assistiu em <b>Treinamento dos clientes</b>, no Painel do Dono.</p>
+    <div class="fld"><label for="la-m">Quais aulas</label><select class="inp" id="la-m">${Object.entries(AULA_MODS).map(([k, [n, q, d]]) => `<option value="${k}">${n} · ${q} aulas, ${d}</option>`).join('')}</select></div>
+    <div class="fld"><label for="la-n">Nome de quem vai assistir</label><input class="inp" id="la-n" value="${esc(i.nome || '')}"></div>
+    <div class="fld"><label for="la-e">Empresa</label><select class="inp" id="la-e"><option value="">Sem empresa cadastrada</option>${(C.tenants || []).slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(x => `<option value="${x.id}" ${t && t.id === x.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></div>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="la-ok">Gerar e mandar</button>', onMount: m => {
+      $('#la-ok', m).onclick = async () => {
+        const b = $('#la-ok', m), mod = $('#la-m', m).value, nome = $('#la-n', m).value.trim(), tid = $('#la-e', m).value, emp = tid ? ((C.tenants || []).find(x => x.id === tid) || {}).nome || '' : (i.empresa || '');
+        if (!nome) return toast('Escreva o nome de quem vai assistir.', true);
+        b.disabled = true; b.textContent = 'Gerando…'; const tk = aulaToken();
+        try {
+          await FB.db.collection('treinoLinks').doc(tk).set({ mod, nome, empresa: emp, tid: tid || '', tel: soD(i.tel || ''), conv: i.id || '', canal: i.canal || '', criadoEm: new Date().toISOString(), criadoPor: (C.user && C.user.email) || '', ativo: true, feitas: {}, pos: {}, pct: 0, concluido: false, visitas: 0 });
+          const txt = `Olá, ${nome.split(' ')[0]}! Segue o treinamento em vídeo do ${AULA_MODS[mod][0]} da NEXUM:\n${AULA_URL}${tk}\n\nSão aulas curtas, com voz explicando cada tela. Elas seguem em ordem: assista até o fim de cada uma para liberar a próxima. Pode parar e continuar depois pelo mesmo link.`;
+          if (i.canal === 'sistema') await enviarSup(i, txt); else await enviarWA(i, txt);
+          fechar(); toast('Link das aulas enviado.');
+        } catch (e) { b.disabled = false; b.textContent = 'Gerar e mandar'; toast('Não foi possível gerar o link: ' + (e.code || e.message), true); }
+      };
+    } });
+}
+if (typeof desenharComposer === 'function') {
+  const _dcAula = desenharComposer;
+  desenharComposer = function () {
+    const r = _dcAula.apply(this, arguments);
+    try { const el = $('#cp'), i = atual(), sp = el && $('.cp-t .sp', el); if (sp && i && !$('#cp-aula', el)) { const b = document.createElement('button'); b.className = 'ferr'; b.id = 'cp-aula'; b.type = 'button'; b.title = 'Mandar aulas em vídeo (Portal ou Recrutamento)'; b.innerHTML = `${I('link')}Aulas`; b.onclick = () => linkAula(i); sp.before(b); } } catch (e) { console.warn(e); }
+    return r;
+  };
+}
+</script>
+
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
