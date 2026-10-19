@@ -1335,6 +1335,13 @@ if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav =
 
 
 
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    LINK DE AULA PELO CRM: manda para o colaborador só as aulas do Portal,
@@ -1428,6 +1435,53 @@ async function crmTranscrever(src) {
     catch (e) { b.disabled = false; b.textContent = 'Transcrever'; toast(e.message, true); } });
 }; }
 (function () { const st = document.createElement('style'); st.textContent = '.tr-bt{display:inline-block;margin-top:6px;font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}.tr-bt:disabled{opacity:.5}.tr-au{margin-top:6px;padding:6px 8px;border-radius:8px;background:rgba(127,127,127,.12);font-size:13px;line-height:1.45;white-space:pre-wrap}.tr-au small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}'; document.head.appendChild(st); })();
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 33 (CRM): resposta pronta conforme a pergunta. Quando a última
+   mensagem é do cliente, o CRM entende o assunto (preço, senha, ponto,
+   pagamento, cancelamento, agradecimento...) e mostra a resposta certa
+   acima do campo de mensagem: usar, ajustar com a IA ou ignorar.
+   ===================================================================== */
+const ASSUNTOS = [
+  { k: 'preço', re: /pre[çc]o|quanto custa|valor|planos?\b|mensalidade|or[çc]amento|contratar|assinar o/i, cat: 'Vendas', tit: 'Fechar negócio' },
+  { k: 'senha e acesso', re: /senha|n[ãa]o consigo (entrar|acessar)|login|acesso|esqueci/i, cat: 'Acesso e senha', tit: 'Esqueci a senha' },
+  { k: 'novo usuário', re: /novo usu[áa]rio|outra pessoa|dar acesso|cadastrar (um )?(gerente|rh)/i, cat: 'Acesso e senha', tit: 'Novo usuário' },
+  { k: 'ponto', re: /ponto|bater|batida|registr|c[âa]mera|reconhec|biometria|rosto/i, cat: 'Ponto e folha', tit: 'Ponto não registra' },
+  { k: 'pagamento', re: /boleto|pix|pagar|pagamento|renova|vencid|fatura|cart[ãa]o de cr/i, cat: 'Plano e pagamento', tit: 'Renovar' },
+  { k: 'erro', re: /erro|n[ãa]o (funciona|abre|carrega)|travou|bug|problema/i, cat: 'Atendimento', tit: 'Pedir print' },
+  { k: 'agradecimento', re: /obrigad|valeu|resolveu|deu certo|funcionou/i, cat: 'Encerramento', tit: 'Encerramento' }
+];
+function respostaDe(cat, tit) { const g = RESPOSTAS.find(x => x[0] === cat); const r = g && g[1].find(x => x[0] === tit); return r ? r[1] : ''; }
+function assuntoDe(txt) {
+  const t = String(txt || ''); if (t.length < 2) return null;
+  for (const a of ASSUNTOS) if (a.re.test(t)) { const doTime = (C.atalhos || []).find(x => x.texto && new RegExp(a.k.split(' ')[0], 'i').test((x.titulo || '') + ' ' + (x.atalho || ''))); const tx = respostaDe(a.cat, a.tit) || (doTime && doTime.texto); if (tx) return { ...a, texto: tx, titulo: doTime && !respostaDe(a.cat, a.tit) ? doTime.titulo : a.tit }; }
+  if (/cancel/i.test(t)) return { k: 'cancelamento', texto: 'Poxa, {nome}, que pena! Antes de cancelar, posso entender o que aconteceu? Muitas vezes conseguimos resolver rapidinho, e se preferir mesmo cancelar, eu já te ajudo com isso.', titulo: 'Entender o cancelamento' };
+  return null;
+}
+function ultimaDoCliente(i) {
+  const l = i.canal === 'wa' ? C.msgs : i.canal === 'sistema' ? (i.raw.msgs || []) : (i.raw.conversa || []).map(x => typeof x === 'string' ? { de: 'cliente', t: x } : { de: x.de === 'bot' || x.role === 'assistant' ? 'bot' : 'cliente', t: x.t || x.content || '' });
+  const u = l.filter(m => m.de !== 'nota' && m.de !== 'sistema').slice(-1)[0]; if (!u) return null;
+  const cli = i.canal === 'sistema' ? u.de === 'rh' : u.de === 'cliente'; return cli ? (u.transcricao || u.t || '') : null;
+}
+function atualizarSugestao() {
+  const i = atual(), cp = $('#cp-t'), velha = $('#cp-sug'); if (velha) velha.remove(); if (!i || !cp || C.nota || C.sugOculta === i.key + (C.msgs || []).length) return;
+  const txt = ultimaDoCliente(i), a = txt && assuntoDe(txt); if (!a) return;
+  const pronto = preencher(a.texto, i), box = document.createElement('div'); box.id = 'cp-sug'; box.className = 'cp-sug';
+  box.innerHTML = `<div class="cp-sug-h"><b>Resposta pronta · ${esc(a.k)}</b><span>${esc(a.titulo)}</span></div><p>${esc(pronto.length > 220 ? pronto.slice(0, 220) + '…' : pronto)}</p><div class="cp-sug-b"><button type="button" class="btn sm" data-sg="usar">Usar</button>${C.iaKey ? '<button type="button" class="btn sec sm" data-sg="ia">Ajustar com a IA</button>' : ''}<button type="button" class="btn ghost sm" data-sg="x" aria-label="Esconder a sugestão">Agora não</button></div>`;
+  const alvo = cp.closest('.cp-r') || cp.parentElement; alvo.parentElement.insertBefore(box, alvo);
+  const por = v => { cp.value = v; cp.style.height = 'auto'; cp.style.height = Math.min(180, cp.scrollHeight) + 'px'; cp.focus(); };
+  box.querySelector('[data-sg="usar"]').onclick = () => { por(pronto); box.remove(); };
+  box.querySelector('[data-sg="x"]').onclick = () => { C.sugOculta = i.key + (C.msgs || []).length; box.remove(); };
+  const ia = box.querySelector('[data-sg="ia"]'); if (ia) ia.onclick = async () => { ia.disabled = true; ia.textContent = 'Ajustando…';
+    try { const t = await groq([{ role: 'system', content: 'Você ajusta uma resposta pronta da equipe de atendimento da NEXUM (NEXUM RH, Portal do Colaborador e Recrutamento) para a pergunta do cliente. Mantenha as informações, os valores e os links da resposta pronta, responda exatamente o que o cliente perguntou, em português do Brasil, curto e cordial. Escreva só a mensagem.' }, { role: 'user', content: `Pergunta do cliente: ${txt}\n\nResposta pronta: ${pronto}` }]);
+      por(String(t).trim()); box.remove(); toast('Resposta ajustada: revise antes de enviar.'); } catch (e) { ia.disabled = false; ia.textContent = 'Ajustar com a IA'; toast('A IA não respondeu agora: ' + e.message, true); } };
+}
+{ const _dc33 = desenharComposer; desenharComposer = function () { const r = _dc33.apply(this, arguments); try { atualizarSugestao(); } catch (e) { console.warn(e); } return r; }; }
+{ const _dm33 = desenharMsgs; desenharMsgs = function () { const r = _dm33.apply(this, arguments); try { atualizarSugestao(); } catch (e) { console.warn(e); } return r; }; }
+(function () { const st = document.createElement('style'); st.textContent = `.cp-sug{margin:0 0 8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(31,94,255,.35);background:rgba(31,94,255,.07);display:grid;gap:6px}
+  .cp-sug-h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.cp-sug-h b{font-size:13px}.cp-sug-h span{font-size:12px;opacity:.7}.cp-sug p{margin:0;font-size:13px;line-height:1.45;white-space:pre-wrap}.cp-sug-b{display:flex;gap:6px;flex-wrap:wrap}`; document.head.appendChild(st); })();
 
 </script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
