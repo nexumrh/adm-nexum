@@ -1315,6 +1315,17 @@ if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav =
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    LINK DE AULA PELO CRM: manda para o colaborador só as aulas do Portal,
@@ -1378,5 +1389,37 @@ if (typeof desenharComposer === 'function') {
 }
 </script>
 
+<script>
+/* =====================================================================
+   LOTE 30 (CRM): áudio do cliente transcrito. Em cada áudio do WhatsApp
+   aparece "Transcrever"; o texto fica salvo na própria mensagem, então
+   a equipe toda lê sem precisar ouvir de novo.
+   ===================================================================== */
+async function crmTranscrever(src) {
+  if (!C.iaKey) throw new Error('A chave da IA (Groq) não está configurada no Painel do Dono.');
+  const blob = await (await fetch(src)).blob(), ext = /ogg/.test(blob.type) ? 'ogg' : /mpeg|mp3/.test(blob.type) ? 'mp3' : /mp4|m4a|aac/.test(blob.type) ? 'm4a' : /wav/.test(blob.type) ? 'wav' : 'webm';
+  for (const md of ['whisper-large-v3-turbo', 'whisper-large-v3']) {
+    const fd = new FormData(); fd.append('file', blob, 'audio.' + ext); fd.append('model', md); fd.append('language', 'pt'); fd.append('response_format', 'json');
+    const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + C.iaKey }, body: fd }).catch(() => null);
+    if (r && r.ok) return String((await r.json()).text || '').trim(); if (r && r.status === 401) throw new Error('A chave da IA foi recusada.');
+  }
+  throw new Error('Não foi possível transcrever agora. Tente de novo em instantes.');
+}
+{ const _b30 = bolha; bolha = function (m, i) {
+  let h = _b30(m, i); const a = m && m.anexo;
+  if (!a || !a.data || !/^audio\//.test(a.tipo || '') || !i || i.canal !== 'wa' || !m.id) return h;
+  const extra = m.transcricao ? `<div class="tr-au"><small>Transcrição</small>${esc(m.transcricao)}</div>` : C.iaKey ? `<button type="button" class="tr-bt" data-trau="${esc(m.id)}">Transcrever</button>` : '';
+  return extra ? h.replace(/(<audio [^>]*><\/audio>)/, '$1' + extra) : h;
+}; }
+{ const _dm30 = desenharMsgs; desenharMsgs = function () {
+  _dm30.apply(this, arguments); const el = $('#ch-b'), i = atual(); if (!el || !i) return;
+  $$('[data-trau]', el).forEach(b => b.onclick = async () => { const m = C.msgs.find(x => x.id === b.dataset.trau); if (!m) return; b.disabled = true; b.textContent = 'Transcrevendo…';
+    try { const t = await crmTranscrever(m.anexo.data); if (!t) throw new Error('Não deu para entender o áudio.'); m.transcricao = t;
+      await FB.db.collection('wa_conversas').doc(i.id).collection('msgs').doc(m.id).update({ transcricao: t.slice(0, 4000), transcritoEm: new Date().toISOString() }); desenharMsgs(); }
+    catch (e) { b.disabled = false; b.textContent = 'Transcrever'; toast(e.message, true); } });
+}; }
+(function () { const st = document.createElement('style'); st.textContent = '.tr-bt{display:inline-block;margin-top:6px;font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}.tr-bt:disabled{opacity:.5}.tr-au{margin-top:6px;padding:6px 8px;border-radius:8px;background:rgba(127,127,127,.12);font-size:13px;line-height:1.45;white-space:pre-wrap}.tr-au small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}'; document.head.appendChild(st); })();
+
+</script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
