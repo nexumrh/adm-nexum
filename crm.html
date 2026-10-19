@@ -1301,12 +1301,21 @@ if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav =
 
 
 
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    LINK DE AULA PELO CRM: manda para o colaborador só as aulas do Portal,
    e para quem faz a seleção só as aulas de Recrutamento. O link abre
    rh.nexumdp.com.br/aula.html?t=... e o progresso fica em treinoLinks/{t}.
    ===================================================================== */
+try { if (typeof LINKS !== 'undefined' && !LINKS.some(l => /demo\.html/.test(l[1]))) LINKS.push(['Agendar demonstração', 'https://vendas.nexumdp.com.br/demo.html'], ['Status do sistema', 'https://rh.nexumdp.com.br/status.html']); } catch (e) { }
 const AULA_URL = 'https://rh.nexumdp.com.br/aula.html?t=';
 const AULA_MODS = { portal: ['Portal do Colaborador', 18, 'para o funcionário'], rs: ['Recrutamento e Seleção', 26, 'para quem faz a seleção'] };
 function aulaToken() { const a = new Uint8Array(18), c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; crypto.getRandomValues(a); return Array.from(a, x => c[x % c.length]).join(''); }
@@ -1330,11 +1339,34 @@ function linkAula(i) {
       };
     } });
 }
+/* convite para o treinamento ao vivo (Google Meet) */
+async function convidarReuniao(i) {
+  let rs = []; try { rs = (await FB.db.collection('reunioesTreino').where('status', '==', 'agendada').get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(r => new Date(r.quando).getTime() > Date.now() - 36e5).sort((a, b) => a.quando.localeCompare(b.quando)); } catch (e) { return toast('Não foi possível ler as reuniões: ' + (e.code || e.message), true); }
+  if (!rs.length) return toast('Nenhuma reunião agendada. Agende no Painel do Dono, em Reuniões de treinamento.', true);
+  const t = typeof tenantDe === 'function' ? tenantDe(i) : null, TZ = { timeZone: 'America/Sao_Paulo' }, q = r => { const d = new Date(r.quando); return d.toLocaleDateString('pt-BR', { ...TZ, weekday: 'short', day: '2-digit', month: '2-digit' }) + ' às ' + d.toLocaleTimeString('pt-BR', { ...TZ, hour: '2-digit', minute: '2-digit' }); };
+  modal('Convidar para o treinamento ao vivo', `<div class="fld"><label for="cr-r">Reunião</label><select class="inp" id="cr-r">${rs.map(r => `<option value="${r.id}">${esc(r.titulo)} · ${q(r)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="cr-n">Nome de quem vai participar</label><input class="inp" id="cr-n" value="${esc(i.nome || '')}"></div>
+    <div class="fld"><label for="cr-e">Empresa</label><select class="inp" id="cr-e"><option value="">Cliente novo, sem empresa cadastrada</option>${(C.tenants || []).slice().sort((a, b) => String(a.nome).localeCompare(b.nome)).map(x => `<option value="${x.id}" ${t && t.id === x.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select></div>
+    <p class="hint">A pessoa recebe o convite com dia, hora, botão para a agenda, confirmação de presença e o botão de entrar no Meet. Com a empresa escolhida, o RH dela também vê o convite dentro do NEXUM RH.</p>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="cr-ok">Mandar convite</button>', onMount: m => {
+      $('#cr-ok', m).onclick = async () => {
+        const r = rs.find(x => x.id === $('#cr-r', m).value), nome = $('#cr-n', m).value.trim(), tid = $('#cr-e', m).value, emp = tid ? ((C.tenants || []).find(x => x.id === tid) || {}).nome || '' : (i.empresa || '');
+        const b = $('#cr-ok', m); b.disabled = true;
+        try {
+          if (tid) await FB.db.doc(`reunioesTreino/${r.id}`).update({ tids: firebase.firestore.FieldValue.arrayUnion(tid) });
+          const url = `https://rh.nexumdp.com.br/reuniao.html?r=${r.id}${nome ? '&n=' + encodeURIComponent(nome) : ''}${emp ? '&e=' + encodeURIComponent(emp) : ''}${tid ? '&t=' + tid : ''}`;
+          const txt = `Olá${nome ? ', ' + nome.split(' ')[0] : ''}! Você está convidado(a) para o *${r.titulo}*, ao vivo pelo Google Meet.\n📅 ${q(r)} (horário de Brasília)\n\nConfirme a presença e entre por aqui:\n${url}\n\nO botão de entrar libera 10 minutos antes.`;
+          if (i.canal === 'sistema') await enviarSup(i, txt); else await enviarWA(i, txt);
+          fechar(); toast('Convite enviado.');
+        } catch (e) { b.disabled = false; toast('Não foi possível mandar: ' + (e.code || e.message), true); }
+      };
+    } });
+}
 if (typeof desenharComposer === 'function') {
   const _dcAula = desenharComposer;
   desenharComposer = function () {
     const r = _dcAula.apply(this, arguments);
-    try { const el = $('#cp'), i = atual(), sp = el && $('.cp-t .sp', el); if (sp && i && !$('#cp-aula', el)) { const b = document.createElement('button'); b.className = 'ferr'; b.id = 'cp-aula'; b.type = 'button'; b.title = 'Mandar aulas em vídeo (Portal ou Recrutamento)'; b.innerHTML = `${I('link')}Aulas`; b.onclick = () => linkAula(i); sp.before(b); } } catch (e) { console.warn(e); }
+    try { const el = $('#cp'), i = atual(), sp = el && $('.cp-t .sp', el); if (sp && i && !$('#cp-aula', el)) { const b = document.createElement('button'); b.className = 'ferr'; b.id = 'cp-aula'; b.type = 'button'; b.title = 'Mandar aulas em vídeo (Portal ou Recrutamento)'; b.innerHTML = `${I('link')}Aulas`; b.onclick = () => linkAula(i); sp.before(b); const r = document.createElement('button'); r.className = 'ferr'; r.id = 'cp-reun'; r.type = 'button'; r.title = 'Convidar para o treinamento ao vivo (Google Meet)'; r.innerHTML = `${I('link')}Reunião`; r.onclick = () => convidarReuniao(i); sp.before(r); } } catch (e) { console.warn(e); }
     return r;
   };
 }
