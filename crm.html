@@ -425,7 +425,7 @@ function bolha(m, i) {
   if (m.de === 'sistema') return `<div class="m sis">${esc(m.t)} · ${h}</div>`;
   if (m.de === 'nota') return `<div class="m nota"><small>Nota interna · ${esc(m.por || '')}</small>${esc(m.t)}<span class="h">${h} · só a equipe vê</span></div>`;
   const cli = i.canal === 'sistema' ? m.de === 'rh' : m.de === 'cliente', bot = m.de === 'bot';
-  const quem = cli ? '' : bot ? '<small>Assistente virtual</small>' : m.por === 'followup' ? '<small>Follow-up automático</small>' : m.por === 'cobranca' ? '<small>Cobrança automática</small>' : m.por === 'pesquisa' ? '<small>Pesquisa de satisfação</small>' : m.de === 'celular' || m.por === 'celular' ? '<small>Pelo celular</small>' : (m.por ? `<small>${esc(String(m.por).split('@')[0])}</small>` : '');
+  const quem = cli ? '' : bot ? '<small>Assistente virtual</small>' : m.por === 'followup' ? '<small>Follow-up automático</small>' : m.por === 'cobranca' ? '<small>Cobrança automática</small>' : m.por === 'teste' ? '<small>Acompanhamento do teste grátis</small>' : m.por === 'lead' ? '<small>Primeira mensagem para o lead do site</small>' : m.por === 'pesquisa' ? '<small>Pesquisa de satisfação</small>' : m.de === 'celular' || m.por === 'celular' ? '<small>Pelo celular</small>' : (m.por ? `<small>${esc(String(m.por).split('@')[0])}</small>` : '');
   const st = cli ? '' : m.envio === 'pendente' ? ' · enviando…' : m.envio === 'erro' ? ` · <b style="color:#FFD1D1">não enviada${m.erro ? ': ' + esc(m.erro) : ''}</b>` : m.envio === 'manual' ? ' · pelo celular' : m.status === 'lida' ? ' <b class="lido">✓✓</b>' : m.status === 'entregue' ? ' ✓✓' : ' ✓';
   const a = m.anexo; let ax = '';
   if (a && a.data && /^image\//.test(a.tipo)) ax = `<img class="fx" src="${a.data}" alt="${esc(a.nome || 'foto')}" data-zoom>`; else if (a && a.data && /^audio\//.test(a.tipo)) ax = `<audio controls src="${a.data}" style="display:block;margin-top:6px;max-width:250px"></audio>`; else if (a && a.data) ax = `<a class="ax" href="${a.data}" download="${esc(a.nome)}">${I('clipe')}${esc(a.nome)}</a>`; else if (a && a.id && i.canal === 'sistema') ax = `<button type="button" class="ax" data-anx="${esc(a.id)}">${I('clipe')}${esc(a.nome || 'anexo')}</button>`; else if (a) ax = `<div class="hint">${esc(a.nome || 'arquivo')} (grande demais para mostrar)</div>`;
@@ -831,9 +831,9 @@ function fuPerfilHTML(i) {
   return `<div class="pf-sec"><h4>Follow-up automático</h4><div class="fu-st"><span>${I('repetir')}${esc(st)}</span><button class="btn sec sm" id="pf-fu">${c.followupPausado ? 'Retomar' : 'Pausar'}</button></div>${n ? `<p class="hint" style="margin:6px 0 0">${n} lembrete${n > 1 ? 's' : ''} já enviado${n > 1 ? 's' : ''} nesta conversa.</p>` : ''}</div>`;
 }
 function configuracoes(aba) {
-  modal('Configurações do CRM', `<div class="tabs" role="tablist"><button role="tab" data-cab="atalhos">Respostas rápidas</button>${dono() ? '<button role="tab" data-cab="followup">Follow-up</button><button role="tab" data-cab="cobranca">Cobrança automática</button><button role="tab" data-cab="pesquisa">Pesquisa de satisfação</button>' : ''}</div><div id="cfg-b" style="margin-top:14px"></div>`, { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => {
-    const ir = a => { $$('[data-cab]', m).forEach(b => { b.classList.toggle('on', b.dataset.cab === a); b.setAttribute('aria-selected', b.dataset.cab === a); }); ({ followup: cfgFollowup, cobranca: cfgCobranca, pesquisa: cfgPesquisa }[a] || cfgAtalhos)($('#cfg-b', m)); };
-    $$('[data-cab]', m).forEach(b => b.onclick = () => ir(b.dataset.cab)); ir(dono() && ['followup', 'cobranca', 'pesquisa'].includes(aba) ? aba : 'atalhos');
+  modal('Configurações do CRM', `<div class="tabs" role="tablist"><button role="tab" data-cab="atalhos">Respostas rápidas</button>${dono() ? '<button role="tab" data-cab="followup">Follow-up</button><button role="tab" data-cab="cobranca">Cobrança automática</button><button role="tab" data-cab="teste">Teste grátis</button><button role="tab" data-cab="lead">Lead do site</button><button role="tab" data-cab="pesquisa">Pesquisa de satisfação</button>' : ''}</div><div id="cfg-b" style="margin-top:14px"></div>`, { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => {
+    const ir = a => { $$('[data-cab]', m).forEach(b => { b.classList.toggle('on', b.dataset.cab === a); b.setAttribute('aria-selected', b.dataset.cab === a); }); ({ followup: cfgFollowup, cobranca: cfgCobranca, pesquisa: cfgPesquisa, teste: cfgTeste, lead: cfgLead }[a] || cfgAtalhos)($('#cfg-b', m)); };
+    $$('[data-cab]', m).forEach(b => b.onclick = () => ir(b.dataset.cab)); ir(dono() && ['followup', 'cobranca', 'pesquisa', 'teste', 'lead'].includes(aba) ? aba : 'atalhos');
   } });
 }
 function cfgAtalhos(el) {
@@ -1049,6 +1049,37 @@ async function cobrarWhats(x) {
     setTimeout(() => { const t = $('#cp-t'); if (t) { t.value = textoCobranca(x, c && c.nome); t.dispatchEvent(new Event('input')); t.focus(); } if (!x.ca) toast('Sem cobrança aberta: use o botão Cobrança para gerar o link.'); }, 450);
   } catch (e) { toast(e.code || e.message, true); }
 }
+const TESTE_PADRAO = [
+  { dia: 1, texto: 'Olá, {nome}! Aqui é da NEXUM. 😊 Vi que a *{empresa}* começou o teste grátis do NEXUM RH. Para aproveitar bem, comece por 3 coisas:\n\n1. Cadastre os funcionários (ou importe a planilha)\n2. Libere o Portal do Colaborador\n3. Peça para a equipe bater o ponto pelo celular\n\nSe quiser, a gente faz isso junto com você numa chamada rápida. É só responder aqui.' },
+  { dia: 3, texto: 'Oi, {nome}! Tudo certo com o teste do NEXUM na *{empresa}*? Se travou em alguma parte, me conta aqui que eu te ajudo. 🙌' },
+  { dia: 7, texto: 'Olá, {nome}! Metade do teste grátis já foi. Uma dica: no fim do mês o holerite sai pronto com o ponto, e cada funcionário assina no próprio celular. Quer que eu te mostre com os dados da *{empresa}*?' },
+  { dia: 12, texto: 'Olá, {nome}! O teste grátis da *{empresa}* termina em {fim}. Para continuar sem perder nada do que já foi cadastrado, é só contratar por este link:\n{link}\n\nQualquer dúvida, é só responder aqui.' }
+];
+const LEAD_PADRAO = 'Olá, {nome}! Aqui é da NEXUM. 😊 Vi que você conversou com a gente no site{empresa}. {plano}\n\nQuer que eu te mostre o sistema funcionando por aqui? Se preferir, você já pode testar grátis por 14 dias, sem cartão: https://rh.nexumdp.com.br/#criar';
+async function cfgLead(el) {
+  let t = {}; try { const s = await FB.db.doc('plataforma/crm').get(); t = (s.exists && s.data().leadWa) || {}; } catch (e) { }
+  el.innerHTML = `${!webOn() || webVersao() < 1.7 ? '<div class="aviso">A primeira mensagem sai pelo WhatsApp conectado pelo QR code, com o programa NEXUM WhatsApp na versão 1.7.</div>' : ''}
+    <p class="hint" style="margin-top:0">Quando alguém deixa o WhatsApp no chat de vendas do site, o NEXUM manda esta mensagem em até 1 minuto (das 8h às 21h; à noite, sai às 8h). A conversa entra na fila de <b>Vendas</b> com a etiqueta <b>Lead do site</b>.</p>
+    <label class="row sw"><input type="checkbox" id="ld-on" ${t.ativo === false ? '' : 'checked'}> <b>Mandar a primeira mensagem automaticamente</b></label>
+    <textarea class="inp" id="ld-t" rows="7" aria-label="Texto da primeira mensagem">${esc(t.texto || LEAD_PADRAO)}</textarea><p class="hint" style="margin:6px 0 0">Use {nome}, {empresa} e {plano} (sugere o plano pelo número de funcionários que a pessoa informou).</p>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="ld-s">Salvar</button></div>`;
+  $('#ld-s', el).onclick = async () => { const v = { ativo: $('#ld-on', el).checked, texto: $('#ld-t', el).value.trim() || LEAD_PADRAO, atualizadoEm: agora(), por: C.nome };
+    try { await FB.db.doc('plataforma/crm').set({ leadWa: v }, { merge: true }); toast(v.ativo ? 'Primeira mensagem automática ligada.' : 'Primeira mensagem automática desligada.'); } catch (e) { toast(e.code || e.message, true); } };
+}
+async function cfgTeste(el) {
+  let t = {}; try { const s = await FB.db.doc('plataforma/crm').get(); t = (s.exists && s.data().teste) || {}; } catch (e) { }
+  const ps = (Array.isArray(t.passos) && t.passos.length ? t.passos : TESTE_PADRAO).slice(0, 4);
+  el.innerHTML = `${!webOn() || webVersao() < 1.6 ? '<div class="aviso">O acompanhamento sai pelo WhatsApp conectado pelo QR code, com o programa NEXUM WhatsApp na versão 1.6.</div>' : ''}
+    <p class="hint" style="margin-top:0">Durante os 14 dias de teste grátis, o cliente recebe estas mensagens no WhatsApp cadastrado na empresa, no horário de atendimento. A conversa entra na fila de <b>Vendas</b> com a etiqueta <b>Teste grátis</b>. Para sozinho quando o cliente contrata.</p>
+    <label class="row sw"><input type="checkbox" id="tg-on" ${t.ativo ? 'checked' : ''}> <b>Ligar o acompanhamento do teste grátis</b></label>
+    ${ps.map((p, k) => `<div class="fu-r"><div class="fu-h"><span class="fu-n">Dia do teste</span><input class="inp" type="number" min="0" max="14" id="tg-d${k}" value="${esc(p.dia)}" style="width:70px" aria-label="Dia da mensagem ${k + 1}"></div><textarea class="inp" id="tg-t${k}" rows="${k === 0 || k === 3 ? 6 : 3}" aria-label="Mensagem ${k + 1}">${esc(p.texto)}</textarea></div>`).join('')}
+    <p class="hint" style="margin:6px 0 0">Use {nome}, {empresa}, {fim} (último dia do teste) e {link} (link para contratar o plano escolhido).</p>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:12px"><button class="btn sec" id="tg-p">Voltar aos textos padrão</button><button class="btn" id="tg-s">Salvar</button></div>`;
+  $('#tg-p', el).onclick = async () => { try { await FB.db.doc('plataforma/crm').set({ teste: { ativo: !!t.ativo, passos: TESTE_PADRAO } }, { merge: true }); cfgTeste(el); } catch (e) { toast(e.code || e.message, true); } };
+  $('#tg-s', el).onclick = async () => { const passos = ps.map((_, k) => ({ dia: Math.min(14, Math.max(0, Math.round(+$(`#tg-d${k}`, el).value || 0))), texto: $(`#tg-t${k}`, el).value.trim() })).filter(p => p.texto);
+    const v = { ativo: $('#tg-on', el).checked, passos, atualizadoEm: agora(), por: C.nome };
+    try { await FB.db.doc('plataforma/crm').set({ teste: v }, { merge: true }); toast(v.ativo ? 'Acompanhamento do teste ligado.' : 'Acompanhamento do teste desligado.'); } catch (e) { toast(e.code || e.message, true); } };
+}
 function cfgCobranca(el) {
   const r = { ...REC_PADRAO, ...(C.recuperacao || {}) }, d = (r.dias || []).concat(['', '', '']).slice(0, 3);
   el.innerHTML = `${!webOn() || webVersao() < 1.3 ? '<div class="aviso">A cobrança automática sai pelo WhatsApp conectado pelo QR code, com o programa NEXUM WhatsApp na versão 1.3. Sem isso, use a lista "Cobranças vencidas" no menu e cobre com um clique.</div>' : ''}
@@ -1182,6 +1213,86 @@ function abrirFicha(i, tFixo) {
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mr').innerHTML) fechar(); });
   setInterval(checarRetornos, 30000); setInterval(() => { if (C.user) batePresenca(); }, 60000);
 })();
+</script>
+<script>
+/* =====================================================================
+   CLIENTES ESFRIANDO: o conector mede todo dia o uso de cada cliente
+   (plataforma/saude). Quem cai para "risco" vira alerta no CRM.
+   ===================================================================== */
+C.saude = { empresas: {}, esfriando: [] };
+(function vigiarSaude() { let n = 0; const t = setInterval(() => { if (++n > 120) return clearInterval(t); if (!FB || !FB.db || !C.user) return; clearInterval(t);
+  try { FB.db.doc('plataforma/saude').onSnapshot(s => { C.saude = s.exists ? s.data() : { empresas: {}, esfriando: [] }; try { desenharNav(); } catch (e) { } }, () => { }); } catch (e) { } }, 1000); })();
+if (typeof riscoDe === 'function') { const _rd = riscoDe; riscoDe = function (i) { const r = _rd.apply(this, arguments); try { const t = tenantDe(i), x = t && (C.saude.empresas || {})[t.id]; if (x && x.nivel === 'risco') r.push([`Uso do sistema caiu: ${(x.f || [])[0] || 'nota ' + x.s + ' de 100'}`, 'alta']); } catch (e) { } return r; }; }
+const msgEsfriando = (x, nome) => { const p = (x.f || [])[0] || ''; return `Olá${nome ? ', ' + String(nome).split(' ')[0] : ''}! Aqui é da NEXUM. Passando para saber como está o uso do sistema na ${x.nome}.${/ponto/i.test(p) ? ' Vi que o ponto pelo celular está pouco usado: posso te ajudar a liberar para a equipe em 5 minutos?' : /nunca entrou|sem entrar|entrou há/i.test(p) ? ' Notei que faz alguns dias que vocês não acessam. Quer que eu te mostre o caminho mais rápido para o fechamento do mês?' : /funcion/i.test(p) ? ' Posso te ajudar a importar os funcionários de uma planilha?' : ' Precisa de ajuda com alguma coisa?'}`; };
+function abrirEsfriando() {
+  const l = (C.saude.esfriando || []).map(id => ({ id, ...(C.saude.empresas || {})[id] })).filter(x => x.nome).sort((a, b) => a.s - b.s);
+  modal('Clientes esfriando', `<p class="hint" style="margin-top:0">Clientes pagantes com nota de uso abaixo de 40 de 100${C.saude.em ? ` (medido ${new Date(C.saude.em).toLocaleString('pt-BR').slice(0, 17)})` : ''}. Quem para de usar costuma cancelar na renovação: ligue antes.</p>
+    ${l.length ? `<div class="esf-l">${l.map(x => `<div class="esf"><div style="flex:1;min-width:0"><b>${esc(x.nome)}</b> <span class="pill risco">${x.s}/100</span><div class="hint">${(x.f || []).map(esc).join(' · ')}</div>${x.desde ? `<div class="hint">Esfriando desde ${fd(String(x.desde).slice(0, 10))}</div>` : ''}</div>${soD(x.telefone).length >= 10 ? `<button class="btn sm" data-esf="${esc(x.id)}">Chamar no WhatsApp</button>` : '<span class="hint">sem telefone</span>'}</div>`).join('')}</div>` : '<p class="hint">Nenhum cliente esfriando agora. 🎉</p>'}`,
+    { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => $$('[data-esf]', m).forEach(b => b.onclick = async () => {
+      const x = { id: b.dataset.esf, ...(C.saude.empresas || {})[b.dataset.esf] }, t = C.tenants.find(y => y.id === x.id) || {}, d = soD(x.telefone || t.telefone), numero = d.length <= 11 ? '55' + d : d, id = 'n_' + numero;
+      try { const ref = FB.db.collection('wa_conversas').doc(id), s = await ref.get(), ant = s.exists ? s.data() : {};
+        await ref.set({ numero, nome: ant.nome || t.responsavel || x.nome, tid: x.id, empresa: x.nome, etiquetas: [...new Set([...(ant.etiquetas || []), 'Esfriando'])], ...(!s.exists || ant.coluna === 'fim' ? { coluna: 'rh', fila: 'rh', etapa: 'fila', origem: 'equipe', criadoEm: agora(), naoLidas: 0, ultimaMsg: 'Cliente esfriando: contato da equipe', ultimaDe: 'sistema', oculto: false } : {}), atendente: C.nome, atendenteEmail: C.user.email, atualizadoEm: agora() }, { merge: true });
+        C.preTexto = { sel: 'wa:' + id, t: msgEsfriando(x, ant.nome || t.responsavel), ate: Date.now() + 30000 }; fechar(); for (let i = 0; i < 30 && !(C.wa || []).some(c => c.id === id); i++) await new Promise(r => setTimeout(r, 100)); abrir('wa:' + id); setTimeout(() => { try { desenharComposer(); } catch (e) { } }, 400);
+      } catch (e) { toast(e.code || e.message, true); } }) });
+}
+if (typeof desenharComposer === 'function') { const _dc = desenharComposer; desenharComposer = function () { _dc.apply(this, arguments); try { const p = C.preTexto, cp = $('#cp-t'); if (p && cp && C.sel === p.sel && Date.now() < p.ate && !cp.value) { cp.value = p.t; cp.dispatchEvent(new Event('input', { bubbles: true })); cp.focus(); } } catch (e) { } }; }
+if (typeof desenharNav === 'function') { const _dn = desenharNav; desenharNav = function () { _dn.apply(this, arguments); try { const el = $('#nav'), rk = el && $('#nv-risco', el); if (!rk || $('#nv-esf', el)) return; const n = (C.saude.esfriando || []).length;
+  rk.insertAdjacentHTML('afterend', `<button id="nv-esf">${I('alerta')}<span>Clientes esfriando</span>${n ? `<span class="n r">${n}</span>` : ''}</button>`); $('#nv-esf', el).onclick = () => { el.classList.remove('aberto'); abrirEsfriando(); }; } catch (e) { } }; }
+document.head.insertAdjacentHTML('beforeend', '<style>.esf-l{display:grid;gap:8px}.esf{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px}.pill.risco{background:#FDECEC;color:#B3261E}</style>');
+</script>
+
+<script>
+/* =====================================================================
+   LOTE 26 (CRM): motivo obrigatório quando o lead é perdido e o funil
+   de vendas com os motivos de perda.
+   ===================================================================== */
+const MOTIVOS_PERDA = ['Achou caro', 'Já usa outro sistema', 'Parou de responder', 'Empresa pequena demais ou não precisa agora', 'Faltou um recurso', 'Achou difícil de usar', 'Foi para um concorrente', 'Outro'];
+function pedirMotivoPerda() {
+  return new Promise(res => {
+    let ok = false;
+    modal('Por que o lead foi perdido?', `<p class="hint" style="margin-top:0">O motivo é obrigatório. Com ele, o funil mostra onde a NEXUM está perdendo vendas.</p>
+      <div class="mp-g">${MOTIVOS_PERDA.map((m, i) => `<label class="mp-o"><input type="radio" name="mp" value="${esc(m)}" ${i === 0 ? '' : ''}><span>${esc(m)}</span></label>`).join('')}</div>
+      <div class="fld" style="margin-top:10px"><label for="mp-d">Detalhe (opcional)</label><input class="inp" id="mp-d" maxlength="200" placeholder="Ex.: queria pagar menos de R$ 80"></div>`,
+      { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn bad" id="mp-ok">Marcar como perdido</button>', onMount: m => {
+        $('#mp-ok', m).onclick = () => { const r = m.querySelector('input[name=mp]:checked'); if (!r) return toast('Escolha o motivo.', true); const d = $('#mp-d', m).value.trim(); if (r.value === 'Outro' && d.length < 4) return toast('Explique o motivo no detalhe.', true); ok = true; fechar(); res({ motivoPerda: r.value, motivoPerdaDetalhe: d.slice(0, 200), perdidoEm: agora(), perdidoPor: C.nome || (C.user && C.user.email) || '' }); };
+        const obs = new MutationObserver(() => { if (!document.body.contains(m)) { obs.disconnect(); if (!ok) res(null); } }); obs.observe(document.body, { childList: true, subtree: true }); } });
+  });
+}
+if (typeof atualizar === 'function') {
+  const _atPerda = atualizar;
+  atualizar = async function (i, d) {
+    if (d && d.status === 'perdido' && !d.motivoPerda && (!i.raw || i.raw.status !== 'perdido')) {
+      const mt = await pedirMotivoPerda(); if (!mt) { try { if (typeof desenhar === 'function') desenhar(); } catch (e) { } throw new Error('cancelado'); }
+      d = { ...d, ...mt };
+    }
+    return _atPerda.call(this, i, d);
+  };
+}
+/* não mostrar erro quando a pessoa só desistiu de marcar como perdido */
+window.addEventListener('unhandledrejection', e => { if (e.reason && e.reason.message === 'cancelado') e.preventDefault(); });
+
+function abrirFunil() {
+  const pint = dias => {
+    const lim = new Date(Date.now() - dias * 864e5).toISOString(), l = (C.leads || []).filter(x => (x.em || '') >= lim);
+    const n = s => l.filter(x => (x.status || 'novo') === s).length, tot = l.length, contato = l.filter(x => x.status && x.status !== 'novo').length, ganho = n('ganho'), perdido = n('perdido');
+    const pct = (a, b) => b ? Math.round(a / b * 100) : 0, mot = {}; l.filter(x => x.status === 'perdido').forEach(x => { const k = x.motivoPerda || 'Sem motivo registrado'; mot[k] = (mot[k] || 0) + 1; });
+    const mt = Object.entries(mot).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...mt.map(x => x[1]));
+    const org = {}; l.forEach(x => { const k = x.origem || 'site'; org[k] = org[k] || { t: 0, g: 0 }; org[k].t++; if (x.status === 'ganho') org[k].g++; });
+    const etapa = (rot, v, base, cor) => `<div class="fn-e"><div class="fn-b" style="width:${Math.max(6, pct(v, tot || 1))}%;background:${cor}"></div><span><b>${v}</b> ${rot}${base != null ? ` · ${pct(v, base)}%` : ''}</span></div>`;
+    $('#fn-c').innerHTML = tot ? `<div class="fn">${etapa('leads recebidos', tot, null, '#1F5FE8')}${etapa('conversaram com a equipe', contato, tot, '#4F46E5')}${etapa('viraram clientes', ganho, tot, '#0F8A5F')}${etapa('perdidos', perdido, tot, '#B42318')}</div>
+      <p class="hint" style="margin:8px 0 14px">${n('novo')} ainda sem contato · ${n('contato')} em conversa agora · conversão final de ${pct(ganho, ganho + perdido)}% entre os concluídos.</p>
+      <h3 style="margin:0 0 8px;font-size:15px">Por que perdemos</h3>${mt.length ? `<div class="fn-m">${mt.map(([k, v]) => `<div><span>${esc(k)}</span><div class="fn-mb"><i style="width:${v / mx * 100}%"></i></div><b>${v}</b></div>`).join('')}</div>` : '<p class="hint">Nenhum lead perdido no período.</p>'}
+      <h3 style="margin:14px 0 8px;font-size:15px">De onde vêm</h3><div class="fn-m">${Object.entries(org).sort((a, b) => b[1].t - a[1].t).map(([k, v]) => `<div><span>${esc(k)}</span><div class="fn-mb"><i style="width:${v.t / tot * 100}%;background:#1F5FE8"></i></div><b>${v.t}${v.g ? ` · ${v.g} cliente(s)` : ''}</b></div>`).join('')}</div>`
+      : '<p class="hint">Nenhum lead no período.</p>';
+  };
+  modal('Funil de vendas', `<div class="row" style="gap:8px;margin-bottom:12px"><label for="fn-p" class="hint">Período</label><select class="inp" id="fn-p" style="width:auto">${opts([['30', 'Últimos 30 dias'], ['90', 'Últimos 90 dias'], ['365', 'Último ano']], '90')}</select></div><div id="fn-c"></div>
+    <p class="hint" style="margin:12px 0 0">Conta os últimos 200 leads do site. O motivo de perda passou a ser obrigatório: leads antigos aparecem como “Sem motivo registrado”.</p>`,
+    { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => { $('#fn-p', m).onchange = e => pint(+e.target.value); pint(90); } });
+}
+if (typeof desenharNav === 'function') { const _dnF = desenharNav; desenharNav = function () { _dnF.apply(this, arguments); try { const el = $('#nav'); if (!el || $('#nv-fun', el) || !(typeof podeLeads === 'function' && podeLeads())) return; const ref = $('#nv-esf', el) || $('#nv-risco', el); if (!ref) return;
+  ref.insertAdjacentHTML('afterend', `<button id="nv-fun">${I('barras')}<span>Funil de vendas</span></button>`); $('#nv-fun', el).onclick = () => { el.classList.remove('aberto'); abrirFunil(); }; } catch (e) { } }; }
+(function () { const st = document.createElement('style'); st.textContent = `.mp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}.mp-o{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}.mp-o:has(input:checked){border-color:#B42318;background:#FFF5F4}
+  .fn{display:grid;gap:8px}.fn-e{display:grid;gap:4px}.fn-b{height:14px;border-radius:8px}.fn-e span{font-size:14px}.fn-m{display:grid;gap:6px}.fn-m>div{display:grid;grid-template-columns:minmax(120px,240px) 1fr auto;gap:10px;align-items:center;font-size:14px}.fn-mb{height:10px;background:var(--bg,#F1F3F8);border-radius:6px;overflow:hidden}.fn-mb i{display:block;height:100%;background:#B42318;border-radius:6px}`; document.head.appendChild(st); })();
 </script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">

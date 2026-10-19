@@ -2513,5 +2513,106 @@ if (typeof vEmpresas === 'function') { const _ve = vEmpresas; vEmpresas = functi
 } catch (e) { console.warn(e); } }; }
 </script>
 
+<script>
+/* =====================================================================
+   MONITOR DO SISTEMA e DEPOIMENTOS DE CLIENTES
+   ===================================================================== */
+ICO.monitor = '<path d="M3 12h4l3-8 4 16 3-8h4"/>'; ICO.depo = '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>';
+{ const i = NAV.findIndex(n => n[0] === 'geral'); NAV.splice(i + 1, 0, ['monitor', 'Monitor do sistema']); const j = NAV.findIndex(n => n[0] === 'novid'); NAV.splice(j > -1 ? j + 1 : NAV.length - 1, 0, ['depo', 'Depoimentos']); }
+if (typeof go === 'function') { const _goA = go; go = function (v, m) { if (v === 'monitor' || v === 'depo') { A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open'); $('#t-view').textContent = (NAV.find(n => n[0] === v) || [])[1] || ''; const el = $('#view'); el.innerHTML = ''; (v === 'monitor' ? vMonitor : vDepo)(el); $('.content').scrollTop = 0; return; } return _goA.apply(this, arguments); }; }
+const quandoFoi = iso => { if (!iso) return '—'; const m = Math.round((Date.now() - Date.parse(iso)) / 60e3); return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(iso).toLocaleString('pt-BR'); };
+async function vMonitor(el) {
+  el.innerHTML = '<div class="panel empty">Carregando…</div>'; let d = {};
+  try { const s = await FB.db.doc('plataforma/monitor').get(); d = s.exists ? s.data() : {}; } catch (e) { el.innerHTML = `<div class="panel empty"><b>Não foi possível ler o monitor</b>${esc(e.message || e)}</div>`; return; }
+  const ch = d.checks || [], caidos = ch.filter(c => !c.ok), rs = d.resumoDiario, velho = d.em && Date.now() - Date.parse(d.em) > 30 * 60e3;
+  el.innerHTML = `<section class="panel" style="border-color:${!ch.length ? 'var(--line)' : caidos.length ? 'var(--bad)' : 'var(--ok)'}"><div class="row" style="gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">${!ch.length ? 'O monitor ainda não rodou' : caidos.length ? `${caidos.length} item(ns) com problema` : 'Tudo funcionando'}</h2><p class="hint" style="margin:0">${ch.length ? `Última verificação ${quandoFoi(d.em)}. O conector confere tudo a cada 10 minutos.` : 'Depois de atualizar o conector, a primeira verificação acontece em até 10 minutos. Ou clique em Verificar agora.'}${velho ? ' <b style="color:var(--bad)">A última verificação está atrasada: confira se o conector do Asaas está no ar.</b>' : ''}</p></div><button class="btn" id="mo-run">Verificar agora</button></div></section>
+    ${ch.length ? `<section class="panel"><ul class="list">${ch.map(c => `<li><span class="pill ${c.ok ? 'ok' : 'bad'}" style="min-width:86px;justify-content:center">${c.ok ? 'No ar' : 'Problema'}</span><div class="t"><div><b>${esc(c.nome)}</b>${c.url ? ` <span class="hint">${esc(c.url.replace(/^https:\/\//, ''))}</span>` : ''}</div><div>${esc(c.detalhe || '')}${c.ms != null ? ` · ${c.ms} ms` : ''}</div></div></li>`).join('')}</ul></section>` : ''}
+    <section class="panel"><h2 style="margin-bottom:8px">Ocorrências recentes</h2>${(d.historico || []).length ? `<ul class="list">${d.historico.slice().reverse().map(h => `<li><span class="pill ${h.ev === 'caiu' ? 'bad' : 'ok'}">${h.ev === 'caiu' ? 'Caiu' : 'Voltou'}</span><div class="t"><div><b>${esc(h.nome)}</b></div><div>${new Date(h.em).toLocaleString('pt-BR')}${h.detalhe ? ' · ' + esc(h.detalhe) : ''}</div></div></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhuma queda registrada.</p>'}</section>
+    <section class="panel"><h2 style="margin-bottom:4px">Resumo do dia para os clientes</h2><p class="hint" style="margin-top:0">Todo dia às 9h, o dono de cada empresa recebe no celular quem bateu o ponto ontem, faltas, atrasos e pedidos esperando.</p>${rs ? `<p style="margin:0">Último envio ${quandoFoi(rs.em)}: <b>${rs.enviados || 0}</b> aviso(s) para <b>${rs.empresas || 0}</b> empresa(s).${(rs.erros || []).length ? ` <span style="color:var(--bad)">${rs.erros.length} erro(s).</span>` : ''}</p>` : '<p class="hint" style="margin:0">Ainda não enviado.</p>'}<div class="row end" style="margin-top:10px"><button class="btn sec sm" id="mo-rs">Enviar o resumo agora</button></div></section>`;
+  $('#mo-run', el).onclick = async () => { const b = $('#mo-run', el); b.disabled = true; b.textContent = 'Verificando…'; try { await asaasCall('/api/monitor', {}); toast('Verificação concluída.'); vMonitor(el); } catch (e) { toast(e.message, true); b.disabled = false; b.textContent = 'Verificar agora'; } };
+  $('#mo-rs', el).onclick = async () => { const b = $('#mo-rs', el); b.disabled = true; try { const r = await asaasCall('/api/resumo', {}); toast(`${r.enviados || 0} aviso(s) para ${r.empresas || 0} empresa(s).`); vMonitor(el); } catch (e) { toast(e.message, true); b.disabled = false; } };
+}
+/* avisa na Visão geral quando algo caiu */
+if (typeof vGeral === 'function') { const _vg = vGeral; vGeral = function (el) { const r = _vg.apply(this, arguments); (async () => { try { const s = await FB.db.doc('plataforma/monitor').get(), d = s.exists ? s.data() : {}; const c = (d.checks || []).filter(x => !x.ok); if (!c.length || A.view !== 'geral' || $('#mo-al', el)) return;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="mo-al" style="border-color:var(--bad)"><div class="row" style="gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b style="color:var(--bad)">Atenção: ${c.map(x => esc(x.nome)).join(', ')} com problema</b><div class="hint">${esc(c[0].detalhe || '')} · verificado ${quandoFoi(d.em)}</div></div><button class="btn sec sm" id="mo-ver">Ver o monitor</button></div></section>`); $('#mo-ver', el).onclick = () => go('monitor'); } catch (e) { } })(); return r; }; }
+
+async function vDepo(el) {
+  el.innerHTML = '<div class="panel empty">Carregando…</div>'; let l = [], pub = '';
+  try { const [s, p] = await Promise.all([FB.db.collection('depoimentos').get(), FB.db.doc('plataforma/publico').get()]); l = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(b.em || '').localeCompare(a.em || '')); pub = String((p.exists && p.data().depoimentos) || ''); }
+  catch (e) { el.innerHTML = `<div class="panel empty"><b>Não foi possível carregar</b>${esc(e.message || e)}</div>`; return; }
+  const notas = l.filter(x => typeof x.nota === 'number'), prom = notas.filter(x => x.nota >= 9).length, det = notas.filter(x => x.nota <= 6).length, nps = notas.length ? Math.round((prom - det) * 100 / notas.length) : null;
+  const linhas = pub.split('\n').filter(x => x.trim()).length;
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Depoimentos de clientes</h2><p class="hint" style="margin:0">Depois de 3 semanas de uso, o dono de cada empresa recebe no NEXUM RH um pedido de avaliação. Quem dá nota alta pode deixar um depoimento e autorizar a publicação. Você revisa e publica no site com um clique.</p></div></div>
+      <div class="kpis" style="margin-top:14px"><div class="kpi"><b>${l.length}</b><span>respostas</span></div><div class="kpi"><b>${nps == null ? '—' : nps}</b><span>NPS (de −100 a 100)</span></div><div class="kpi"><b>${l.filter(x => x.autoriza && x.status === 'novo').length}</b><span>prontos para publicar</span></div><div class="kpi"><b>${linhas}</b><span>no site agora (até 6 aparecem)</span></div></div></section>
+    <section class="panel">${l.length ? `<ul class="list">${l.map(x => `<li style="align-items:flex-start"><span class="pill ${x.nota >= 9 ? 'ok' : x.nota <= 6 ? 'bad' : 'warn'}" style="min-width:52px;justify-content:center">${x.nota ?? '—'}</span><div class="t" style="flex:1"><div><b>${esc(x.nome || '')}</b>${x.cargo ? ', ' + esc(x.cargo) : ''} · ${esc(x.empresa || x.id)} <span class="hint">${x.em ? new Date(x.em).toLocaleDateString('pt-BR') : ''}</span></div>
+        ${x.texto ? `<textarea class="inp" data-dt="${x.id}" rows="2" style="margin-top:6px" ${x.autoriza ? '' : 'readonly'}>${esc(x.texto)}</textarea>` : ''}${x.melhorar ? `<div style="margin-top:6px"><b>O que melhorar:</b> ${esc(x.melhorar)}</div>` : ''}
+        <div class="hint" style="margin-top:4px">${x.autoriza ? 'Autorizou publicar com nome e empresa.' : 'Não autorizou publicar.'} ${x.status === 'publicado' ? '<b style="color:var(--ok)">Publicado no site.</b>' : x.status === 'arquivado' ? 'Arquivado.' : ''}</div></div>
+        <div class="row" style="flex-wrap:nowrap;gap:6px">${x.autoriza && x.status !== 'publicado' && x.texto ? `<button class="btn sm" data-dp="${x.id}">Publicar no site</button>` : ''}${x.status !== 'arquivado' ? `<button class="btn ghost sm" data-da="${x.id}">Arquivar</button>` : ''}</div></li>`).join('')}</ul>` : '<div class="empty"><b>Nenhuma resposta ainda</b>As avaliações aparecem aqui assim que os clientes responderem.</div>'}</section>`;
+  $$('[data-dp]', el).forEach(b => b.onclick = async () => { const x = l.find(y => y.id === b.dataset.dp), t = ($(`[data-dt="${x.id}"]`, el) || {}).value || x.texto, linha = `${String(t).replace(/[|\n]/g, ' ').trim()} | ${String(x.nome || '').replace(/[|\n]/g, ' ')}${x.cargo ? ', ' + String(x.cargo).replace(/[|\n]/g, ' ') : ''} | ${String(x.empresa || '').replace(/[|\n]/g, ' ')}`;
+    b.disabled = true; try { const novo = [linha, ...pub.split('\n').filter(y => y.trim())].slice(0, 12).join('\n');
+      await FB.db.doc('plataforma/publico').set({ depoimentos: novo }, { merge: true }); await FB.db.doc(`depoimentos/${x.id}`).update({ status: 'publicado', texto: t, publicadoEm: new Date().toISOString() });
+      toast('Publicado no site.'); vDepo(el); } catch (e) { toast(e.message, true); b.disabled = false; } });
+  $$('[data-da]', el).forEach(b => b.onclick = async () => { try { await FB.db.doc(`depoimentos/${b.dataset.da}`).update({ status: 'arquivado' }); vDepo(el); } catch (e) { toast(e.message, true); } });
+}
+</script>
+
+<script>
+/* =====================================================================
+   CANCELAMENTOS: motivo obrigatório (pedido pelo cliente no RH ou
+   registrado aqui para quem saiu sem avisar) e ranking dos motivos
+   ===================================================================== */
+const MOTIVOS_CANC_ADM = ['O preço ficou alto para nós', 'Não tivemos tempo de implantar', 'Faltou um recurso que precisamos', 'Achei difícil de usar', 'Fechei ou vendi a empresa', 'Vamos usar outro sistema', 'Outro motivo'];
+ICO.canc = '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/><path d="M8 12h8"/>';
+{ const i = NAV.findIndex(n => n[0] === 'saude'); NAV.splice(i > -1 ? i + 1 : 2, 0, ['canc', 'Cancelamentos']); }
+if (typeof go === 'function') { const _goC = go; go = function (v) { if (v === 'canc') { A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open'); $('#t-view').textContent = 'Cancelamentos'; const el = $('#view'); el.innerHTML = ''; vCanc(el); $('.content').scrollTop = 0; return; } return _goC.apply(this, arguments); }; }
+async function lerCanc() { try { return (await FB.db.collection('cancelamentos').get()).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { return []; } }
+const saiuSemMotivo = l => A.tenants.filter(t => !t.trial && !t.bloqueado && (() => { const s = situacao(t); return s.k === 'vencido' && s.d <= -15; })() && !l.some(c => c.id === t.id));
+async function vCanc(el) {
+  el.innerHTML = '<div class="panel empty">Carregando…</div>'; const l = await lerCanc(), sem = saiuSemMotivo(l), ped = l.filter(c => c.status === 'pedido'), contam = l.filter(c => ['pedido', 'saiu'].includes(c.status));
+  const rank = MOTIVOS_CANC_ADM.map(m => [m, contam.filter(c => c.motivo === m).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]), max = Math.max(1, ...rank.map(x => x[1]));
+  el.innerHTML = `<section class="panel"><h2 style="margin:0 0 4px">Por que os clientes saem</h2><p class="hint" style="margin:0 0 12px">Todo cancelamento tem motivo: o cliente informa ao cancelar no NEXUM RH, e quem sai sem avisar precisa ter o motivo registrado aqui.</p>
+      ${rank.length ? `<div class="cn-r">${rank.map(([m, n]) => `<div><span>${esc(m)}</span><i style="width:${Math.round(n / max * 100)}%"></i><b>${n}</b></div>`).join('')}</div>` : '<p class="hint" style="margin:0">Nenhum cancelamento registrado ainda.</p>'}</section>
+    ${sem.length ? `<section class="panel" style="border-color:var(--bad)"><h2 style="margin:0 0 4px">Saíram sem motivo registrado (${sem.length})</h2><p class="hint" style="margin:0 0 10px">Venceram há mais de 15 dias e não renovaram. Ligue, descubra o motivo e registre.</p><ul class="list">${sem.map(t => `<li style="flex-wrap:wrap"><div class="t" style="min-width:200px"><div><b>${esc(t.nome)}</b></div><div>venceu em ${fd(t.expira)}${t.telefone ? ' · ' + esc(t.telefone) : ''}</div></div>
+        <select class="inp" data-cm="${t.id}" style="width:auto;max-width:260px"><option value="">Motivo…</option>${MOTIVOS_CANC_ADM.map(m => `<option>${esc(m)}</option>`).join('')}</select><input class="inp" data-cd="${t.id}" placeholder="Detalhe (opcional)" style="flex:1;min-width:160px"><button class="btn sm" data-cs="${t.id}">Registrar</button></li>`).join('')}</ul></section>` : ''}
+    <section class="panel"><h2 style="margin:0 0 8px">Pedidos de cancelamento</h2>${ped.length ? `<ul class="list">${ped.map(c => { const t = A.tenants.find(x => x.id === c.id) || {}; return `<li><div class="t"><div><b>${esc(c.empresa || t.nome || c.id)}</b> · ${esc(c.motivo)}</div><div>${c.detalhe ? esc(c.detalhe) + ' · ' : ''}pedido em ${fd(String(c.em).slice(0, 10))} · usa até ${fd(c.expira || t.expira)}</div></div>${t.telefone ? `<a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/55${String(t.telefone).replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Aqui é da NEXUM. Vi que vocês pediram o cancelamento (${c.motivo.toLowerCase()}). Posso entender melhor e ver se conseguimos resolver?`)}">Tentar reverter</a>` : ''}</li>`; }).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhum pedido aberto.</p>'}</section>
+    ${l.filter(c => c.status === 'desistiu').length ? `<p class="hint">${l.filter(c => c.status === 'desistiu').length} cliente(s) pediram para cancelar e desistiram.</p>` : ''}`;
+  $$('[data-cs]', el).forEach(b => b.onclick = async () => { const id = b.dataset.cs, m = $(`[data-cm="${id}"]`, el).value, d = $(`[data-cd="${id}"]`, el).value.trim(), t = A.tenants.find(x => x.id === id); if (!m) return toast('Escolha o motivo.', true);
+    try { await FB.db.doc(`cancelamentos/${id}`).set({ tid: id, empresa: t.nome, motivo: m, detalhe: d.slice(0, 600), em: new Date().toISOString(), por: (FB.auth.currentUser || {}).email || '', expira: t.expira, status: 'saiu', origem: 'adm' }); toast('Motivo registrado.'); vCanc(el); } catch (e) { toast(e.message, true); } });
+}
+if (typeof vGeral === 'function') { const _vgC = vGeral; vGeral = function (el) { const r = _vgC.apply(this, arguments); (async () => { try { const l = await lerCanc(), sem = saiuSemMotivo(l), ped = l.filter(c => c.status === 'pedido');
+  let sd = {}; try { const s = await FB.db.doc('plataforma/saude').get(); sd = s.exists ? s.data() : {}; } catch (e) { }
+  const esf = (sd.esfriando || []).length; if (A.view !== 'geral' || $('#cn-al', el) || (!sem.length && !ped.length && !esf)) return;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="cn-al" style="border-color:var(--warn)"><div class="row" style="gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:220px">${esf ? `<div><b>${esf} cliente(s) esfriando:</b> uso do sistema caiu. Ligue antes da renovação.</div>` : ''}${ped.length ? `<div><b>${ped.length} pedido(s) de cancelamento</b> aberto(s).</div>` : ''}${sem.length ? `<div><b style="color:var(--bad)">${sem.length} cliente(s) saíram sem motivo registrado.</b> O motivo é obrigatório.</div>` : ''}</div>${esf ? '<button class="btn sec sm" id="cn-sd">Ver saúde</button>' : ''}${sem.length || ped.length ? '<button class="btn sm" id="cn-go">Ver cancelamentos</button>' : ''}</div></section>`);
+  const g1 = $('#cn-go', el); if (g1) g1.onclick = () => go('canc'); const g2 = $('#cn-sd', el); if (g2) g2.onclick = () => go('saude'); } catch (e) { } })(); return r; }; }
+document.head.insertAdjacentHTML('beforeend', '<style>.cn-r{display:grid;gap:8px}.cn-r div{display:grid;grid-template-columns:minmax(160px,260px) 1fr 40px;gap:10px;align-items:center}.cn-r i{display:block;height:12px;border-radius:6px;background:var(--pri,#1F5FE8)}.cn-r b{text-align:right;font-variant-numeric:tabular-nums}@media(max-width:600px){.cn-r div{grid-template-columns:1fr 40px}.cn-r i{grid-column:1/-1;order:3}}</style>');
+</script>
+
+<script>
+/* =====================================================================
+   LOTE 26 (Painel do Dono): previsão de receita do mês.
+   Junta o que já entrou, as renovações que faltam (com o risco de cada
+   cliente) e os testes grátis que terminam no mês.
+   ===================================================================== */
+async function painelPrevisao(el) {
+  if (!el || $('#pv-rec', el)) return; const h = hoje(), mes = iso(h).slice(0, 7), fim = iso(new Date(h.getFullYear(), h.getMonth() + 1, 0)), hj = iso(h);
+  const sec = document.createElement('section'); sec.className = 'panel'; sec.id = 'pv-rec'; sec.innerHTML = '<h2 style="margin:0">Previsão de receita do mês</h2><p class="hint">Calculando…</p>'; el.prepend(sec);
+  let saude = {}, canc = []; try { const s = await FB.db.doc('plataforma/saude').get(); saude = s.exists ? s.data() : {}; } catch (e) { }
+  try { canc = (await FB.db.collection('cancelamentos').get()).docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.status === 'pedido'); } catch (e) { }
+  const ts = A.tenants || [], esfr = new Set((saude.esfriando || []).map(x => x.tid || x.id || x)), pedido = new Set(canc.map(c => c.tid || c.id));
+  const preco = t => ((PLANOS[t.plano] || {}).preco || 0) + (t.recrutamento ? 289 : 0);
+  const recebido = (A.pag || []).filter(p => (p.data || '').startsWith(mes)).reduce((s, p) => s + num(p.valor), 0);
+  const renov = ts.filter(t => !t.trial && !t.bloqueado && t.expira >= hj && t.expira <= fim).map(t => { const risco = pedido.has(t.id) ? 1 : esfr.has(t.id) ? 0.5 : 0.05; return { t, v: preco(t), p: 1 - risco, risco, motivo: pedido.has(t.id) ? 'pediu cancelamento' : esfr.has(t.id) ? 'uso caindo' : '' }; });
+  const novos = ts.filter(t => (t.criadoEm || '') >= iso(addD(h, -90))), conv = novos.length >= 5 ? novos.filter(t => !t.trial).length / novos.length : 0.3;
+  const testes = ts.filter(t => t.trial && t.expira >= hj && t.expira <= fim).map(t => ({ t, v: preco(t) || (PLANOS.essencial || {}).preco || 99, p: conv }));
+  const espRen = renov.reduce((s, x) => s + x.v * x.p, 0), espTes = testes.reduce((s, x) => s + x.v * x.p, 0), prev = recebido + espRen + espTes;
+  const otim = recebido + renov.reduce((s, x) => s + (x.risco === 1 ? 0 : x.v), 0) + testes.reduce((s, x) => s + x.v, 0), pess = recebido + renov.filter(x => !x.motivo).reduce((s, x) => s + x.v, 0);
+  const risco = renov.filter(x => x.motivo).sort((a, b) => b.v - a.v);
+  const kpi = (v, t, s) => `<div class="kpi"><b>${v}</b><span>${t}</span>${s ? `<small class="hint" style="display:block">${s}</small>` : ''}</div>`;
+  sec.innerHTML = `<h2 style="margin:0 0 4px">Previsão de receita de ${new Date(h.getFullYear(), h.getMonth(), 1).toLocaleDateString('pt-BR', { month: 'long' })}</h2><p class="hint" style="margin:0 0 12px">O que já entrou, mais o que deve entrar até o fim do mês. Atualiza sozinha com a saúde dos clientes e os pedidos de cancelamento.</p>
+    <div class="kpis" style="margin-bottom:12px">${kpi(brl(prev), 'previsão para o mês', `entre ${brl(pess)} e ${brl(otim)}`)}${kpi(brl(recebido), 'já recebido')}${kpi(brl(espRen), `${renov.length} renovação(ões) a vencer`, risco.length ? `${risco.length} com risco` : 'nenhuma com risco')}${kpi(brl(espTes), `${testes.length} teste(s) terminando`, `conversão de ${Math.round(conv * 100)}% nos últimos 90 dias`)}</div>
+    ${risco.length ? `<h3 style="margin:6px 0 6px;font-size:15px">Renovações em risco: ligue antes do vencimento</h3><ul class="list">${risco.map(x => `<li><div class="t"><div><b>${esc(x.t.nome || x.t.id)}</b> · ${brl(x.v)}/mês</div><div>Vence em ${fd(x.t.expira)} · ${esc(x.motivo)}</div></div><span class="pill ${x.risco === 1 ? 'bad' : 'warn'}">${x.risco === 1 ? 'cancelando' : 'esfriando'}</span></li>`).join('')}</ul>` : ''}`;
+}
+if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el) { const r = await _vnPv.apply(this, arguments); try { await painelPrevisao(el); } catch (e) { console.warn(e); } return r; }; }
+</script>
 </body>
 </html>
