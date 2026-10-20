@@ -2777,6 +2777,70 @@ if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    TREINAMENTO DOS CLIENTES: quem já assistiu todas as videoaulas,
@@ -3250,5 +3314,137 @@ setTimeout(() => { try { if (A.user && document.querySelector('.side .nav')) { a
 setInterval(() => { try { menuBadges(); } catch (e) { } }, 3000);
 </script>
 
+<script>
+/* =====================================================================
+   LOTE 36 (Painel do Dono): meta de vendas do mês e ranking comercial,
+   oportunidades de upgrade, NPS dos clientes (a cada 3 meses) e a ficha
+   do cliente com tudo junto (uso, opinião, conversas e cobranças).
+   ===================================================================== */
+(function () { const st = document.createElement('style'); st.textContent = `.mt36-bar{height:14px;border-radius:7px;background:var(--line);overflow:hidden;position:relative;margin:8px 0 4px}.mt36-bar i{display:block;height:100%;background:linear-gradient(90deg,#1F5FE8,#22C55E);border-radius:7px}.mt36-bar em{position:absolute;top:-3px;width:2px;height:20px;background:#0B1B3F;opacity:.5}
+.mt36-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.mt36-pod{display:flex;gap:10px;align-items:flex-end;justify-content:center;margin:6px 0 14px}.mt36-pod div{flex:0 1 150px;text-align:center;border-radius:12px 12px 0 0;padding:10px 8px;background:var(--bg2,#F2F5FB);border:1px solid var(--line)}.mt36-pod b{display:block;font-size:15px}.mt36-pod span{font-size:12.5px;color:var(--mut)}
+.up36 .sn{display:flex;flex-direction:column;gap:3px}.up36 .sn span{font-size:12.5px}.nps36-k{font-size:44px;font-weight:800;line-height:1}.nps36-q{display:flex;gap:12px;align-items:flex-end;height:90px;margin-top:6px}.nps36-q div{flex:1;text-align:center;font-size:12px;color:var(--mut)}.nps36-q i{display:block;margin:0 auto 4px;width:70%;border-radius:6px 6px 0 0;background:#1F5FE8}
+.fu36 .k{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.fu36 .k div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.fu36 .k b{font-size:18px;display:block}`; document.head.appendChild(st); })();
+try {
+  [['metas', 'Metas e ranking'], ['upgrade', 'Oportunidades de upgrade'], ['nps', 'NPS dos clientes']].forEach(([k, t]) => { if (!NAV.some(n => n[0] === k)) { const i = NAV.findIndex(n => n[0] === 'leads'); NAV.splice(i >= 0 ? i : NAV.length, 0, [k, t]); } });
+  const gv = MENU_GRUPOS.find(g => g[0] === 'VENDAS E DIVULGAÇÃO'), gc = MENU_GRUPOS.find(g => g[0] === 'CLIENTES');
+  if (gv) ['metas', 'upgrade'].forEach(k => !gv[1].includes(k) && gv[1].unshift(k)); if (gc && !gc[1].includes('nps')) gc[1].splice(2, 0, 'nps');
+  if (PAPEL_NX.comercial) PAPEL_NX.comercial[1].push('upgrade', 'nps'); if (PAPEL_NX.financeiro) PAPEL_NX.financeiro[1].push('metas'); if (PAPEL_NX.suporte) PAPEL_NX.suporte[1].push('nps');
+} catch (e) { console.warn(e); }
+setTimeout(() => { try { if (A.user && document.getElementById('view') && !document.querySelector('.side .nav button[data-v="metas"]') && podeVer('metas')) renderApp(); } catch (e) { } }, 0);
+{ const _go36 = go; go = function (v, ms) { const V = { metas: [vMetas36, 'Metas e ranking'], upgrade: [vUpgrade36, 'Oportunidades de upgrade'], nps: [vNps36, 'NPS dos clientes'] }[v];
+  if (V && podeVer(v)) { A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open'); $('#t-view').textContent = V[1]; const el = $('#view'); el.innerHTML = '<div class="panel empty">Carregando…</div>'; Promise.resolve(V[0](el)).catch(e => { el.innerHTML = `<div class="panel empty"><b>Não foi possível carregar</b>${esc(e.code || e.message || e)}</div>`; }); $('.content').scrollTop = 0; try { const g = menuGrupoDe(v); if (g) abrirGrupoMenu(g, true); } catch (e) { } return; }
+  return _go36(v, ms); }; }
+const m36Mes = d => (d || new Date().toISOString()).slice(0, 7), m36Pago = c => ['RECEIVED', 'CONFIRMED'].includes(c.status) && c.pagoEm;
+const m36Nome = e => !e || e === 'site' ? 'Site (automático)' : nomeDe(String(e).toLowerCase());
+async function m36Cob() { if (Array.isArray(A.cob)) return A.cob; const s = await FB.db.collection('cobrancas').get(); A.cob = s.docs.map(d => ({ id: d.id, ...d.data() })); return A.cob; }
+/* venda nova = primeiro pagamento da empresa; os seguintes são renovação */
+function m36Vendas(cob, mes) {
+  const pagas = cob.filter(m36Pago).sort((a, b) => String(a.pagoEm).localeCompare(String(b.pagoEm))), prim = {};
+  (A.pag || []).forEach(p => { if (p.tid && !/^asaas_/.test(p.id) && p.data) prim[p.tid] = !prim[p.tid] || p.data < prim[p.tid] ? p.data : prim[p.tid]; });
+  const out = []; pagas.forEach(c => { const tid = c.tid || ''; const nova = !!tid && !(prim[tid] && prim[tid] < c.pagoEm); if (tid && (!prim[tid] || c.pagoEm < prim[tid])) prim[tid] = c.pagoEm; if (String(c.pagoEm).slice(0, 7) === mes) out.push({ ...c, nova: nova && !(c.tipo === 'ass' && c.assinatura && pagas.some(x => x !== c && x.assinatura === c.assinatura && x.pagoEm < c.pagoEm)), quem: c.tipo === 'ass' && !c.por ? 'site' : (c.por || 'site') }); });
+  return out;
+}
+async function vMetas36(el) {
+  const mes = A.m36Mes || m36Mes(), cob = await m36Cob(), cfgDoc = await FB.db.doc('plataforma/metasVendas').get().catch(() => null), cfgAll = (cfgDoc && cfgDoc.exists && cfgDoc.data()) || {}, meta = cfgAll[mes] || cfgAll.padrao || { qtd: 10, valor: 3000, pct: 10 };
+  const v = m36Vendas(cob, mes), novas = v.filter(x => x.nova), renov = v.filter(x => !x.nova), soma = l => l.reduce((s, x) => s + (+x.valor || 0), 0), [ano, mm] = mes.split('-').map(Number);
+  const diasMes = new Date(ano, mm, 0).getDate(), hojeMes = m36Mes() === mes ? new Date().getDate() : diasMes, proj = hojeMes ? Math.round(novas.length / hojeMes * diasMes) : novas.length, pctQ = meta.qtd ? Math.min(100, Math.round(novas.length / meta.qtd * 100)) : 0, pctV = meta.valor ? Math.min(100, Math.round(soma(novas) / meta.valor * 100)) : 0, marcador = Math.round(hojeMes / diasMes * 100);
+  const por = {}; v.forEach(x => { const k = x.quem === 'site' ? 'site' : String(x.quem).toLowerCase(); const p = por[k] = por[k] || { k, nome: m36Nome(k), qtd: 0, valor: 0, renov: 0, renovV: 0 }; if (x.nova) { p.qtd++; p.valor += +x.valor || 0; } else { p.renov++; p.renovV += +x.valor || 0; } });
+  const pess = Object.values(por).filter(p => p.k !== 'site').sort((a, b) => b.qtd - a.qtd || b.valor - a.valor), site = por.site, pct = +meta.pct || 0, top = pess.filter(p => p.qtd).slice(0, 3);
+  const meses = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); return d.toISOString().slice(0, 7); });
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Meta de vendas e ranking comercial</h2><p class="hint" style="margin:0">Vendas novas = primeiro pagamento de uma empresa. Quem gerou o link de pagamento no CRM ou no Painel leva a venda; o que entra sozinho pelo site fica à parte.</p></div>
+      <select class="inp" id="m36-m" style="width:auto">${opts(meses.map(m => [m, new Date(m + '-15').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })]), mes)}</select>${papelAtual() === 'dono' ? '<button class="btn sec" id="m36-cfg">Definir meta</button>' : ''}</div></section>
+    <div class="mt36-g"><section class="panel"><span class="hint">Vendas novas</span><div style="font-size:30px;font-weight:800">${novas.length} <span class="hint" style="font-size:15px;font-weight:600">de ${meta.qtd || '—'}</span></div><div class="mt36-bar" title="Linha: onde deveria estar hoje"><i style="width:${pctQ}%"></i>${m36Mes() === mes ? `<em style="left:${marcador}%"></em>` : ''}</div><span class="hint">${pctQ}% da meta${m36Mes() === mes ? ` · no ritmo atual, fecha o mês com <b>${proj}</b>` : ''}</span></section>
+      <section class="panel"><span class="hint">Valor em vendas novas</span><div style="font-size:30px;font-weight:800">${brl(soma(novas))}</div><div class="mt36-bar"><i style="width:${pctV}%"></i>${m36Mes() === mes ? `<em style="left:${marcador}%"></em>` : ''}</div><span class="hint">${pctV}% de ${brl(meta.valor || 0)}</span></section>
+      <section class="panel"><span class="hint">Renovações recebidas</span><div style="font-size:30px;font-weight:800">${brl(soma(renov))}</div><span class="hint">${renov.length} pagamento(s) de quem já era cliente</span></section></div>
+    <section class="panel"><h2 style="margin:0 0 8px">Ranking do mês</h2>${top.length ? `<div class="mt36-pod">${[top[1], top[0], top[2]].map((p, i) => p ? `<div style="height:${[70, 96, 56][i]}px"><b>${['🥈', '🥇', '🥉'][i]} ${esc(String(p.nome).split(' ')[0])}</b><span>${p.qtd} venda(s)</span></div>` : '').join('')}</div>` : ''}
+      ${pess.length || site ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Pessoa</th><th class="n">Vendas novas</th><th class="n">Valor</th><th class="n">Renovações</th>${pct ? `<th class="n">Comissão (${pct}% das vendas novas)</th>` : ''}</tr></thead><tbody>${pess.map((p, i) => `<tr><td>${i + 1}</td><td><b>${esc(p.nome)}</b></td><td class="n">${p.qtd}</td><td class="n">${brl(p.valor)}</td><td class="n">${p.renov ? `${p.renov} · ${brl(p.renovV)}` : '—'}</td>${pct ? `<td class="n"><b>${brl(p.valor * pct / 100)}</b></td>` : ''}</tr>`).join('')}
+        ${site ? `<tr style="opacity:.75"><td>—</td><td>Site (automático)</td><td class="n">${site.qtd}</td><td class="n">${brl(site.valor)}</td><td class="n">${site.renov ? `${site.renov} · ${brl(site.renovV)}` : '—'}</td>${pct ? '<td class="n">—</td>' : ''}</tr>` : ''}</tbody></table></div>` : '<p class="hint" style="margin:0">Nenhuma venda paga neste mês ainda.</p>'}</section>
+    <section class="panel"><h2 style="margin:0 0 8px">Vendas novas do mês</h2>${novas.length ? `<ul class="list">${novas.slice().reverse().map(x => `<li><div class="t"><div><b>${esc(x.empresa || x.nome || x.tid)}</b> · ${esc((PLANOS[x.plano] || {}).nome || x.plano || '')}</div><div>${fd(x.pagoEm)} · ${esc(m36Nome(x.quem))} · ${esc(x.forma || '')}</div></div><b>${brl(x.valor)}</b></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhuma ainda.</p>'}</section>`;
+  $('#m36-m', el).onchange = e => { A.m36Mes = e.target.value; vMetas36(el); };
+  const bc = $('#m36-cfg', el); if (bc) bc.onclick = () => modal('Meta do mês', `<div class="grid"><div class="fld"><label for="m36-q">Vendas novas</label><input class="inp" type="number" min="0" id="m36-q" value="${meta.qtd || 0}"></div><div class="fld"><label for="m36-v">Valor em vendas novas (R$)</label><input class="inp" type="number" min="0" id="m36-v" value="${meta.valor || 0}"></div><div class="fld full"><label for="m36-p">Comissão da equipe sobre o valor da venda nova (%)</label><input class="inp" type="number" min="0" max="100" step="0.5" id="m36-p" value="${meta.pct || 0}"><span class="hint">0 = não mostrar comissão.</span></div></div><label class="row hint" style="gap:8px"><input type="checkbox" id="m36-pd" checked> Usar também nos próximos meses</label>`, {
+    foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="m36-ok">Salvar</button>', onMount: m => $('#m36-ok', m).onclick = async () => { const d = { qtd: +$('#m36-q', m).value || 0, valor: +$('#m36-v', m).value || 0, pct: +$('#m36-p', m).value || 0 };
+      try { await FB.db.doc('plataforma/metasVendas').set({ [mes]: d, ...($('#m36-pd', m).checked ? { padrao: d } : {}) }, { merge: true }); closeModal(); toast('Meta salva.'); vMetas36(el); } catch (e) { toast(e.code || e.message, true); } } });
+  /* resumo para a equipe ver na Minha central (sem valores de comissão de outras pessoas) */
+  if (mes === m36Mes()) FB.db.doc('plataforma/vendasEquipe').set({ mes, meta: { qtd: meta.qtd || 0 }, feitas: novas.length, projecao: proj, ranking: pess.filter(p => p.qtd).slice(0, 10).map(p => ({ email: p.k, nome: String(p.nome).split(' ')[0], qtd: p.qtd })), site: site ? site.qtd : 0, em: new Date().toISOString() }).catch(() => { });
+}
+/* equipe: progresso da meta na Minha central */
+if (typeof vCentral === 'function') { const _vc36 = vCentral; vCentral = async function (el) { const r = await _vc36.apply(this, arguments); try { const s = await FB.db.doc('plataforma/vendasEquipe').get(); if (!s.exists || $('#mt36c', el)) return r; const d = s.data(); if (d.mes !== m36Mes()) return r;
+  const eu = String(emailEu() || '').toLowerCase(), pos = (d.ranking || []).findIndex(x => x.email === eu), pc = d.meta.qtd ? Math.min(100, Math.round(d.feitas / d.meta.qtd * 100)) : 0;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="mt36c"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:220px"><h2 style="margin:0 0 4px">Meta de vendas do mês</h2><p class="hint" style="margin:0">${d.feitas} de ${d.meta.qtd} vendas novas · no ritmo atual, ${d.projecao}${pos > -1 ? ` · você está em <b>${pos + 1}º lugar</b> com ${d.ranking[pos].qtd} venda(s)` : ''}</p></div></div><div class="mt36-bar"><i style="width:${pc}%"></i></div>
+    ${(d.ranking || []).length ? `<p class="hint" style="margin:6px 0 0">${d.ranking.slice(0, 5).map((x, i) => `${['🥇', '🥈', '🥉'][i] || i + 1 + 'º'} ${esc(x.nome)} (${x.qtd})`).join(' · ')}</p>` : ''}</section>`); } catch (e) { } return r; }; }
+
+/* =================== Oportunidades de upgrade =================== */
+const UP36_ORD = ['essencial', 'profissional', 'empresa'];
+function up36Sinais(t, h) {
+  const p = PLANOS[t.plano] || {}, s = situacao(t), out = [], prox = UP36_ORD[UP36_ORD.indexOf(t.plano) + 1], col = h && h.colab != null ? h.colab : null;
+  if (col != null && p.limite && p.limite < 99999) { if (col > p.limite) out.push({ peso: 3, tipo: 'plano', para: prox, txt: `Acima do limite: ${col} funcionários no plano de até ${p.limite}` }); else if (col >= Math.ceil(p.limite * .8)) out.push({ peso: 2, tipo: 'plano', para: prox, txt: `Perto do limite: ${col} de ${p.limite} funcionários` }); }
+  if (t.trial && s.k === 'teste' && s.d <= 5 && h && h.s >= 60) { const ideal = col > 50 ? 'empresa' : col > 10 ? 'profissional' : 'essencial'; out.push({ peso: 3, tipo: 'assinar', para: ideal, txt: `Teste bem usado (saúde ${h.s}) e termina em ${Math.max(0, s.d)} dia(s)` }); }
+  if (!t.trial && !t.recrutamento && col >= 20) out.push({ peso: 1, tipo: 'rs', txt: `${col} funcionários e sem o Recrutamento: empresas desse tamanho contratam todo mês` });
+  const pags = (A.pag || []).filter(p => p.tid === t.id), mensais = pags.filter(p => +p.meses === 1).length, longos = pags.some(p => +p.meses >= 6);
+  if (!t.trial && mensais >= 3 && !longos) out.push({ peso: 1, tipo: 'anual', txt: `Paga mês a mês há ${mensais} meses: ofereça 6 ou 12 meses de uma vez` });
+  return out;
+}
+function up36Msg(t, x) {
+  const nm = (PLANOS[x.para] || {}).nome || '';
+  return x.tipo === 'plano' ? `Olá! Aqui é da NEXUM. Vi que a ${t.nome} cresceu: já são mais funcionários do que o plano atual comporta. Posso te mostrar o plano ${nm}? Ele libera mais funcionários e mais recursos, e a mudança é na hora, sem perder nada.`
+    : x.tipo === 'assinar' ? `Olá! Aqui é da NEXUM. Vi que a equipe da ${t.nome} está usando bem o sistema no teste grátis. Para não parar nada quando o teste acabar, posso te mandar o link do plano ${nm}?`
+    : x.tipo === 'rs' ? `Olá! Aqui é da NEXUM. Com a equipe do tamanho da ${t.nome}, o NEXUM Recrutamento costuma economizar muitas horas: vaga com link, triagem automática e o aprovado já vira admissão no RH. Quer ver em 10 minutos?`
+    : `Olá! Aqui é da NEXUM. Para a ${t.nome} não precisar pagar todo mês, dá para renovar 6 ou 12 meses de uma vez. Quer que eu te mande a proposta?`;
+}
+async function vUpgrade36(el) {
+  const ts = A.tenants.filter(t => !t.bloqueado && !t.suspenso && ['ativo', 'teste'].includes(situacao(t).k)); A.saude = A.saude || {};
+  el.innerHTML = `<section class="panel"><h2 style="margin:0 0 4px">Oportunidades de upgrade</h2><p class="hint" style="margin:0">Clientes que já precisam de mais: perto do limite de funcionários, teste bem usado terminando, empresas grandes sem o Recrutamento e quem paga mês a mês há tempo.</p><p class="hint" id="up36-p" style="margin:8px 0 0">Medindo o uso de ${ts.length} empresa(s)…</p></section><div id="up36-b"></div>`;
+  let n = 0; for (const t of ts) { if (!A.saude[t.id] || Date.now() - A.saude[t.id].em > 30 * 60000) { try { A.saude[t.id] = await medirSaude(t); } catch (e) { A.saude[t.id] = { s: 0, f: [], em: Date.now() }; } } n++; const p = $('#up36-p', el); if (p) p.textContent = `Medindo o uso: ${n} de ${ts.length}…`; if (A.view !== 'upgrade') return; }
+  const l = ts.map(t => ({ t, h: A.saude[t.id], s: up36Sinais(t, A.saude[t.id]) })).filter(x => x.s.length).sort((a, b) => Math.max(...b.s.map(x => x.peso)) - Math.max(...a.s.map(x => x.peso)));
+  const ganho = l.reduce((s, x) => { const pl = x.s.find(y => y.para && y.tipo === 'plano'); return s + (pl ? ((PLANOS[pl.para] || {}).preco || 0) - ((PLANOS[x.t.plano] || {}).preco || 0) : 0); }, 0);
+  const pp = $('#up36-p', el); if (pp) pp.innerHTML = `<b>${l.length}</b> oportunidade(s)${ganho ? ` · potencial de <b>${brl(ganho)}/mês</b> só com troca de plano` : ''}.`;
+  $('#up36-b', el).innerHTML = l.length ? `<section class="panel up36"><div class="tbl-wrap"><table><thead><tr><th>Empresa</th><th>Plano</th><th>O que vimos</th><th>Sugestão</th><th></th></tr></thead><tbody>${l.map(x => { const top = x.s.slice().sort((a, b) => b.peso - a.peso)[0], tel = soDig(x.t.telefone);
+    return `<tr><td><b>${esc(x.t.nome)}</b><div class="hint">${x.t.trial ? 'Teste grátis' : situacao(x.t).rot}</div></td><td>${esc((PLANOS[x.t.plano] || {}).nome || x.t.plano || '')}</td><td><div class="sn">${x.s.map(y => `<span>• ${esc(y.txt)}</span>`).join('')}</div></td><td>${top.para ? `<b>${esc(PLANOS[top.para].nome)}</b><div class="hint">+${brl(PLANOS[top.para].preco - ((PLANOS[x.t.plano] || {}).preco || 0))}/mês</div>` : top.tipo === 'rs' ? '<b>Recrutamento</b>' : '<b>6 ou 12 meses</b>'}</td>
+      <td class="n" style="white-space:nowrap">${tel.length >= 10 ? `<a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(up36Msg(x.t, top))}">WhatsApp</a> ` : ''}<button class="btn ghost sm" data-up="${x.t.id}">Ficha</button></td></tr>`; }).join('')}</tbody></table></div></section>` : '<div class="panel empty"><b>Nenhuma oportunidade agora</b>Ninguém perto do limite do plano nem com teste terminando bem usado.</div>';
+  $$('[data-up]', el).forEach(b => b.onclick = () => detalhes(tById(b.dataset.up)));
+}
+
+/* =================== NPS dos clientes =================== */
+async function n36Dados() {
+  const [n, d, tr] = await Promise.all([FB.db.collection('nps').get().then(s => s.docs.map(x => ({ id: x.id, fonte: 'nps', ...x.data() }))).catch(() => []), FB.db.collection('depoimentos').get().then(s => s.docs.map(x => ({ id: 'dep_' + x.id, fonte: 'dep', ...x.data(), comentario: x.data().melhorar || x.data().texto || '' }))).catch(() => []), FB.db.collection('npsTrat').get().then(s => Object.fromEntries(s.docs.map(x => [x.id, x.data()]))).catch(() => ({}))]);
+  return { l: [...n, ...d].filter(x => typeof x.nota === 'number' && x.em).sort((a, b) => String(b.em).localeCompare(String(a.em))), tr };
+}
+const n36Calc = l => { const p = l.filter(x => x.nota >= 9).length, d = l.filter(x => x.nota <= 6).length; return { n: l.length, p, d, ne: l.length - p - d, nps: l.length ? Math.round((p - d) * 100 / l.length) : null }; };
+async function vNps36(el) {
+  const { l, tr } = await n36Dados(), jan = A.n36Jan || 90, ini = jan ? new Date(Date.now() - jan * 864e5).toISOString() : '';
+  const ult = {}; l.forEach(x => { if (!ult[x.tid]) ult[x.tid] = x; }); const atual = Object.values(ult).filter(x => !ini || x.em >= ini), k = n36Calc(atual);
+  const tris = Array.from({ length: 4 }, (_, i) => { const d = new Date(); d.setMonth(d.getMonth() - i * 3); const q = Math.floor(d.getMonth() / 3); const a = new Date(d.getFullYear(), q * 3, 1).toISOString(), b = new Date(d.getFullYear(), q * 3 + 3, 1).toISOString(); return { r: `${q + 1}º tri ${String(d.getFullYear()).slice(2)}`, c: n36Calc(l.filter(x => x.em >= a && x.em < b)) }; }).reverse();
+  const det = atual.filter(x => x.nota <= 6 && !tr[x.id]), prom = atual.filter(x => x.nota >= 9), cor = k.nps == null ? 'inherit' : k.nps >= 50 ? 'var(--ok)' : k.nps >= 0 ? '#D97706' : 'var(--bad)', telDe = tid => soDig((tById(tid) || {}).telefone);
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">NPS dos clientes</h2><p class="hint" style="margin:0">O dono de cada empresa responde aos 21 dias de uso e depois a cada 3 meses, dentro do NEXUM RH. Conta a última resposta de cada empresa.</p></div><select class="inp" id="n36-j" style="width:auto">${opts([[90, 'Últimos 90 dias'], [365, 'Últimos 12 meses'], [0, 'Desde o início']], jan)}</select></div></section>
+    <div class="mt36-g"><section class="panel"><span class="hint">NPS (de −100 a 100)</span><div class="nps36-k" style="color:${cor}">${k.nps == null ? '—' : k.nps}</div><span class="hint">${k.n} empresa(s) responderam</span></section>
+      <section class="panel"><span class="hint">Respostas</span><p style="margin:6px 0 0"><b style="color:var(--ok)">${k.p}</b> promotores (9 e 10) · <b>${k.ne}</b> neutros (7 e 8) · <b style="color:var(--bad)">${k.d}</b> detratores (0 a 6)</p></section>
+      <section class="panel"><span class="hint">Por trimestre</span><div class="nps36-q">${tris.map(t => `<div><i style="height:${t.c.nps == null ? 2 : Math.max(4, (t.c.nps + 100) / 200 * 60)}px;${t.c.nps != null && t.c.nps < 0 ? 'background:var(--bad)' : ''}"></i><b>${t.c.nps == null ? '—' : t.c.nps}</b><br>${t.r}</div>`).join('')}</div></section></div>
+    <section class="panel" style="border-left:4px solid var(--bad)"><h2 style="margin:0 0 6px">Detratores para ligar (${det.length})</h2>${det.length ? `<ul class="list">${det.map(x => { const tel = telDe(x.tid); return `<li><div class="t"><div><b>${esc(x.empresa || x.tid)}</b> · nota <b style="color:var(--bad)">${x.nota}</b></div><div>${new Date(x.em).toLocaleDateString('pt-BR')}${x.comentario ? ' · “' + esc(String(x.comentario).slice(0, 220)) + '”' : ''}</div></div>${tel.length >= 10 ? `<a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(`Olá! Aqui é da NEXUM. Vi a sua avaliação e queria entender melhor o que está atrapalhando na ${x.empresa || 'empresa'}${x.comentario ? '' : ''}. Tem 5 minutos para conversarmos? Quero resolver.`)}">WhatsApp</a>` : ''}<button class="btn ghost sm" data-n36t="${x.id}">Já tratei</button></li>`; }).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhum detrator sem retorno. 👏</p>'}</section>
+    <section class="panel"><h2 style="margin:0 0 6px">Promotores (${prom.length})</h2><p class="hint" style="margin:0 0 8px">Bons para pedir indicação ou depoimento.</p>${prom.length ? `<ul class="list">${prom.map(x => { const tel = telDe(x.tid); return `<li><div class="t"><div><b>${esc(x.empresa || x.tid)}</b> · nota <b style="color:var(--ok)">${x.nota}</b></div><div>${x.comentario ? '“' + esc(String(x.comentario).slice(0, 220)) + '”' : new Date(x.em).toLocaleDateString('pt-BR')}</div></div>${tel.length >= 10 ? `<a class="btn sec sm" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent('Olá! Aqui é da NEXUM. Obrigado pela nota alta! Se conhecer outra empresa que sofre com ponto e folha, pode indicar? A gente cuida muito bem dela.')}">Pedir indicação</a>` : ''}</li>`; }).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhum ainda.</p>'}</section>`;
+  $('#n36-j', el).onchange = e => { A.n36Jan = +e.target.value; vNps36(el); };
+  $$('[data-n36t]', el).forEach(b => b.onclick = () => modal('Detrator tratado', '<div class="fld"><label for="n36-o">O que foi feito</label><textarea class="inp" id="n36-o" placeholder="Ex.: liguei, ajustamos a escala e ele ficou satisfeito"></textarea></div>', { size: 'sm', foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="n36-ok">Salvar</button>', onMount: m => $('#n36-ok', m).onclick = async () => { try { await FB.db.doc(`npsTrat/${b.dataset.n36t}`).set({ por: nomeDe(String(emailEu()).toLowerCase()), email: String(emailEu()).toLowerCase(), em: new Date().toISOString(), obs: $('#n36-o', m).value.trim().slice(0, 400) }); closeModal(); toast('Marcado como tratado.'); vNps36(el); } catch (e) { toast(e.code || e.message, true); } } }));
+}
+
+/* =================== Ficha do cliente com tudo junto =================== */
+{ const _fc36 = fichaCliente; fichaCliente = function (m, t) { const r = _fc36.apply(this, arguments); try { fu36(m, t); } catch (e) { console.warn(e); } return r; }; }
+async function fu36(m, t) {
+  const b = $('.modal-b', m); if (!b || $('#fu36', m)) return; const sec = document.createElement('section'); sec.id = 'fu36'; sec.className = 'fu36'; sec.style.marginTop = '18px'; sec.innerHTML = '<h3 style="margin:0 0 8px">Visão completa</h3><p class="hint">Carregando uso, opinião e conversas…</p>'; const hist = $('#fc-p', m); if (hist) hist.before(sec); else b.appendChild(sec);
+  const tel = soDig(t.telefone).replace(/^55(?=\d{10,11}$)/, ''), A_ = A.saude || (A.saude = {});
+  const [h, nps, convs] = await Promise.all([A_[t.id] && Date.now() - A_[t.id].em < 30 * 60000 ? A_[t.id] : medirSaude(t).then(x => (A_[t.id] = x)).catch(() => null),
+    Promise.all([FB.db.collection('nps').where('tid', '==', t.id).get().then(s => s.docs.map(d => d.data())).catch(() => []), FB.db.doc(`depoimentos/${t.id}`).get().then(s => s.exists ? [s.data()] : []).catch(() => [])]).then(([a, c]) => [...a, ...c].filter(x => typeof x.nota === 'number').sort((x, y) => String(y.em).localeCompare(String(x.em)))),
+    Promise.all([FB.db.collection('wa_conversas').where('tid', '==', t.id).get().then(s => s.docs).catch(() => []), tel.length >= 10 ? FB.db.doc(`wa_conversas/n_55${tel}`).get().then(s => s.exists ? [s] : []).catch(() => []) : []]).then(([a, c]) => [...new Map([...a, ...c].map(d => [d.id, { id: d.id, ...d.data() }])).values()])]);
+  const cobs = (Array.isArray(A.cob) ? A.cob : []).filter(c => c.tid === t.id && ['PENDING', 'OVERDUE'].includes(c.status)), p = PLANOS[t.plano] || {};
+  const notas = convs.flatMap(c => (c.notasCrm || []).map(n => ({ ...n, conv: c.nome || c.numero }))).sort((a, b) => String(b.em).localeCompare(String(a.em))), props = convs.flatMap(c => c.propostas || []);
+  const k = (v, r) => `<div><b>${v}</b><span class="hint">${r}</span></div>`, u = nps[0];
+  sec.innerHTML = `<h3 style="margin:0 0 8px">Visão completa</h3><div class="k">${h ? k(`${h.s}<span class="hint" style="font-size:12px"> /100</span>`, `saúde · ${esc((h.nivel || [])[1] || '')}`) + k(`${h.colab ?? '—'}${p.limite && p.limite < 99999 ? `<span class="hint" style="font-size:12px"> de ${p.limite}</span>` : ''}`, 'funcionários') + k(h.batidas ?? 0, 'batidas na semana') + k(h.portal ?? 0, 'no portal') : k('—', 'uso indisponível')}${k(u ? `<span style="color:var(--${u.nota >= 9 ? 'ok' : u.nota >= 7 ? 'warn' : 'bad'})">${u.nota}</span>` : '—', u ? `NPS · ${new Date(u.em).toLocaleDateString('pt-BR')}` : 'sem avaliação')}${k(convs.length, 'conversa(s) no WhatsApp')}${k(cobs.length ? `<span style="color:var(--bad)">${cobs.length}</span>` : 0, 'cobrança(s) em aberto')}</div>
+    ${u && u.comentario || u && (u.texto || u.melhorar) ? `<p class="hint" style="margin:8px 0 0">Último comentário: “${esc(String(u.comentario || u.texto || u.melhorar).slice(0, 260))}”</p>` : ''}
+    ${h && (h.f || []).length ? `<p class="hint" style="margin:6px 0 0">O que olhar: ${esc(h.f.slice(0, 3).join(' · '))}</p>` : ''}
+    ${convs.length ? `<details style="border:1px solid var(--line);border-radius:10px;margin-top:8px"><summary style="cursor:pointer;padding:10px 12px;font-weight:700">Conversas no WhatsApp <span class="hint" style="font-weight:500">(${convs.length})</span></summary><div style="padding:0 12px 10px"><ul class="list">${convs.map(c => `<li><div class="t"><div><b>${esc(c.nome || c.numero || '')}</b>${c.atendente ? ` · com ${esc(c.atendente)}` : ''}</div><div>${c.atualizadoEm ? new Date(c.atualizadoEm).toLocaleString('pt-BR').slice(0, 16) + ' · ' : ''}${esc(String(c.ultimaMsg || '').slice(0, 120))}</div></div></li>`).join('')}</ul><button class="btn sec sm" id="fu36-crm">Abrir o CRM</button></div></details>` : ''}
+    ${notas.length || props.length ? `<details style="border:1px solid var(--line);border-radius:10px;margin-top:8px"><summary style="cursor:pointer;padding:10px 12px;font-weight:700">Notas internas e propostas do CRM <span class="hint" style="font-weight:500">(${notas.length + props.length})</span></summary><div style="padding:0 12px 10px"><ul class="list">${props.map(x => `<li><div class="t"><div><b>Proposta ${esc(x.numero || '')}</b> · ${brl(x.total || 0)}</div><div>${x.em ? new Date(x.em).toLocaleDateString('pt-BR') : ''} · ${esc(x.por || '')}</div></div></li>`).join('')}${notas.slice(0, 20).map(n => `<li><div class="t"><div>${esc(String(n.t || '').slice(0, 240))}</div><div>${n.em ? new Date(n.em).toLocaleDateString('pt-BR') : ''} · ${esc(n.por || '')}</div></div></li>`).join('')}</ul></div></details>` : ''}
+    ${cobs.length ? `<details style="border:1px solid var(--line);border-radius:10px;margin-top:8px" open><summary style="cursor:pointer;padding:10px 12px;font-weight:700">Cobranças em aberto <span class="hint" style="font-weight:500">(${cobs.length})</span></summary><div style="padding:0 12px 10px"><ul class="list">${cobs.map(c => `<li><div class="t"><div><b>${brl(c.valor)}</b> · ${c.status === 'OVERDUE' ? '<span style="color:var(--bad)">vencida</span>' : 'em aberto'}</div><div>vence ${fd(c.vencimento)}${c.fatura ? ` · <a href="${esc(c.fatura)}" target="_blank" rel="noopener">link</a>` : ''}</div></div></li>`).join('')}</ul></div></details>` : ''}`;
+  const bc = $('#fu36-crm', sec); if (bc) bc.onclick = () => { closeModal(); go('crmnx'); };
+}
+
+</script>
 </body>
 </html>
