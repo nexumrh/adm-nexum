@@ -2853,6 +2853,34 @@ if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    TREINAMENTO DOS CLIENTES: quem já assistiu todas as videoaulas,
@@ -3493,6 +3521,29 @@ async function vFalhas37(el) {
 /* alerta na Visão geral quando há falha nas últimas 24 horas */
 if (typeof vGeral === 'function') { const _vg37 = vGeral; vGeral = function (el) { const r = _vg37.apply(this, arguments); (async () => { try { if (!podeVer('falhas')) return; const l = (await f37Lista(1)).filter(x => !x.resolvido); if (!l.length || !el.isConnected || $('#f37-al', el)) return; const emp = new Set(l.map(x => x.tid)).size;
   el.insertAdjacentHTML('afterbegin', `<section class="panel" id="f37-al" style="border-color:var(--bad)"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:220px"><b style="color:var(--bad)">${l.length} gravação(ões) recusada(s) no portal de ${emp} empresa(s) nas últimas 24 horas</b><div class="hint">${esc([...new Set(l.map(x => (F37_MOT[x.motivo] || ['', x.motivo])[1]))].join(', '))}</div></div><button class="btn sm" id="f37-v">Ver falhas</button></div></section>`); $('#f37-v', el).onclick = () => go('falhas'); } catch (e) { } })(); return r; }; }
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 37 parte 4 (Painel do Dono): oferta antes do cancelamento. Você
+   escolhe o que oferecer para cada motivo; quem aceita aparece aqui para
+   a equipe cumprir (aplicar o desconto, marcar a implantação ou o treino).
+   ===================================================================== */
+const RET37_ROT = [['preco', 'O preço ficou alto', true], ['tempo', 'Não tivemos tempo de implantar', false], ['recurso', 'Faltou um recurso', false], ['dificil', 'Achei difícil de usar', false], ['outro_sistema', 'Vamos usar outro sistema', true]];
+const RET37_PADRAO = { tempo: 'implantação assistida de 1 hora, sem custo', recurso: 'consultor liga no mesmo dia', dificil: 'treinamento ao vivo, sem custo' };
+{ const _vc37r = vCanc; vCanc = async function (el) { const r = await _vc37r.apply(this, arguments); try {
+  if ($('#r37-a', el)) return r; let cfg = {}; try { const d = await FB.db.doc('plataforma/retencao').get(); cfg = d.exists ? d.data() : {}; } catch (e) { }
+  const l = await lerCanc(), of = l.filter(c => c.status === 'oferta' && !c.ofertaFeitaEm).sort((a, b) => String(b.ofertaEm).localeCompare(String(a.ofertaEm))), retidos = l.filter(c => c.status === 'retido' || (c.status === 'oferta' && c.ofertaFeitaEm)).length;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="r37-a" style="${of.length ? 'border-color:var(--warn)' : ''}"><h2 style="margin:0 0 4px">Aceitaram a oferta para ficar${of.length ? ` (${of.length})` : ''}</h2><p class="hint" style="margin:0 0 10px">Clientes que iam cancelar e aceitaram a oferta. Cumpra o combinado e marque como feito.${retidos ? ` ${retidos} cliente(s) já ficaram por causa da oferta.` : ''}</p>
+    ${of.length ? `<ul class="list">${of.map(c => { const t = A.tenants.find(x => x.id === c.id) || {}, tel = soDig(t.telefone); return `<li><div class="t"><div><b>${esc(c.empresa || t.nome || c.id)}</b> · ${esc((c.oferta || {}).titulo || '')}</div><div>Motivo: ${esc(c.motivo)}${c.detalhe ? ' · ' + esc(c.detalhe) : ''} · aceitou em ${fd(String(c.ofertaEm || c.em).slice(0, 10))}</div></div>
+      ${tel.length >= 10 ? `<a class="btn sec sm" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(`Olá! Aqui é da NEXUM. Que bom que vocês vão continuar! Sobre o combinado (${(c.oferta || {}).titulo || ''}): ${(c.oferta || {}).desconto ? 'já vou aplicar o desconto nas próximas cobranças.' : 'qual o melhor dia e horário para você?'}`)}">WhatsApp</a>` : ''}<button class="btn sm" data-r37f="${esc(c.id)}">Feito</button></li>`; }).join('')}</ul>` : '<p class="hint" style="margin:0">Nenhuma oferta aceita esperando a equipe.</p>'}</section>
+    <section class="panel" id="r37-c"><h2 style="margin:0 0 4px">Oferta antes do cancelamento</h2><p class="hint" style="margin:0 0 10px">Quando o cliente escolhe o motivo, o sistema mostra a oferta antes de confirmar. Desconto só aparece se você preencher o percentual. "Fechei a empresa" e "Outro motivo" não recebem oferta.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Motivo</th><th>Oferecer</th><th>Oferta</th></tr></thead><tbody>${RET37_ROT.map(([k, t, din]) => { const c = cfg[k] || {}; return `<tr><td>${esc(t)}</td><td><input type="checkbox" data-r37on="${k}" ${c.ativo === false ? '' : 'checked'} aria-label="Oferecer para ${esc(t)}"></td><td>${din ? `<div class="row" style="gap:6px;flex-wrap:nowrap"><input class="inp" type="number" min="0" max="90" data-r37d="${k}" value="${num(c.desconto) || ''}" placeholder="%" style="width:80px" aria-label="Desconto"> <span class="hint">% por</span> <input class="inp" type="number" min="1" max="12" data-r37m="${k}" value="${parseInt(c.meses) || 3}" style="width:70px" aria-label="Meses"> <span class="hint">meses</span></div>` : `<span class="hint">${esc(RET37_PADRAO[k])}</span>`}</td></tr>`; }).join('')}</tbody></table></div>
+      <div class="row end" style="margin-top:10px"><button class="btn sm" id="r37-sv">Salvar ofertas</button></div></section>`);
+  $$('[data-r37f]', el).forEach(b => b.onclick = async () => { try { await FB.db.doc(`cancelamentos/${b.dataset.r37f}`).set({ status: 'retido', ofertaFeitaEm: new Date().toISOString(), ofertaFeitaPor: (FB.auth.currentUser || {}).email || '' }, { merge: true }); toast('Marcado como feito.'); vCanc(el); } catch (e) { toast(e.message, true); } });
+  $('#r37-sv', el).onclick = async () => { const n = {}; RET37_ROT.forEach(([k, , din]) => { n[k] = { ativo: $(`[data-r37on="${k}"]`, el).checked }; if (din) { n[k].desconto = Math.max(0, Math.min(90, num($(`[data-r37d="${k}"]`, el).value))); n[k].meses = Math.max(1, Math.min(12, parseInt($(`[data-r37m="${k}"]`, el).value) || 3)); } });
+    try { await FB.db.doc('plataforma/retencao').set({ ...n, em: new Date().toISOString() }); toast('Ofertas salvas.'); } catch (e) { toast(e.message, true); } };
+} catch (e) { console.warn(e); } return r; }; }
 
 </script>
 </body>
