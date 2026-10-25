@@ -474,7 +474,7 @@ function ouvir() {
   carregarPlat();
   A.unsub.forEach(u => u()); A.unsub = [];
   const erro = col => e => { console.error(col, e); A.carregado = true; A.erro = { col, code: e.code || e.message }; redesenhar(); };
-  A.unsub.push(FB.db.collection('tenants').onSnapshot(s => { A.tenants = s.docs.map(tenantDe); A.carregado = true; A.erro = null; contarColab(); lerPix(); redesenhar(); }, erro('tenants')));
+  A.unsub.push(FB.db.collection('tenants').onSnapshot(s => { A.tenants = s.docs.filter(d => !d.data().robo).map(tenantDe); A.carregado = true; A.erro = null; contarColab(); lerPix(); redesenhar(); }, erro('tenants')));
   A.unsub.push(FB.db.collection('avisosPlataforma').onSnapshot(s => { A.avisos = s.docs.map(d => ({ id: d.id, ...d.data() })); A.avisosErro = false; if (A.view === 'avisos' && !(document.activeElement && document.activeElement.matches('#view input, #view textarea, #view select'))) redesenhar(); }, () => { A.avisos = A.avisos || []; A.avisosErro = true; }));
   A.unsub.push(FB.db.collection('avisosAceites').onSnapshot(s => { A.aceites = s.docs.map(d => d.data()); if (A.view === 'avisos' && !(document.activeElement && document.activeElement.matches('#view input, #view textarea, #view select'))) redesenhar(); }, () => { A.aceites = A.aceites || []; }));
   A.unsub.push(FB.db.collection('suporte').onSnapshot(s => { const antes = (A.sup || []).filter(x => x.naoLidoDono).length; A.sup = s.docs.map(d => d.data()); A.supErro = false; const n = A.sup.filter(x => x.naoLidoDono).length; document.title = n ? `(${n}) Painel do Dono` : 'Painel do Dono'; if (n > antes) toast(`Nova mensagem no suporte (${n} aguardando).`); if (A.supAberto && $('#sc-c')) A.supAberto(); if (A.view === 'sup' || !$('#sc-c')) redesenhar(); }, () => { A.sup = A.sup || []; A.supErro = true; }));
@@ -1167,7 +1167,7 @@ async function papelEquipe(u) {
 function ouvirEquipe() {
   A.unsub.forEach(u => u()); A.unsub = []; A.ped = A.ped || []; A.pag = A.pag || []; A.sup = A.sup || []; A.avisos = []; A.aceites = []; A.tenants = A.tenants || []; A.colab = A.colab || {}; A.pix = A.pix || {};
   const ok = () => {}, p = A.papel;
-  A.unsub.push(FB.db.collection('tenants').onSnapshot(s => { A.tenants = s.docs.map(tenantDe); A.carregado = true; redesenhar(); }, ok));
+  A.unsub.push(FB.db.collection('tenants').onSnapshot(s => { A.tenants = s.docs.filter(d => !d.data().robo).map(tenantDe); A.carregado = true; redesenhar(); }, ok));
   if (p === 'suporte') A.unsub.push(FB.db.collection('suporte').onSnapshot(s => { A.sup = s.docs.map(d => d.data()); redesenhar(); }, ok));
   if (['comercial', 'financeiro'].includes(p)) A.unsub.push(FB.db.collection('contratacoes').onSnapshot(s => { A.ped = s.docs.map(d => ({ id: d.id, ...d.data() })); redesenhar(); }, ok));
   if (p === 'financeiro') A.unsub.push(FB.db.collection('pagamentos').onSnapshot(s => { A.pag = s.docs.map(d => ({ id: d.id, ...d.data() })); redesenhar(); }, ok));
@@ -2885,6 +2885,26 @@ if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    TREINAMENTO DOS CLIENTES: quem já assistiu todas as videoaulas,
@@ -3640,6 +3660,75 @@ window.POLIR38 = { funcionario: false };
 
 try { const f = { falhas: '<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>', metas: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', upgrade: '<path d="m12 19V5"/><path d="m5 12 7-7 7 7"/>', nps: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.5 2.9 1-6.1L3.2 9.5l6.1-.9z"/>' }; Object.keys(f).forEach(k => { if (!ICO[k]) ICO[k] = f[k]; }); } catch (e) { }
 setTimeout(() => { try { if (A.user && document.getElementById('view')) renderApp(); } catch (e) { } }, 0);
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 38 parte 2 (Painel do Dono): quando uma tela quebra no aparelho de alguém, o erro vai
+   para o Painel do Dono (Falhas dos clientes > Erros de tela).
+   ===================================================================== */
+window.ERRO38 = { sistema: 'Painel do Dono', ctx: () => ({ tela: (document.getElementById('t-view') || {}).textContent || '' }), token: () => (typeof FB !== 'undefined' && FB.auth && FB.auth.currentUser) ? FB.auth.currentUser.getIdToken() : '' };
+(function () {
+  if (window.__erro38) return; window.__erro38 = 1;
+  var C = window.ERRO38 || {}, PUB = 'https://firestore.googleapis.com/v1/projects/nexum-30044/databases/(default)/documents/plataforma/publico?key=AIzaSyDdcLJdO2qnmiGsR1EsKFu-uJfs4FRNvA4', baseP = null, vistos = {}, n = 0;
+  function base() { if (!baseP) baseP = fetch(PUB).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { var f = j && j.fields && j.fields.asaasUrl; return f ? String(f.stringValue || '').replace(/\/+$/, '') : ''; }).catch(function () { return ''; }); return baseP; }
+  function ctx() { try { return C.ctx ? C.ctx() || {} : {}; } catch (e) { return {}; } }
+  function token() { try { return C.token ? Promise.resolve(C.token()).catch(function () { return ''; }) : Promise.resolve(''); } catch (e) { return Promise.resolve(''); } }
+  function manda(msg, stack) {
+    msg = String(msg || '').slice(0, 300); if (!msg || n >= 8) return; var k = msg + '|' + (ctx().tela || ''); if (vistos[k]) return; vistos[k] = 1; n++;
+    var c = ctx();
+    Promise.all([base(), token()]).then(function (r) { if (!r[0]) return; var h = { 'Content-Type': 'application/json' }; if (r[1]) h.Authorization = 'Bearer ' + r[1];
+      return fetch(r[0] + '/api/erro-tela', { method: 'POST', headers: h, keepalive: true, body: JSON.stringify({ sistema: C.sistema, tela: c.tela || document.title, empresa: c.empresa || '', msg: msg, stack: String(stack || '').slice(0, 1200), url: location.pathname + location.hash, aparelho: navigator.userAgent }) }); }).catch(function () { });
+  }
+  window.addEventListener('error', function (e) {
+    if (!e || !e.message) return; var f = e.filename || '';
+    if (f && f.indexOf(location.origin) !== 0 && !/cdnjs|gstatic|jsdelivr|unpkg/.test(f)) return;
+    manda(e.message, e.error && e.error.stack ? e.error.stack : (f + ':' + (e.lineno || '') + ':' + (e.colno || '')));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e && e.reason, m = r && (r.message || r.code) || String(r || '');
+    if (/permission-denied|insufficient permissions|unavailable|network|Failed to fetch|Load failed|auth\/|quota|deadline|offline|AbortError|NotAllowedError/i.test(m)) return;
+    manda('Erro sem tratamento: ' + m, r && r.stack);
+  });
+  window.erroTela38 = manda;
+})();
+/* ---------- Falhas dos clientes > Erros de tela ---------- */
+const E38_COR = { 'RH': 'pri', 'Portal': 'ok', 'Painel do Dono': '', 'CRM': 'warn', 'Recrutador': 'warn', 'Candidato': 'ok', 'Site': '' };
+const e38Ap = ua => { ua = String(ua || ''); const so = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Aparelho'; const nv = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : ''; return so + (nv ? ' · ' + nv : ''); };
+async function e38Lista(dias) { const lim = iso(new Date(Date.now() - dias * 864e5)).slice(0, 10), s = await FB.db.collection('errosTela').where('dia', '>=', lim).get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); }
+function e38Agrupa(l) { const g = {}; l.forEach(x => { const k = x.chave || x.id; const a = g[k] = g[k] || { chave: k, sistema: x.sistema, tela: x.tela, msg: x.msg, stack: x.stack, n: 0, docs: [], empresas: new Set(), aparelhos: new Set(), ultimo: '', resolvido: true }; a.n += +x.n || 1; a.docs.push(x.id); (x.empresas || []).forEach(e => a.empresas.add(e)); if (x.empresa) a.empresas.add(x.empresa); a.aparelhos.add(e38Ap(x.aparelho)); if ((x.ultimoEm || '') > a.ultimo) a.ultimo = x.ultimoEm || ''; if (!x.resolvido) a.resolvido = false; }); return Object.values(g).sort((a, b) => (a.resolvido - b.resolvido) || b.ultimo.localeCompare(a.ultimo)); }
+async function vErros38(el) {
+  const dias = A.e38Dias || 7, so = A.e38Todos, l = e38Agrupa(await e38Lista(dias)).filter(x => so || !x.resolvido);
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Erros de tela</h2><p class="hint" style="margin:0">Quando uma tela quebra no aparelho de alguém, em qualquer sistema da NEXUM, o erro aparece aqui. Erros iguais ficam juntos.</p></div>
+      <select class="inp" id="e38-d" style="width:auto">${opts([[1, 'Últimas 24 horas'], [7, 'Últimos 7 dias'], [30, 'Últimos 30 dias']], dias)}</select><label class="row hint" style="gap:6px"><input type="checkbox" id="e38-t" ${so ? 'checked' : ''}> Mostrar resolvidos</label></div></section>
+    ${l.length ? l.map((x, i) => `<section class="panel"><div class="row" style="gap:10px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:240px"><div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="pill ${E38_COR[x.sistema] || ''}">${esc(x.sistema)}</span>${x.tela ? `<b>${esc(x.tela)}</b>` : ''}${x.resolvido ? '<span class="pill ok">resolvido</span>' : ''}</div>
+        <code style="display:block;font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-word;background:none;padding:0">${esc(x.msg)}</code>
+        <p class="hint" style="margin:6px 0 0">${x.n} vez${x.n === 1 ? '' : 'es'} · última ${x.ultimo ? new Date(x.ultimo).toLocaleString('pt-BR').slice(0, 17) : '—'}${x.empresas.size ? ' · ' + esc([...x.empresas].slice(0, 4).join(', ')) + (x.empresas.size > 4 ? '…' : '') : ''} · ${esc([...x.aparelhos].slice(0, 3).join(', '))}</p>
+        ${x.stack ? `<details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Detalhe técnico</summary><pre style="white-space:pre-wrap;font-size:11.5px;max-height:200px;overflow:auto;background:var(--bg,#F4F6FB);padding:8px;border-radius:8px">${esc(x.stack)}</pre></details>` : ''}</div>
+        ${x.resolvido ? '' : `<button class="btn sm" data-e38="${i}">Resolvido</button>`}</div></section>`).join('') : `<div class="panel empty"><b>Nenhum erro de tela ${so ? '' : 'em aberto '}no período</b>As telas de todos os sistemas estão abrindo normalmente.</div>`}`;
+  $('#e38-d', el).onchange = e => { A.e38Dias = +e.target.value; vFalhas37(el); }; $('#e38-t', el).onchange = e => { A.e38Todos = e.target.checked; vFalhas37(el); };
+  $$('[data-e38]', el).forEach(b => b.onclick = async () => { const x = l[+b.dataset.e38]; try { const bt = FB.db.batch(); x.docs.forEach(id => bt.update(FB.db.doc(`errosTela/${id}`), { resolvido: true, resolvidoEm: new Date().toISOString(), resolvidoPor: String((FB.auth.currentUser || {}).email || '') })); await bt.commit(); toast('Marcado como resolvido.'); vFalhas37(el); } catch (e) { toast(e.code || e.message, true); } });
+}
+{ const _vf38 = vFalhas37; vFalhas37 = async function (el) { const ab = A.f38Aba || 'grav';
+  const barra = () => { if (el.querySelector(':scope > .f38-ab')) return; el.insertAdjacentHTML('afterbegin', `<div class="tabs f38-ab" style="margin-bottom:12px"><button class="${ab === 'grav' ? 'on' : ''}" data-f38="grav">Gravações recusadas</button><button class="${ab === 'erros' ? 'on' : ''}" data-f38="erros">Erros de tela</button></div>`); $$('[data-f38]', el).forEach(b => b.onclick = () => { A.f38Aba = b.dataset.f38; vFalhas37(el); }); };
+  try { if (ab === 'erros') await vErros38(el); else await _vf38.apply(this, arguments); } catch (e) { el.innerHTML = `<div class="panel empty"><b>Não foi possível carregar</b>${esc(e.code || e.message || e)}. Publique o firestore.rules novo.</div>`; }
+  barra(); }; }
+/* alerta na Visão geral: erros de tela nas últimas 24 horas */
+if (typeof vGeral === 'function') { const _vg38 = vGeral; vGeral = function (el) { const r = _vg38.apply(this, arguments); (async () => { try { if (!podeVer('falhas')) return; const l = e38Agrupa(await e38Lista(1)).filter(x => !x.resolvido); if (!l.length || !el.isConnected || $('#e38-al', el)) return;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="e38-al" style="border-color:var(--warn)"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:220px"><b>${l.length} erro${l.length === 1 ? '' : 's'} de tela nas últimas 24 horas</b><div class="hint">${esc([...new Set(l.map(x => x.sistema))].join(', '))}</div></div><button class="btn sm" id="e38-v">Ver erros</button></div></section>`); $('#e38-v', el).onclick = () => { A.f38Aba = 'erros'; go('falhas'); }; } catch (e) { } })(); return r; }; }
+/* ---------- Monitor: rodar o robô de teste agora ---------- */
+if (typeof vMonitor === 'function') { const _vm38 = vMonitor; vMonitor = async function (el) { const r = await _vm38.apply(this, arguments); try { const b0 = $('#mo-run', el); if (!b0 || $('#mo-robo', el)) return r;
+  b0.insertAdjacentHTML('beforebegin', '<button class="btn sec" id="mo-robo" title="O robô entra como RH, funcionário e candidato de teste e confere se tudo grava">Rodar o robô de teste</button> ');
+  $('#mo-robo', el).onclick = async () => { const b = $('#mo-robo', el); b.disabled = true; b.textContent = 'Robô testando…'; try { const x = await asaasCall('/api/robo', {}); await asaasCall('/api/monitor', {}); const ruins = (x.testes || []).filter(t => !t.ok); toast(ruins.length ? `${ruins.length} teste(s) do robô falharam: ${ruins[0].nome}.` : `Robô: ${(x.testes || []).length} testes, tudo funcionando.`, !!ruins.length); vMonitor(el); } catch (e) { toast(e.message, true); b.disabled = false; b.textContent = 'Rodar o robô de teste'; } };
+} catch (e) { } return r; }; }
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 38 parte 3 (Painel do Dono): no celular, todo botão, aba e campo tem pelo menos 40 px de
+   altura (fácil de tocar com o dedo). No computador nada muda.
+   ===================================================================== */
+(function () { const st = document.createElement('style'); st.id = 'toque38'; st.textContent = '@media (max-width:760px),(pointer:coarse) and (max-width:1024px){.btn,a.btn,button.btn,.btn.sm,.btn.ghost,.btn.sec{min-height:40px!important;height:auto}.modal-h button,button.x,header button,.tg-abre,button[aria-label^="Fechar"]{min-height:40px;min-width:40px}.tabs button,.chip,button.on,.nav button,.nav-g,.bnav button,.tb,select,select.inp,input.inp:not([type=checkbox]):not([type=radio]){min-height:40px}.menu-btn,.ib,.ferr{min-width:40px;min-height:40px}.f36{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:40px;margin-top:-10px;margin-bottom:-10px}.side .nav button,.side nav button{min-height:40px}}'; document.head.appendChild(st); })();
 
 </script>
 </body>
