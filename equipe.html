@@ -2841,6 +2841,18 @@ if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* =====================================================================
    TREINAMENTO DOS CLIENTES: quem já assistiu todas as videoaulas,
@@ -3444,6 +3456,43 @@ async function fu36(m, t) {
     ${cobs.length ? `<details style="border:1px solid var(--line);border-radius:10px;margin-top:8px" open><summary style="cursor:pointer;padding:10px 12px;font-weight:700">Cobranças em aberto <span class="hint" style="font-weight:500">(${cobs.length})</span></summary><div style="padding:0 12px 10px"><ul class="list">${cobs.map(c => `<li><div class="t"><div><b>${brl(c.valor)}</b> · ${c.status === 'OVERDUE' ? '<span style="color:var(--bad)">vencida</span>' : 'em aberto'}</div><div>vence ${fd(c.vencimento)}${c.fatura ? ` · <a href="${esc(c.fatura)}" target="_blank" rel="noopener">link</a>` : ''}</div></div></li>`).join('')}</ul></div></details>` : ''}`;
   const bc = $('#fu36-crm', sec); if (bc) bc.onclick = () => { closeModal(); go('crmnx'); };
 }
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 37 (Painel do Dono): falhas dos clientes. Quando o servidor recusa
+   o ponto, o chat ou uma assinatura no portal de qualquer empresa, aparece
+   aqui com o motivo (licença, cadastro ou regras), antes do cliente reclamar.
+   ===================================================================== */
+const F37_MOT = { regras: ['bad', 'Regras do Firebase desatualizadas'], licenca: ['warn', 'Licença vencida'], empresa_suspensa: ['warn', 'Empresa suspensa'], desligado: ['', 'Funcionário desligado'], sem_colab: ['warn', 'Acesso sem funcionário'], sem_cadastro: ['warn', 'Acesso sem cadastro'], sem_empresa: ['warn', 'Acesso sem empresa'] };
+const F37_COL = { ponto: 'ponto', atend: 'chat com o RH', chat: 'chat com o RH', solic: 'pedido', assin: 'assinatura', docs: 'documento', faces: 'rosto', mural: 'troca de turno', convites: 'troca de turno', av360r: 'avaliação 360°' };
+try { if (!NAV.some(n => n[0] === 'falhas')) { const i = NAV.findIndex(n => n[0] === 'saude'); NAV.splice(i >= 0 ? i + 1 : NAV.length, 0, ['falhas', 'Falhas dos clientes']); }
+  const gc = MENU_GRUPOS.find(g => g[0] === 'CLIENTES'); if (gc && !gc[1].includes('falhas')) gc[1].splice(1, 0, 'falhas'); if (PAPEL_NX.suporte) PAPEL_NX.suporte[1].push('falhas'); } catch (e) { }
+setTimeout(() => { try { if (A.user && document.getElementById('view') && !document.querySelector('.side .nav button[data-v="falhas"]') && podeVer('falhas')) renderApp(); } catch (e) { } }, 0);
+{ const _go37 = go; go = function (v, ms) { if (v === 'falhas' && podeVer(v)) { A.view = v; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#side').classList.remove('open'); $('#t-view').textContent = 'Falhas dos clientes'; const el = $('#view'); el.innerHTML = '<div class="panel empty">Carregando…</div>'; vFalhas37(el).catch(e => { el.innerHTML = `<div class="panel empty"><b>Não foi possível carregar</b>${esc(e.code || e.message || e)}. Publique o firestore.rules novo.</div>`; }); $('.content').scrollTop = 0; try { const g = menuGrupoDe(v); if (g) abrirGrupoMenu(g, true); } catch (e) { } return; } return _go37(v, ms); }; }
+async function f37Lista(dias) { const lim = new Date(Date.now() - dias * 864e5).toISOString(), s = await FB.db.collection('falhas').where('em', '>=', lim).get(); return s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.em.localeCompare(a.em)); }
+function f37Msg(t, mot) { return mot === 'regras' ? `Olá! Aqui é da NEXUM. Vimos que o portal da ${t.nome} teve gravações recusadas. Já estamos corrigindo do nosso lado; se alguém da equipe não conseguiu bater o ponto, pode registrar pelo RH com a justificativa. Avisamos quando estiver normal.`
+  : mot === 'licenca' ? `Olá! Aqui é da NEXUM. A licença da ${t.nome} venceu e o portal parou de registrar o ponto da equipe. Quer que eu mande o link para renovar agora? A liberação é na hora.`
+  : mot === 'desligado' ? `Olá! Aqui é da NEXUM. Um funcionário marcado como desligado na ${t.nome} tentou bater o ponto pelo portal. Se ele ainda trabalha aí, é só reativar o cadastro em Funcionários.`
+  : `Olá! Aqui é da NEXUM. Um funcionário da ${t.nome} não conseguiu usar o portal porque o acesso dele está sem cadastro completo. É só liberar o portal de novo na ficha dele, em Funcionários.`; }
+async function vFalhas37(el) {
+  const dias = A.f37Dias || 7, l = await f37Lista(dias), so = A.f37Todas ? l : l.filter(x => !x.resolvido), por = {};
+  so.forEach(x => { const k = x.tid || '—'; (por[k] = por[k] || []).push(x); });
+  const grupos = Object.entries(por).map(([tid, xs]) => ({ tid, xs, t: tById(tid) || { id: tid, nome: xs[0].empresa || tid, telefone: '' } })).sort((a, b) => b.xs[0].em.localeCompare(a.xs[0].em)), regras = so.filter(x => x.motivo === 'regras').length;
+  el.innerHTML = `<section class="panel"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Falhas dos clientes</h2><p class="hint" style="margin:0">Quando o servidor recusa o ponto, o chat ou uma assinatura no portal de uma empresa, o conector descobre o motivo e registra aqui.</p></div>
+      <select class="inp" id="f37-d" style="width:auto">${opts([[1, 'Últimas 24 horas'], [7, 'Últimos 7 dias'], [30, 'Últimos 30 dias']], dias)}</select><label class="row hint" style="gap:6px"><input type="checkbox" id="f37-t" ${A.f37Todas ? 'checked' : ''}> Mostrar resolvidas</label></div>
+    ${regras ? `<div class="note" style="margin-top:12px;border-color:var(--bad)"><b>${regras} recusa(s) por regras desatualizadas.</b> Publique o firestore.rules mais novo no Firebase (Firestore Database > Regras): isso afeta todas as empresas.</div>` : ''}</section>
+    ${grupos.length ? grupos.map(g => { const mots = [...new Set(g.xs.map(x => x.motivo))], top = mots[0], tel = soDig(g.t.telefone), pessoas = [...new Set(g.xs.map(x => x.nome || x.email))].filter(Boolean);
+      return `<section class="panel"><div class="row" style="gap:10px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h3 style="margin:0 0 4px">${esc(g.t.nome)}</h3><p class="hint" style="margin:0">${g.xs.length} recusa(s) · última ${new Date(g.xs[0].em).toLocaleString('pt-BR').slice(0, 16)} · ${esc([...new Set(g.xs.map(x => F37_COL[x.col] || x.col))].join(', '))}${pessoas.length ? ' · ' + esc(pessoas.slice(0, 3).join(', ')) + (pessoas.length > 3 ? '…' : '') : ''}</p>
+        <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${mots.map(m => `<span class="pill ${(F37_MOT[m] || [''])[0]}">${esc((F37_MOT[m] || ['', m])[1])}</span>`).join('')}</div></div>
+        <div class="row" style="gap:6px">${tel.length >= 10 ? `<a class="btn sm sec" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(f37Msg(g.t, top))}">WhatsApp</a>` : ''}${tById(g.tid) ? `<button class="btn ghost sm" data-f37f="${esc(g.tid)}">Ficha</button>` : ''}${g.xs.some(x => !x.resolvido) ? `<button class="btn sm" data-f37r="${esc(g.tid)}">Resolvido</button>` : ''}</div></div></section>`; }).join('') : `<div class="panel empty"><b>Nenhuma falha ${A.f37Todas ? '' : 'em aberto '}no período</b>O portal de todos os clientes está gravando normalmente.</div>`}`;
+  $('#f37-d', el).onchange = e => { A.f37Dias = +e.target.value; vFalhas37(el); }; $('#f37-t', el).onchange = e => { A.f37Todas = e.target.checked; vFalhas37(el); };
+  $$('[data-f37f]', el).forEach(b => b.onclick = () => detalhes(tById(b.dataset.f37f)));
+  $$('[data-f37r]', el).forEach(b => b.onclick = async () => { const ids = (por[b.dataset.f37r] || []).filter(x => !x.resolvido).map(x => x.id); try { const bt = FB.db.batch(); ids.forEach(id => bt.update(FB.db.doc(`falhas/${id}`), { resolvido: true, resolvidoEm: new Date().toISOString(), resolvidoPor: nomeDe(String(emailEu()).toLowerCase()) })); await bt.commit(); toast('Marcado como resolvido.'); vFalhas37(el); } catch (e) { toast(e.code || e.message, true); } });
+}
+/* alerta na Visão geral quando há falha nas últimas 24 horas */
+if (typeof vGeral === 'function') { const _vg37 = vGeral; vGeral = function (el) { const r = _vg37.apply(this, arguments); (async () => { try { if (!podeVer('falhas')) return; const l = (await f37Lista(1)).filter(x => !x.resolvido); if (!l.length || !el.isConnected || $('#f37-al', el)) return; const emp = new Set(l.map(x => x.tid)).size;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="f37-al" style="border-color:var(--bad)"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:220px"><b style="color:var(--bad)">${l.length} gravação(ões) recusada(s) no portal de ${emp} empresa(s) nas últimas 24 horas</b><div class="hint">${esc([...new Set(l.map(x => (F37_MOT[x.motivo] || ['', x.motivo])[1]))].join(', '))}</div></div><button class="btn sm" id="f37-v">Ver falhas</button></div></section>`); $('#f37-v', el).onclick = () => go('falhas'); } catch (e) { } })(); return r; }; }
 
 </script>
 </body>
