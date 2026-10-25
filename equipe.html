@@ -2881,6 +2881,10 @@ if (typeof vNum === 'function') { const _vnPv = vNum; vNum = async function (el)
 
 
 
+
+
+
+
 <script>
 /* =====================================================================
    TREINAMENTO DOS CLIENTES: quem já assistiu todas as videoaulas,
@@ -3544,6 +3548,98 @@ const RET37_PADRAO = { tempo: 'implantação assistida de 1 hora, sem custo', re
   $('#r37-sv', el).onclick = async () => { const n = {}; RET37_ROT.forEach(([k, , din]) => { n[k] = { ativo: $(`[data-r37on="${k}"]`, el).checked }; if (din) { n[k].desconto = Math.max(0, Math.min(90, num($(`[data-r37d="${k}"]`, el).value))); n[k].meses = Math.max(1, Math.min(12, parseInt($(`[data-r37m="${k}"]`, el).value) || 3)); } });
     try { await FB.db.doc('plataforma/retencao').set({ ...n, em: new Date().toISOString() }); toast('Ofertas salvas.'); } catch (e) { toast(e.message, true); } };
 } catch (e) { console.warn(e); } return r; }; }
+
+</script>
+<script>
+/* =====================================================================
+   LOTE 38 (Painel do Dono): acabamento profissional. Plural certo, erros em português e os ícones que faltavam no menu.
+   ===================================================================== */
+window.POLIR38 = { funcionario: false };
+(function () {
+  if (window.__polir38) return; window.__polir38 = 1;
+  const CFG = window.POLIR38 || {};
+  /* ---------- plural: "3 funcionário(s)" → "3 funcionários"; "1 dia(s)" → "1 dia" ---------- */
+  const MARCA = /([A-Za-zÀ-ÖØ-öø-ÿ]+)\((s|es|is|ões|ns|eis)\)/g;
+  const NUMRE = /(?<![\d/:.,])(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?)(?![\d/:])|\b(um|uma|nenhum|nenhuma|zero)\b/gi;
+  const cap = (base, out) => base[0] === base[0].toUpperCase() && base[0] !== base[0].toLowerCase() ? out[0].toUpperCase() + out.slice(1) : out;
+  function plural(w, m) {
+    const lw = w.toLowerCase(); let o;
+    if (m === 's') o = lw + 's';
+    else if (m === 'es') o = /ês$/.test(lw) ? lw.slice(0, -2) + 'eses' : lw + 'es';
+    else if (m === 'is') o = /l$/.test(lw) ? lw.slice(0, -1) + 'is' : lw + 'is';
+    else if (m === 'eis') o = /il$/.test(lw) ? lw.slice(0, -2) + 'eis' : lw + 'eis';
+    else if (m === 'ões') o = /ão$/.test(lw) ? lw.slice(0, -2) + 'ões' : lw + 'ões';
+    else if (m === 'ns') o = /m$/.test(lw) ? lw.slice(0, -1) + 'ns' : lw + 'ns';
+    else o = lw + m;
+    return w === w.toUpperCase() && w.length > 1 ? o.toUpperCase() : cap(w, o);
+  }
+  function contagem(ctx) {
+    const parte = ctx.split(/[.!?;:·|\n•–—]|\s-\s/).pop(); let ult = null, m; NUMRE.lastIndex = 0;
+    while ((m = NUMRE.exec(parte))) ult = m;
+    if (!ult) return null;
+    if (ult[2]) { const p = ult[2].toLowerCase(); return p === 'um' || p === 'uma' ? 1 : 0; }
+    return parseFloat(ult[1].replace(/\./g, '').replace(',', '.'));
+  }
+  function corrigirPlural(t, antes) {
+    if (t.indexOf('(') < 0) return t;
+    return t.replace(MARCA, (tudo, w, m, pos, str) => { const n = contagem((antes || '') + str.slice(0, pos)); const sing = n !== null && n >= 1 && n < 2; return sing ? w : plural(w, m); });
+  }
+  /* ---------- um nome só: "colaborador" → "funcionário" (o nome do produto "Portal do Colaborador" fica) ---------- */
+  const COLAB = /(Portal do |portal do )?\b([Cc])olaborador(a|es|as)?\b(\(a\)|\(es\)|\(as\))?/g;
+  function corrigirNomes(t) {
+    if (!CFG.funcionario || !/olaborador/.test(t)) return t;
+    return t.replace(COLAB, (tudo, portal, c, suf, marca) => { if (portal) return tudo; const f = c === 'C' ? 'F' : 'f'; const s = suf === 'a' ? 'uncionária' : suf === 'es' ? 'uncionários' : suf === 'as' ? 'uncionárias' : 'uncionário'; return f + s + (marca === '(a)' ? '(a)' : marca === '(es)' ? '(s)' : marca || ''); });
+  }
+  /* ---------- erro técnico vira frase em português ---------- */
+  const ERROS = [
+    [/(FirebaseError:\s*)?(\[code=)?permission-denied\]?:?\s*(Missing or insufficient permissions\.?)?|Missing or insufficient permissions\.?/gi, 'sem permissão para gravar isso (se continuar, avise o suporte)'],
+    [/(FirebaseError:\s*)?(\[code=)?unavailable\]?:?[^.]*\.?|Failed to fetch|NetworkError[^.]*\.?|auth\/network-request-failed/gi, 'sem conexão com a internet; tente de novo em instantes'],
+    [/(\[code=)?deadline-exceeded\]?/gi, 'o servidor demorou para responder; tente de novo'],
+    [/(\[code=)?resource-exhausted\]?|quota exceeded/gi, 'limite de uso atingido; tente mais tarde'],
+    [/auth\/(wrong-password|invalid-credential|invalid-login-credentials)/gi, 'e-mail ou senha incorretos'],
+    [/auth\/user-not-found/gi, 'não existe conta com este e-mail'],
+    [/auth\/too-many-requests/gi, 'muitas tentativas; espere alguns minutos e tente de novo'],
+    [/auth\/email-already-in-use/gi, 'este e-mail já tem cadastro'],
+    [/auth\/weak-password/gi, 'a senha precisa ter pelo menos 6 caracteres'],
+    [/auth\/invalid-email/gi, 'o e-mail não é válido'],
+    [/auth\/requires-recent-login/gi, 'por segurança, saia e entre de novo para fazer isso'],
+    [/(\[code=)?failed-precondition\]?/gi, 'o servidor ainda não está pronto para isso; tente de novo em alguns minutos'],
+    [/(\[code=)?(not-found)\]?(?=[\s.:]|$)/gi, 'registro não encontrado'],
+    [/(TypeError|ReferenceError|SyntaxError):[^\n]*|Cannot read propert(y|ies) of (undefined|null)[^\n]*/g, 'algo deu errado nesta tela; recarregue a página e, se continuar, fale com o suporte']
+  ];
+  const temErro = /permission-denied|insufficient permissions|unavailable|Failed to fetch|NetworkError|deadline-exceeded|resource-exhausted|quota exceeded|auth\/[a-z-]+|failed-precondition|not-found|TypeError|ReferenceError|SyntaxError|Cannot read propert/i;
+  function corrigirErro(t) { if (!temErro.test(t)) return t; let o = t; ERROS.forEach(([re, f]) => { o = o.replace(re, f); }); o = o.replace(/^\s*([a-zà-ú])/, (x, l) => x.replace(l, l.toUpperCase())); return o; }
+  window.polirTexto38 = (t, antes) => corrigirErro(corrigirNomes(corrigirPlural(String(t), antes)));
+  /* ---------- aplica nos textos da tela ---------- */
+  const PULA = 'SCRIPT,STYLE,TEXTAREA,NOSCRIPT,CODE,PRE,INPUT,SELECT';
+  const MSG = CFG.mensagens || '.msg,.bolha,.sp-m,.m,.sv-m,blockquote,.chat-m,.cv-m,[data-usuario]';
+  const BLOCO = 'p,li,td,th,div,label,button,h1,h2,h3,h4,h5,h6,section,small,span.pill,dd,dt,a';
+  function antesDe(n) { try { const b = n.parentElement && n.parentElement.closest(BLOCO); if (!b) return ''; const r = document.createRange(); r.setStart(b, 0); r.setEnd(n, 0); return r.toString().slice(-80); } catch (e) { return ''; } }
+  function tratar(n) {
+    const t = n.nodeValue; if (!t || (t.indexOf('(') < 0 && !/olaborador/.test(t) && !temErro.test(t))) return;
+    const el = n.parentElement; if (!el || el.closest(PULA) || el.isContentEditable) return;
+    const deUsuario = el.closest(MSG);
+    let o = deUsuario ? t : window.polirTexto38(t, t.indexOf('(') >= 0 ? antesDe(n) : '');
+    if (o !== t) n.nodeValue = o;
+  }
+  function varrer(raiz) {
+    if (!raiz) return; if (raiz.nodeType === 3) return tratar(raiz); if (raiz.nodeType !== 1) return;
+    if (raiz.closest && raiz.closest(PULA)) return;
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) tratar(n);
+    const at = el => ['placeholder', 'title', 'aria-label'].forEach(a => { const v = el.getAttribute && el.getAttribute(a); if (v && (v.indexOf('(') >= 0 || /olaborador/.test(v))) { const o = window.polirTexto38(v); if (o !== v) el.setAttribute(a, o); } });
+    at(raiz); raiz.querySelectorAll && raiz.querySelectorAll('[placeholder],[title],[aria-label]').forEach(at);
+  }
+  let fila = new Set(), agendado = false;
+  const processa = () => { agendado = false; const l = [...fila]; fila = new Set(); l.forEach(x => { if (x.isConnected) varrer(x); }); };
+  const mo = new MutationObserver(ms => { ms.forEach(m => { if (m.type === 'characterData') fila.add(m.target); else m.addedNodes.forEach(x => fila.add(x)); }); if (!agendado) { agendado = true; (window.queueMicrotask || setTimeout)(processa); } });
+  const ligar = () => { varrer(document.body); mo.observe(document.body, { childList: true, subtree: true, characterData: true }); };
+  if (document.body) ligar(); else document.addEventListener('DOMContentLoaded', ligar);
+  /* janelas do navegador (alerta, confirmação) */
+  ['alert', 'confirm', 'prompt'].forEach(k => { const o = window[k]; if (typeof o === 'function') window[k] = function (m, ...r) { return o.call(window, m == null ? m : window.polirTexto38(m), ...r); }; });
+})();
+
+try { const f = { falhas: '<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>', metas: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', upgrade: '<path d="m12 19V5"/><path d="m5 12 7-7 7 7"/>', nps: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.5 2.9 1-6.1L3.2 9.5l6.1-.9z"/>' }; Object.keys(f).forEach(k => { if (!ICO[k]) ICO[k] = f[k]; }); } catch (e) { }
+setTimeout(() => { try { if (A.user && document.getElementById('view')) renderApp(); } catch (e) { } }, 0);
 
 </script>
 </body>
