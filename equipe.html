@@ -3861,6 +3861,22 @@ function rf41Modal(x) {
    O conector consulta o próprio Firebase: se o bloqueio do App Check está ligado
    e se as regras publicadas são as certas. "Consertar" desliga o bloqueio e publica as regras.
    ===================================================================== */
+/* Consertar em etapas curtas (o plano grátis da Cloudflare limita cada chamada): publica a regra corrigida, espera, testa; se ainda recusar, publica a versão simples e testa de novo */
+async function fb42Consertar(el) {
+  const box = $('#fb42-r', el), bs = $$('#fb42 button', el), log = []; bs.forEach(b => b.disabled = true);
+  const mostra = (txt, fim) => { box.innerHTML = `<div style="padding:10px 14px;border-radius:10px;background:var(--bg,#F5F7FB)">${log.map(x => `<div>${esc(x)}</div>`).join('')}${txt ? `<div class="hint" style="margin-top:6px">${esc(txt)}</div>` : ''}</div>`; if (fim) bs.forEach(b => b.disabled = false); };
+  const espera = async seg => { for (let i = seg; i > 0; i--) { mostra(`Esperando o Firebase aplicar a regra… ${i} s`); await new Promise(r => setTimeout(r, 1000)); } };
+  const testar = async () => { mostra('Testando com um login de funcionário…'); const r = await asaasCall('/api/firebase-diag', { testar: true }); return r.teste || { ok: false, detalhe: 'sem resposta' }; };
+  try {
+    mostra('Conferindo e publicando a regra corrigida…');
+    const r1 = await asaasCall('/api/firebase-diag', { consertar: true }); (r1.acoes || []).forEach(a => log.push('✓ ' + a));
+    if (r1.publicou) await espera(45);
+    let t = await testar();
+    if (!t.ok) { log.push('O Firebase ainda recusa (' + t.detalhe + '). Publicando a versão simples…'); const r2 = await asaasCall('/api/firebase-diag', { consertar: true, variante: 'B' }); (r2.acoes || []).forEach(a => log.push('✓ ' + a)); await espera(45); t = await testar(); }
+    log.push(t.ok ? '✅ Teste com login de funcionário: ponto, chat e biometria GRAVANDO normalmente. Feche e abra o Portal no celular e bata o ponto.' : '❌ Ainda recusado: ' + t.detalhe + '. Mande este print para o suporte.');
+    mostra('', true);
+  } catch (e) { log.push('Erro: ' + (e.message || e)); mostra('', true); }
+}
 async function fb42(el, consertar, fundo) {
   const box = $('#fb42-r', el), bs = $$('#fb42 button', el); bs.forEach(b => b.disabled = true); box.innerHTML = `<p class="hint">${consertar ? 'Consertando e testando com um login de funcionário… pode levar até 1 minuto e meio. Não feche a página.' : 'Consultando o Firebase…'}</p>`;
   try {
@@ -3879,7 +3895,7 @@ async function fb42(el, consertar, fundo) {
 if (typeof vMonitor === 'function') { const _vm42 = vMonitor; vMonitor = async function (el) { const r = await _vm42.apply(this, arguments); try {
   if (A.papel !== 'dono' || $('#fb42', el)) return r;
   el.insertAdjacentHTML('afterbegin', `<section class="panel" id="fb42" style="border-left:4px solid var(--pri)"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Firebase: bloqueio e regras</h2><p class="hint" style="margin:0">Se o ponto ou o chat do Portal forem recusados, verifique aqui. "Consertar" desliga o bloqueio do App Check e publica as regras certas.</p></div><button class="btn sec" id="fb42-v">Verificar</button><button class="btn sec" id="fb42-f">Verificar a fundo</button><button class="btn" id="fb42-c">Consertar</button></div><div id="fb42-r"></div></section>`);
-  $('#fb42-v', el).onclick = () => fb42(el, false); $('#fb42-f', el).onclick = () => fb42(el, false, true); $('#fb42-c', el).onclick = () => fb42(el, true);
+  $('#fb42-v', el).onclick = () => fb42(el, false); $('#fb42-f', el).onclick = () => fb42(el, false, true); $('#fb42-c', el).onclick = () => fb42Consertar(el);
 } catch (e) { console.warn(e); } return r; }; }
 
 </script>
