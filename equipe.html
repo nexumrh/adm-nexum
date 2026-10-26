@@ -3862,7 +3862,7 @@ function rf41Modal(x) {
    e se as regras publicadas são as certas. "Consertar" desliga o bloqueio e publica as regras.
    ===================================================================== */
 async function fb42(el, consertar, fundo) {
-  const box = $('#fb42-r', el), bs = $$('#fb42 button', el); bs.forEach(b => b.disabled = true); box.innerHTML = '<p class="hint">Consultando o Firebase…</p>';
+  const box = $('#fb42-r', el), bs = $$('#fb42 button', el); bs.forEach(b => b.disabled = true); box.innerHTML = `<p class="hint">${consertar ? 'Consertando e testando com um login de funcionário… pode levar até 1 minuto e meio. Não feche a página.' : 'Consultando o Firebase…'}</p>`;
   try {
     const r = await asaasCall('/api/firebase-diag', { consertar: !!consertar, fundo: !!fundo });
     const nm = { 'firestore.googleapis.com': 'Banco de dados (Firestore)', 'identitytoolkit.googleapis.com': 'Login (Authentication)' }, ac = r.appCheck || {};
