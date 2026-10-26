@@ -3846,7 +3846,7 @@ function rf41Modal(x) {
           <p class="hint">${env ? `Enviado ao cliente por ${env}.` : 'Nada foi enviado ao cliente automaticamente.'}${r.whats ? ' O WhatsApp sai pelo programa NEXUM WhatsApp (precisa estar ligado).' : ''}</p>
           ${r.asaas ? '' : `<p class="hint" style="color:var(--bad)">Não consegui dar baixa no Asaas (${esc(r.asaasErro || '')}). Cancele a cobrança lá para o cliente não receber lembrete.</p>`}`,
           { foot: '<button class="btn" data-close>Fechar</button>', onMount: m2 => { const c = $('#rf-cp', m2); if (c) c.onclick = () => copiar(`Seu acesso ao NEXUM RH:\n${'https://rh.nexumdp.com.br/'}\nE-mail: ${ac.email}\nSenha: ${ac.senha}\nCódigo da empresa: ${ac.tid}`, 'Acesso copiado.'); } });
-      } catch (e) { b.disabled = false; b.textContent = 'Confirmar e liberar'; toast(e.message, true); }
+      } catch (e) { b.disabled = false; b.textContent = 'Confirmar e liberar'; toast(/Rota não encontrada/.test(e.message || '') ? 'O conector ainda está na versão antiga. Publique o worker.js novo no Cloudflare e clique de novo.' : e.message, true); }
     } });
 }
 { const _va41 = vAsaas; vAsaas = async function (el) { const r = await _va41.apply(this, arguments); try {
