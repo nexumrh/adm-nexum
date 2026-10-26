@@ -3855,5 +3855,31 @@ function rf41Modal(x) {
 } catch (e) { console.warn(e); } return r; }; }
 
 </script>
+<script>
+/* =====================================================================
+   LOTE 42 (Painel do Dono): Firebase, bloqueio e regras
+   O conector consulta o próprio Firebase: se o bloqueio do App Check está ligado
+   e se as regras publicadas são as certas. "Consertar" desliga o bloqueio e publica as regras.
+   ===================================================================== */
+async function fb42(el, consertar) {
+  const box = $('#fb42-r', el), bs = $$('#fb42 button', el); bs.forEach(b => b.disabled = true); box.innerHTML = '<p class="hint">Consultando o Firebase…</p>';
+  try {
+    const r = await asaasCall('/api/firebase-diag', { consertar: !!consertar });
+    const nm = { 'firestore.googleapis.com': 'Banco de dados (Firestore)', 'identitytoolkit.googleapis.com': 'Login (Authentication)' }, ac = r.appCheck || {};
+    const linhas = Object.keys(nm).map(k => { const v = ac[k] || 'OFF', mal = v === 'ENFORCED'; return `<li><b>${nm[k]}</b>: <span class="pill ${mal ? 'bad' : 'ok'}">${mal ? 'BLOQUEIO LIGADO' : 'sem bloqueio'}</span></li>`; }).join('');
+    const rg = r.regras || {};
+    box.innerHTML = `<ul style="margin:6px 0 10px;padding-left:18px">${ac.erro ? `<li>App Check: não consegui ler (${esc(ac.erro)})</li>` : linhas}
+      <li><b>Regras publicadas</b>: ${rg.erro ? `não consegui ler (${esc(rg.erro)})` : `<span class="pill ${rg.certa ? 'ok' : 'bad'}">${rg.certa ? 'as certas' : 'DIFERENTES das certas'}</span> <span class="hint">versão ${esc(rg.versao || '?')} · publicada em ${rg.publicadaEm ? new Date(rg.publicadaEm).toLocaleString('pt-BR').slice(0, 17) : '?'}</span>`}</li></ul>
+      ${(r.acoes || []).length ? `<div style="padding:10px 14px;border-radius:10px;background:var(--ok-s,#E8F8F0)">${r.acoes.map(a => `<div>✓ ${esc(a)}</div>`).join('')}<div class="hint" style="margin-top:6px">Espere 1 minuto e teste o ponto de novo (Ctrl+Shift+R no Portal).</div></div>` : ''}`;
+  } catch (e) { box.innerHTML = `<p style="color:var(--bad)">${esc(/Rota não encontrada/.test(e.message || '') ? 'O conector ainda é o antigo: publique o worker.js novo (publicar.bat).' : e.message)}</p>`; }
+  bs.forEach(b => b.disabled = false);
+}
+if (typeof vMonitor === 'function') { const _vm42 = vMonitor; vMonitor = async function (el) { const r = await _vm42.apply(this, arguments); try {
+  if (A.papel !== 'dono' || $('#fb42', el)) return r;
+  el.insertAdjacentHTML('afterbegin', `<section class="panel" id="fb42" style="border-left:4px solid var(--pri)"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><div style="flex:1;min-width:240px"><h2 style="margin:0 0 4px">Firebase: bloqueio e regras</h2><p class="hint" style="margin:0">Se o ponto ou o chat do Portal forem recusados, verifique aqui. "Consertar" desliga o bloqueio do App Check e publica as regras certas.</p></div><button class="btn sec" id="fb42-v">Verificar</button><button class="btn" id="fb42-c">Consertar</button></div><div id="fb42-r"></div></section>`);
+  $('#fb42-v', el).onclick = () => fb42(el, false); $('#fb42-c', el).onclick = () => fb42(el, true);
+} catch (e) { console.warn(e); } return r; }; }
+
+</script>
 </body>
 </html>
