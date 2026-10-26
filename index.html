@@ -3818,5 +3818,43 @@ if (typeof vMonitor === 'function') { const _vm38 = vMonitor; vMonitor = async f
 (function () { const st = document.createElement('style'); st.id = 'toque38'; st.textContent = '@media (max-width:760px),(pointer:coarse) and (max-width:1024px){.btn,a.btn,button.btn,.btn.sm,.btn.ghost,.btn.sec{min-height:40px!important;height:auto}.modal-h button,button.x,header button,.tg-abre,button[aria-label^="Fechar"]{min-height:40px;min-width:40px}.tabs button,.chip,button.on,.nav button,.nav-g,.bnav button,.tb,select,select.inp,input.inp:not([type=checkbox]):not([type=radio]){min-height:40px}.menu-btn,.ib,.ferr{min-width:40px;min-height:40px}.f36{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:40px;margin-top:-10px;margin-bottom:-10px}.side .nav button,.side nav button{min-height:40px}}'; document.head.appendChild(st); })();
 
 </script>
+<script>
+/* =====================================================================
+   LOTE 41 (Painel do Dono): "Recebi por fora" nas cobranças do Asaas
+   O cliente pagou direto (PIX na conta, dinheiro, maquininha...): dá baixa no Asaas,
+   libera o plano e, se o pedido do site ainda não tinha login, cria o login e manda
+   e-mail e senha por e-mail e WhatsApp.
+   ===================================================================== */
+const RF41_FORMAS = [['F_PIX', 'PIX direto na conta'], ['F_DINHEIRO', 'Dinheiro'], ['F_TRANSF', 'Transferência'], ['F_MAQ', 'Cartão na maquininha'], ['F_OUTRO', 'Outro meio']];
+function rf41Modal(x) {
+  const ped = x.tipo === 'ped' ? (A.ped || []).find(p => p.id === x.pedido) : null, semLogin = ped && ped.plano !== 'recrutamento' && !ped.tenantId;
+  modal('Recebi por fora', `<p style="margin-top:0"><b>${esc(x.empresa || '')}</b> · ${brl(+x.valor || 0)}<br><span class="hint">${esc(x.descricao || '')}</span></p>
+    <div class="grid"><div class="fld"><label for="rf-f">Como o cliente pagou</label><select class="inp" id="rf-f">${opts(RF41_FORMAS, 'F_PIX')}</select></div><div class="fld"><label for="rf-d">Data do pagamento</label><input class="inp" type="date" id="rf-d" value="${iso(hoje())}" max="${iso(hoje())}"></div></div>
+    <div class="fld"><label for="rf-o">Observação (opcional)</label><input class="inp" id="rf-o" maxlength="200" placeholder="Ex.: PIX recebido no Nubank às 14h"></div>
+    <label class="row" style="gap:8px;margin:8px 0"><input type="checkbox" id="rf-a" checked> ${semLogin ? 'Criar o login e mandar e-mail e senha para o cliente por e-mail e WhatsApp' : 'Avisar o cliente por e-mail e WhatsApp que o pagamento foi recebido'}</label>
+    <p class="hint">O que acontece: a cobrança é baixada no Asaas (o link para de cobrar), o plano é liberado pelo período contratado${semLogin ? ' e, como este pedido ainda não tem login, o login do NEXUM RH é criado com o e-mail ' + esc(ped.email || '') : ''}.</p>`,
+    { foot: '<button class="btn sec" data-close>Voltar</button><button class="btn" id="rf-ok">Confirmar e liberar</button>', onMount: m => $('#rf-ok', m).onclick = async () => {
+      const b = $('#rf-ok', m); b.disabled = true; b.textContent = 'Liberando…';
+      try {
+        const r = await asaasCall('/api/recebido-fora', { id: x.id, forma: $('#rf-f', m).value, data: $('#rf-d', m).value, obs: $('#rf-o', m).value, avisar: $('#rf-a', m).checked });
+        logEq('asaas', `Recebeu por fora ${brl(+x.valor || 0)} · ${x.empresa || ''}`);
+        const ac = r.acesso, env = [r.email ? 'e-mail' : '', r.whats ? 'WhatsApp' : ''].filter(Boolean).join(' e ');
+        closeModal();
+        modal('Pagamento liberado', `<p style="margin-top:0">✅ Pagamento registrado${r.validade ? ` e acesso liberado até <b>${fd(r.validade)}</b>` : ''}.</p>
+          ${ac && ac.novo ? `<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0"><b>Login criado</b><div class="hint" style="margin-top:4px">E-mail: <b>${esc(ac.email)}</b><br>Senha: <b><code>${esc(ac.senha)}</code></b><br>Código da empresa: <b>${esc(ac.tid)}</b></div><button class="btn ghost sm" id="rf-cp" style="margin-top:8px">Copiar acesso</button></div>` : ''}
+          ${ac && ac.existe ? `<p class="hint">Este e-mail já tinha login no NEXUM RH: o cliente entra com a senha que já usa.</p>` : ''}
+          <p class="hint">${env ? `Enviado ao cliente por ${env}.` : 'Nada foi enviado ao cliente automaticamente.'}${r.whats ? ' O WhatsApp sai pelo programa NEXUM WhatsApp (precisa estar ligado).' : ''}</p>
+          ${r.asaas ? '' : `<p class="hint" style="color:var(--bad)">Não consegui dar baixa no Asaas (${esc(r.asaasErro || '')}). Cancele a cobrança lá para o cliente não receber lembrete.</p>`}`,
+          { foot: '<button class="btn" data-close>Fechar</button>', onMount: m2 => { const c = $('#rf-cp', m2); if (c) c.onclick = () => copiar(`Seu acesso ao NEXUM RH:\n${'https://rh.nexumdp.com.br/'}\nE-mail: ${ac.email}\nSenha: ${ac.senha}\nCódigo da empresa: ${ac.tid}`, 'Acesso copiado.'); } });
+      } catch (e) { b.disabled = false; b.textContent = 'Confirmar e liberar'; toast(e.message, true); }
+    } });
+}
+{ const _va41 = vAsaas; vAsaas = async function (el) { const r = await _va41.apply(this, arguments); try {
+  const l = A.cob || []; $$('[data-asx]', el).forEach(bx => { if (bx.previousElementSibling && bx.previousElementSibling.dataset && bx.previousElementSibling.dataset.asr) return; const x = l.find(y => y.id === bx.dataset.asx); if (!x) return;
+    bx.insertAdjacentHTML('beforebegin', `<button class="btn sm" data-asr="${esc(x.id)}" title="O cliente pagou direto para você">Recebi por fora</button>`); });
+  $$('[data-asr]', el).forEach(b => b.onclick = () => { const x = l.find(y => y.id === b.dataset.asr); if (x) rf41Modal(x); });
+} catch (e) { console.warn(e); } return r; }; }
+
+</script>
 </body>
 </html>
