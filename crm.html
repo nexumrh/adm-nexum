@@ -1983,6 +1983,58 @@ ${BOX}.nx-lg{max-width:920px}
 
 nxModalKit({ sistema: 'crm', root: '#mr', ov: '#mr .ov', box: '#mr .md', body: '#mr .md-b', foot: '#mr .md-f', head: '#mr .md-h', x: '[data-x],[data-close]', fechar: () => fechar(), toastFn: 'toast', abrirFn: 'modal' });
 </script>
+<script>
+/* =====================================================================
+   LOTE 62 (CRM): som e placar quando alguém fecha uma venda
+   Quando um lead vira cliente, quem está com o CRM aberto ouve uma comemoração e vê quem fechou.
+   O placar do mês mostra quem fechou mais (botão "Placar" no menu).
+   ===================================================================== */
+const PLC62 = { vistos: null, som: (() => { try { return localStorage.getItem('crm:somVenda') !== '0'; } catch (e) { return true; } })() };
+function fanfarra62() {
+  if (!PLC62.som) return; try { const A = window.__ac62 = window.__ac62 || new (window.AudioContext || window.webkitAudioContext)(), t = A.currentTime;
+    [[523.25, 0], [659.25, .12], [783.99, .24], [1046.5, .38], [783.99, .56], [1046.5, .68]].forEach(([f, d], i) => { const o = A.createOscillator(), g = A.createGain(), dur = i === 5 ? .7 : .22; o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.2, t + d + .015); g.gain.exponentialRampToValueAtTime(.0005, t + d + dur); o.connect(g); g.connect(A.destination); o.start(t + d); o.stop(t + d + dur + .05); });
+  } catch (e) { }
+}
+document.addEventListener('pointerdown', () => { try { if (!window.__ac62) window.__ac62 = new (window.AudioContext || window.webkitAudioContext)(); else if (window.__ac62.state === 'suspended') window.__ac62.resume(); } catch (e) { } }, { once: true });
+function confete62() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; const c = document.createElement('canvas'), x = c.getContext('2d'), W = c.width = innerWidth, H = c.height = innerHeight;
+  c.style.cssText = 'position:fixed;inset:0;z-index:2147483600;pointer-events:none'; document.body.appendChild(c);
+  const cores = ['#1A5CFF', '#0E8A5F', '#FBBF24', '#F43F5E', '#A855F7', '#06B6D4'], P = Array.from({ length: 150 }, () => ({ x: W / 2 + (Math.random() - .5) * W * .4, y: H * .3, vx: (Math.random() - .5) * 13, vy: -Math.random() * 12 - 4, r: Math.random() * 6 + 4, c: cores[Math.random() * cores.length | 0], a: Math.random() * 6, va: (Math.random() - .5) * .3 }));
+  const t0 = performance.now(); (function q(t) { x.clearRect(0, 0, W, H); P.forEach(p => { p.vy += .3; p.x += p.vx; p.y += p.vy; p.a += p.va; x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.c; x.globalAlpha = Math.max(0, 1 - (t - t0) / 3200); x.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); x.restore(); }); if (t - t0 < 3200) requestAnimationFrame(q); else c.remove(); })(t0);
+}
+const mes62 = () => new Date().toISOString().slice(0, 7);
+function ganhosMes62() { return (C.leads || []).filter(l => l.status === 'ganho' && String(l.ganhoEm || l.atualizadoEm || '').slice(0, 7) === mes62()); }
+function placar62() { const m = {}; ganhosMes62().forEach(l => { const k = String(l.vendedorEmail || l.atendenteEmail || '').toLowerCase() || 'sem'; const o = m[k] = m[k] || { email: k, nome: l.vendedor || l.atendente || (k === 'sem' ? 'Sem vendedor' : k.split('@')[0]), n: 0, planos: {} }; o.n++; if (l.plano) o.planos[l.plano] = (o.planos[l.plano] || 0) + 1; }); return Object.values(m).sort((a, b) => b.n - a.n); }
+function bannerVenda62(l) {
+  const r = placar62(), eu = r.findIndex(x => x.email === String(l.vendedorEmail || '').toLowerCase()), quem = l.vendedor || l.atendente || 'A equipe';
+  document.querySelectorAll('.vd62').forEach(x => x.remove()); const d = document.createElement('div'); d.className = 'vd62'; d.setAttribute('role', 'status');
+  d.innerHTML = `<div class="vd62-t">🎉 Venda fechada!</div><b>${esc(quem)} fechou ${esc(l.empresa || l.nome || 'um novo cliente')}</b><span>${eu >= 0 ? `${r[eu].n}ª venda de ${esc(String(quem).split(' ')[0])} no mês · ${eu + 1}º no placar` : ''}</span><div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" data-p>Ver o placar</button><button class="btn ghost sm" data-x style="color:#fff">Fechar</button></div>`;
+  document.body.appendChild(d); d.querySelector('[data-p]').onclick = () => { d.remove(); abrirPlacar62(); }; d.querySelector('[data-x]').onclick = () => d.remove(); setTimeout(() => d.remove(), 12000);
+}
+function abrirPlacar62() {
+  const r = placar62(), tot = r.reduce((s, x) => s + x.n, 0), max = Math.max(1, ...r.map(x => x.n)), med = ['🥇', '🥈', '🥉'];
+  modal(`Placar de vendas · ${new Date().toLocaleDateString('pt-BR', { month: 'long' })}`, `<div class="mt" style="margin:0 0 12px"><div><b>${tot}</b><span>vendas no mês</span></div><div><b>${r.length}</b><span>vendedores com venda</span></div></div>
+    ${r.length ? r.map((x, i) => `<div style="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2)"><span style="width:28px;text-align:center;font-size:${i < 3 ? 20 : 14}px">${med[i] || (i + 1) + 'º'}</span><div style="flex:1;min-width:0"><b>${esc(x.nome)}</b><div style="height:8px;border-radius:8px;background:var(--line2);margin-top:5px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(x.n / max * 100)}%;background:${i === 0 ? '#FBBF24' : 'var(--pri)'}"></i></div></div><b style="font-size:18px">${x.n}</b></div>`).join('')
+      : `<div class="vazio" style="padding:22px 0">${I('estrela')}<div>Nenhuma venda fechada neste mês ainda.<br>Ao concluir um lead como "Virou cliente", a venda entra no placar.</div></div>`}
+    <label class="row" style="gap:8px;margin-top:14px"><input type="checkbox" id="pl-som" ${PLC62.som ? 'checked' : ''}> Tocar a comemoração quando alguém fechar uma venda</label>`,
+    { foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => { $('#pl-som', m).onchange = e => { PLC62.som = e.target.checked; try { localStorage.setItem('crm:somVenda', PLC62.som ? '1' : '0'); } catch (x) { } if (PLC62.som) fanfarra62(); }; } });
+}
+(function () {
+  const st = document.createElement('style'); st.textContent = '.vd62{position:fixed;right:18px;top:18px;z-index:2147483601;width:min(340px,calc(100% - 24px));background:linear-gradient(135deg,#0A1733,#1A5CFF);color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 20px 50px rgba(10,23,51,.35);animation:fd .2s}.vd62-t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}.vd62 b{display:block;font-size:16px;margin:4px 0 2px}.vd62 span{font-size:13px;opacity:.9}.vd62 .btn.sm{background:#fff;color:#0A1733;border-color:#fff}.vd62 .btn.ghost{background:transparent;border-color:rgba(255,255,255,.5)}';
+  document.head.appendChild(st);
+  setInterval(() => { try {
+    if (typeof C === 'undefined' || !Array.isArray(C.leads) || !C.iniciou) return; const g = (C.leads || []).filter(l => l.status === 'ganho');
+    if (!PLC62.vistos) { PLC62.vistos = new Set(g.map(l => l.id)); return; }
+    const novos = g.filter(l => !PLC62.vistos.has(l.id) && Date.now() - Date.parse(l.ganhoEm || l.atualizadoEm || 0) < 15 * 60000); g.forEach(l => PLC62.vistos.add(l.id));
+    if (!novos.length) return; const l = novos[novos.length - 1]; fanfarra62(); confete62(); bannerVenda62(l);
+  } catch (e) { } }, 2000);
+})();
+{ const _dn62 = desenharNav; desenharNav = function () {
+  const r = _dn62.apply(this, arguments), el = $('#nav'), ref = el && ($('#nv-com', el) || $('#nv-rt', el));
+  if (ref && !$('#nv-plc', el)) { const n = ganhosMes62().length; ref.insertAdjacentHTML('afterend', `<button id="nv-plc">${I('estrela')}<span>Placar do mês</span>${n ? `<span class="n">${n}</span>` : ''}</button>`); $('#nv-plc', el).onclick = () => { el.classList.remove('aberto'); abrirPlacar62(); }; }
+  return r;
+}; }
+</script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
 
