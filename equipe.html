@@ -923,7 +923,7 @@ function supChat(prot) {
         $('#sc-rsel', m).onchange = e => { const r = l[+e.target.value]; if (r) ins(r.texto.replace('{nome}', String(x0.nome || '').split(' ')[0] || '')); e.target.value = ''; };
         $('#sc-lsel', m).onchange = e => { const x = LINKS_NX[+e.target.value]; if (x) ins(`${x[0]}: ${x[1]}`); e.target.value = ''; };
         $$('[data-rp]', m).forEach(b => b.onclick = () => { const t = $('#sc-t', m), r = l[+b.dataset.rp]; t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + r.texto.replace('{nome}', String(x0.nome || '').split(' ')[0] || ''); t.focus(); });
-        $('#sc-rps', m).onclick = async () => { const tx = $('#sc-t', m).value.trim(); if (tx.length < 5) return toast('Escreva a resposta no campo antes de salvar.', true); const ti = prompt('Nome curto para esta resposta (aparece no botão):'); if (!ti || !ti.trim()) return;
+        $('#sc-rps', m).onclick = async () => { const tx = $('#sc-t', m).value.trim(); if (tx.length < 5) return toast('Escreva a resposta no campo antes de salvar.', true); const ti = (await nxPrompt('Nome curto para esta resposta (aparece no botão):')); if (!ti || !ti.trim()) return;
           const lista = [...((A.respostas || {}).lista || []), { titulo: ti.trim().slice(0, 30), texto: tx }]; try { await FB.db.doc('plataforma/suporte').set({ lista }, { merge: true }); A.respostas = { lista }; rps(); toast('Resposta pronta salva.'); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } }; };
       if (A.respostas) rps(); else { rps(); FB.db.doc('plataforma/suporte').get().then(d => { A.respostas = d.data() || { lista: [] }; if ($('#sc-rp', m)) rps(); }).catch(() => { A.respostas = { lista: [] }; }); }
       $('#sc-env', m).onclick = env; $('#sc-t', m).onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); env(); } };
@@ -1023,7 +1023,7 @@ async function vRevenda(el) {
     <section class="panel"><h2 style="margin-bottom:10px">Comissões</h2>${REV.com.length ? `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Contador</th><th>Empresa</th><th class="n">Valor pago</th><th class="n">%</th><th class="n">Comissão</th><th>Situação</th></tr></thead><tbody>${REV.com.slice().sort((a, b) => (b.em || '').localeCompare(a.em || '')).slice(0, 200).map(x => `<tr><td>${new Date(x.em).toLocaleDateString('pt-BR')}</td><td>${esc(x.contador || '')}</td><td>${esc(x.empresa || '')}</td><td class="n">${brl(+x.valor || 0)}</td><td class="n">${String(x.pct).replace('.', ',')}</td><td class="n"><b>${brl(+x.comissao || 0)}</b></td><td>${x.status === 'pago' ? `<span class="pill ok">Paga ${new Date(x.pagoEm).toLocaleDateString('pt-BR')}</span>` : `<button class="btn ghost sm" data-rp1="${x.id}">Marcar paga</button>`}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint" style="margin:0">As comissões aparecem quando você confirmar o pagamento de um pedido ou renovar uma empresa que veio de um contador.</p>'}</section>`;
   $('#rv-ps', el).onclick = async () => { const p = Math.max(0, Math.min(90, num($('#rv-p', el).value))); try { await FB.db.doc('plataforma/revenda').set({ pct: p, atualizadoEm: new Date().toISOString() }); toast(`Comissão de ${String(p).replace('.', ',')}% salva para as próximas vendas.`); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
   const pagar = async ids => { const b = FB.db.batch(), ag = new Date().toISOString(); ids.forEach(id => b.update(FB.db.doc(`revendaComissoes/${id}`), { status: 'pago', pagoEm: ag })); await b.commit(); };
-  $$('[data-rpg]', el).forEach(b => b.onclick = async () => { const c = REV.contadores.find(x => x.id === b.dataset.rpg), l2 = porC(c.id).filter(x => x.status === 'a_pagar'); if (!confirm(`Confirmar o pagamento de ${brl(soma(l2))} para ${c.nome}${c.pix ? ` (PIX ${c.pix})` : ''}?`)) return; try { await pagar(l2.map(x => x.id)); toast('Comissões marcadas como pagas.'); vRevenda(el); } catch (e) { toast(e.code || e.message, true); } });
+  $$('[data-rpg]', el).forEach(b => b.onclick = async () => { const c = REV.contadores.find(x => x.id === b.dataset.rpg), l2 = porC(c.id).filter(x => x.status === 'a_pagar'); if (!(await nxConfirm(`Confirmar o pagamento de ${brl(soma(l2))} para ${c.nome}${c.pix ? ` (PIX ${c.pix})` : ''}?`))) return; try { await pagar(l2.map(x => x.id)); toast('Comissões marcadas como pagas.'); vRevenda(el); } catch (e) { toast(e.code || e.message, true); } });
   $$('[data-rp1]', el).forEach(b => b.onclick = async () => { try { await pagar([b.dataset.rp1]); vRevenda(el); } catch (e) { toast(e.code || e.message, true); } });
   $$('[data-rbl]', el).forEach(b => b.onclick = async () => { const c = REV.contadores.find(x => x.id === b.dataset.rbl); try { await FB.db.doc(`users/${c.id}`).update({ ativo: c.ativo === false }); toast(c.ativo === false ? 'Contador reativado.' : 'Contador bloqueado.'); vRevenda(el); } catch (e) { toast(e.code || e.message, true); } });
 }
@@ -1099,7 +1099,7 @@ async function vCupons(el) {
       try { await FB.db.doc(`cupons/${cod}`).set(d); closeModal(); toast(`Cupom ${cod} criado.`); vCupons(el); } catch (e) { toast('Não foi possível criar: ' + (e.code || e.message), true); } } });
   $$('[data-cl]', el).forEach(b => b.onclick = () => { const u = `https://vendas.nexumdp.com.br/?cupom=${b.dataset.cl}`; navigator.clipboard && navigator.clipboard.writeText(u); toast('Link copiado: ' + u); });
   $$('[data-ca]', el).forEach(b => b.onclick = async () => { const c = l.find(x => x.id === b.dataset.ca); await FB.db.doc(`cupons/${c.id}`).update({ ativo: c.ativo === false }); vCupons(el); });
-  $$('[data-cx]', el).forEach(b => b.onclick = async () => { if (!confirm(`Excluir o cupom ${b.dataset.cx}?`)) return; await FB.db.doc(`cupons/${b.dataset.cx}`).delete(); vCupons(el); });
+  $$('[data-cx]', el).forEach(b => b.onclick = async () => { if (!(await nxConfirm(`Excluir o cupom ${b.dataset.cx}?`))) return; await FB.db.doc(`cupons/${b.dataset.cx}`).delete(); vCupons(el); });
 }
 
 /* ---------- Novidades para os clientes ---------- */
@@ -1117,7 +1117,7 @@ async function vNovid(el) {
       try { if (n) await FB.db.doc(`novidades/${n.id}`).set(d); else await FB.db.collection('novidades').add(d); closeModal(); toast('Publicação salva.'); vNovid(el); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } } });
   $('#nv-n', el).onclick = () => form(null);
   $$('[data-ne]', el).forEach(b => b.onclick = () => form(l.find(x => x.id === b.dataset.ne)));
-  $$('[data-nx]', el).forEach(b => b.onclick = async () => { if (!confirm('Excluir esta publicação?')) return; await FB.db.doc(`novidades/${b.dataset.nx}`).delete(); vNovid(el); });
+  $$('[data-nx]', el).forEach(b => b.onclick = async () => { if (!(await nxConfirm('Excluir esta publicação?'))) return; await FB.db.doc(`novidades/${b.dataset.nx}`).delete(); vNovid(el); });
 }
 
 /* ---------- Notas fiscais (NFS-e) ---------- */
@@ -1158,7 +1158,7 @@ async function vNF(el) {
   $$('[data-nfv]', el).forEach(b => b.onclick = () => { const n = notaDe(b.dataset.nfv); modal(`NFS-e ${esc(n.numero)}`, `<div class="res"><div><span class="hint">Empresa</span><b>${esc(n.empresa)}</b></div><div><span class="hint">Valor</span><b>${brl(+n.valor || 0)}</b></div><div><span class="hint">Período</span><b>${esc(n.competencia || '')}</b></div><div><span class="hint">Emitida em</span><b>${new Date(n.emitidaEm).toLocaleDateString('pt-BR')}</b></div>${n.codigo ? `<div><span class="hint">Verificação</span><b>${esc(n.codigo)}</b></div>` : ''}</div>
       <h3 style="margin:14px 0 6px">${n.pdf || n.link ? 'Trocar o PDF ou o link' : 'Anexar o PDF ou o link para o cliente'}</h3><div class="grid"><div class="fld"><label for="nv-c">Código de verificação</label><input class="inp" id="nv-c" value="${esc(n.codigo || '')}"></div><div class="fld"><label for="nv-l">Link da nota na prefeitura</label><input class="inp" id="nv-l" value="${esc(n.link || '')}" placeholder="https://..."></div><div class="fld full"><label for="nv-f">PDF da nota (até 700 KB)</label><input class="inp" type="file" id="nv-f" accept="application/pdf"></div></div><div class="row end"><button class="btn sec" id="nv-sv">Salvar</button></div>`,
     { size: 'lg', foot: `<button class="btn ghost" id="nv-del" style="color:var(--bad);margin-right:auto">Apagar registro</button><button class="btn sec" id="nv-pr">Ver / imprimir a nota</button>${n.pdf ? `<button class="btn sec" id="nv-op">Abrir PDF</button><a class="btn sec" href="${n.pdf}" download="NFS-e_${esc(n.numero)}.pdf">Baixar PDF</a>` : ''}${n.link ? `<a class="btn sec" href="${esc(n.link)}" target="_blank" rel="noopener">Abrir na prefeitura</a>` : ''}<button class="btn" data-close>Fechar</button>`, onMount: m => { $('#nv-pr', m).onclick = () => verNotaImpressa(n, cfg); const op = $('#nv-op', m); if (op) op.onclick = () => abrirPdfDataUrl(n.pdf);
-      $('#nv-del', m).onclick = async () => { if (!confirm('Apagar o registro desta nota? (não cancela a nota na prefeitura)')) return; await FB.db.doc(`notasFiscais/${n.id}`).delete(); closeModal(); vNF(el); };
+      $('#nv-del', m).onclick = async () => { if (!(await nxConfirm('Apagar o registro desta nota? (não cancela a nota na prefeitura)'))) return; await FB.db.doc(`notasFiscais/${n.id}`).delete(); closeModal(); vNF(el); };
       $('#nv-sv', m).onclick = async () => { const lk = $('#nv-l', m).value.trim(); if (lk && !/^https?:\/\//.test(lk)) return toast('O link deve começar com https://', true); const d = { codigo: $('#nv-c', m).value.trim(), link: lk }; const fl = $('#nv-f', m).files[0];
         if (fl) { if (fl.size > 700000) return toast('O PDF passa de 700 KB. Use o link da prefeitura.', true); d.pdf = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(fl); }); }
         try { await FB.db.doc(`notasFiscais/${n.id}`).update(d); closeModal(); toast('Nota atualizada. O cliente já consegue abrir.'); vNF(el); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } }; } }); });
@@ -1209,7 +1209,7 @@ async function vRst(el) {
     { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="rv-ok">Salvar</button>', onMount: m => $('#rv-ok', m).onclick = async () => { const d = { porCandidato: num($('#rv-a', m).value) || 200, porContratado: num($('#rv-c', m).value) || 400, somar: $('#rv-s', m).checked }; try { await FB.db.doc('plataforma/rst').set(d); A.rstCfg = d; closeModal(); vRst(el); } catch (e) { toast(e.code || e.message, true); } } });
   $$('[data-rss]', el).forEach(s => s.onchange = () => salva(l.find(p => p.id === s.dataset.rss), { status: s.value }));
   $$('[data-rsc]', el).forEach(s => s.onchange = () => { const [p, cid] = ach(s.dataset.rsc), cs = (p.candidatos || []).map(x => x.id === cid ? { ...x, status: s.value } : x); salva(p, { candidatos: cs }); });
-  $$('[data-rsx]', el).forEach(b => b.onclick = () => { const [p, cid] = ach(b.dataset.rsx); if (!confirm('Remover este candidato do pedido?')) return; salva(p, { candidatos: (p.candidatos || []).filter(x => x.id !== cid) }); });
+  $$('[data-rsx]', el).forEach(b => b.onclick = async () => { const [p, cid] = ach(b.dataset.rsx); if (!(await nxConfirm('Remover este candidato do pedido?'))) return; salva(p, { candidatos: (p.candidatos || []).filter(x => x.id !== cid) }); });
   $$('[data-rsa]', el).forEach(b => b.onclick = () => { const p = l.find(x => x.id === b.dataset.rsa);
     modal(`Apresentar candidato · ${esc(p.empresa || '')}`, `<div class="grid"><div class="fld full"><label for="ra-n">Nome do candidato</label><input class="inp" id="ra-n"></div><div class="fld"><label for="ra-t">WhatsApp</label><input class="inp" id="ra-t" type="tel"></div><div class="fld"><label for="ra-e">E-mail</label><input class="inp" id="ra-e" type="email"></div>
       <div class="fld full"><label for="ra-v">Vaga</label><select class="inp" id="ra-v">${opts((p.vagas || []).map(v => [v.cargo + (v.loja ? ' · ' + v.loja : ''), v.cargo + (v.loja ? ' · ' + v.loja : '')]).concat([['Outra', 'Outra']]), '')}</select></div>
@@ -1269,7 +1269,7 @@ async function vEquipeNx(el) {
         modal('Acesso criado', `<p style="margin-top:0">Envie para ${esc(nm)}:</p><div class="res"><div><span class="hint">Endereço</span><b>${esc(URL_EQUIPE)}</b></div><div><span class="hint">E-mail</span><b>${esc(e)}</b></div>${criado ? `<div><span class="hint">Senha</span><b>${esc(s)}</b></div>` : '<div><span class="hint">Senha</span><b>a que a pessoa já usa</b></div>'}</div>`, { size: 'sm', foot: '<button class="btn" data-close>Pronto</button>' }); }
       catch (er) { b.disabled = false; toast('Não foi possível criar: ' + (er.code || er.message), true); } } });
   $$('[data-eqa]', el).forEach(b => b.onclick = () => { const e = b.dataset.eqa; grava({ ...m, [e]: { ...m[e], ativo: m[e].ativo === false } }); });
-  $$('[data-eqx]', el).forEach(b => b.onclick = () => { const e = b.dataset.eqx; if (!confirm(`Remover o acesso de ${m[e].nome || e}?`)) return; const nm = { ...m }; delete nm[e]; grava(nm); });
+  $$('[data-eqx]', el).forEach(b => b.onclick = async () => { const e = b.dataset.eqx; if (!(await nxConfirm(`Remover o acesso de ${m[e].nome || e}?`))) return; const nm = { ...m }; delete nm[e]; grava(nm); });
 }
 /* ---------- Números do negócio ---------- */
 const precoPl = t => (PLANOS[t.plano] || {}).preco || 0;
@@ -1529,7 +1529,7 @@ function waChat(id) {
   $('#wc-col', m).onchange = e => { const k = e.target.value; e.target.value = c.coluna || 'ia'; closeModal(true); un.forEach(f => f()); WA.aberto = null; waMover(c, k); };
   $('#wc-fim', m).onclick = () => { closeModal(true); un.forEach(f => f()); WA.aberto = null; waMover(c, 'fim'); };
   $('#wc-ia', m).onclick = () => { closeModal(true); un.forEach(f => f()); WA.aberto = null; waMover(c, 'ia'); };
-  $('#wc-nm', m).onclick = async () => { const n = prompt('Nome do contato:', c.nome || ''); if (n === null || !n.trim()) return; try { await waRef(c.id).set({ nome: n.trim().slice(0, 80), nomeEditado: true }, { merge: true }); $('.modal-h h2,.modal-h h3', m) && ($('.modal-h h2,.modal-h h3', m).textContent = n.trim()); } catch (e) { toast(crmErro(e), true); } };
+  $('#wc-nm', m).onclick = async () => { const n = (await nxPrompt('Nome do contato:', c.nome || '')); if (n === null || !n.trim()) return; try { await waRef(c.id).set({ nome: n.trim().slice(0, 80), nomeEditado: true }, { merge: true }); $('.modal-h h2,.modal-h h3', m) && ($('.modal-h h2,.modal-h h3', m).textContent = n.trim()); } catch (e) { toast(crmErro(e), true); } };
   $('#wc-na', m).onclick = async () => { const t = $('#wc-n', m).value.trim(); if (!t) return; const l = [...(c.notas || []), { t: t.slice(0, 500), em: new Date().toISOString(), por: A.user.email || '' }].slice(-50); try { await waRef(c.id).set({ notas: l }, { merge: true }); $('#wc-n', m).value = ''; } catch (e) { toast(crmErro(e), true); } };
   setTimeout(() => ta.focus(), 60);
 }
@@ -1696,7 +1696,7 @@ async function vSugAdm(el) {
           try { await FB.db.doc(`sugestoes/${x.id}`).update(d);
             if (st === 'feita' && !$('#se-nw', m).hidden && $('#se-n', m).checked) await FB.db.collection('novidades').add({ titulo: d.titulo, texto: d.resposta || 'Sugestão dos clientes que já está no sistema.', tag: 'melhoria', sistemas: ['rh'], publicado: true, em: new Date().toISOString(), atualizadoEm: new Date().toISOString() });
             closeModal(); toast(st === 'feita' ? `Marcada como feita. ${(x.votos || []).length} empresa(s) serão avisadas.` : 'Sugestão atualizada.'); vSugAdm(el); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
-        const xb = $('#se-x', m); if (xb) xb.onclick = async () => { if (!confirm('Excluir esta sugestão de vez?')) return; try { await FB.db.doc(`sugestoes/${x.id}`).delete(); closeModal(); vSugAdm(el); } catch (e) { toast(e.code || e.message, true); } }; } }); });
+        const xb = $('#se-x', m); if (xb) xb.onclick = async () => { if (!(await nxConfirm('Excluir esta sugestão de vez?'))) return; try { await FB.db.doc(`sugestoes/${x.id}`).delete(); closeModal(); vSugAdm(el); } catch (e) { toast(e.code || e.message, true); } }; } }); });
 }
 document.head.insertAdjacentHTML('beforeend', '<style>.im-p{display:flex;gap:3px;margin-top:5px}.im-p span{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font-size:11px;background:var(--line);color:var(--mut)}.im-p span.ok{background:var(--ok);color:#fff}</style>');
 
@@ -2141,7 +2141,7 @@ function pedidosEquipeModal() {
     <p style="margin:6px 0;white-space:pre-wrap">${esc(x.motivo)}</p>${x.resposta ? `<p class="hint" style="margin:0 0 6px">Sua resposta: ${esc(x.resposta)}</p>` : ''}
     ${x.status === 'pendente' ? `<div class="row" style="gap:6px"><button class="btn sec sm" data-peab="${x.id}">Abrir empresa</button><span class="sp"></span><button class="btn ghost sm" data-perc="${x.id}" style="color:var(--bad)">Recusar</button><button class="btn sm" data-peok="${x.id}">Marcar como feito</button></div>` : ''}</li>`;
   modal('Pedidos da equipe', `${pend.length ? `<ul class="list">${pend.map(li).join('')}</ul>` : '<p class="hint">Nenhum pedido aguardando.</p>'}${fe.length ? `<h3 style="font-size:14px;margin:16px 0 4px">Respondidos</h3><ul class="list">${fe.map(li).join('')}</ul>` : ''}`, { size: 'lg', foot: '<button class="btn" data-close>Fechar</button>', onMount: m => {
-    const resp = async (id, status) => { const r = status === 'recusado' ? prompt('Motivo da recusa (a pessoa da equipe vê):', '') : prompt('Recado para a pessoa da equipe (opcional):', 'Feito!'); if (r === null) return;
+    const resp = async (id, status) => { const r = status === 'recusado' ? (await nxPrompt('Motivo da recusa (a pessoa da equipe vê):', '')) : (await nxPrompt('Recado para a pessoa da equipe (opcional):', 'Feito!')); if (r === null) return;
       try { await FB.db.doc(`pedidosEquipe/${id}`).update({ status, resposta: String(r).slice(0, 500), respondidoEm: new Date().toISOString() }); toast(status === 'feito' ? 'Pedido marcado como feito.' : 'Pedido recusado.'); { const x = (A.pe || []).find(y => y.id === id); logEq('pedido-resp', `${status === 'feito' ? 'Feito' : 'Recusado'}: ${x ? (PE_ACOES[x.acao] || x.acao) + ' · ' + x.empresa : id}`); } pedidosEquipeModal(); } catch (e) { toast('Não foi possível responder: ' + (e.code || e.message), true); } };
     $$('[data-peok]', m).forEach(b => b.onclick = () => resp(b.dataset.peok, 'feito')); $$('[data-perc]', m).forEach(b => b.onclick = () => resp(b.dataset.perc, 'recusado'));
     $$('[data-peab]', m).forEach(b => b.onclick = () => { const x = l.find(y => y.id === b.dataset.peab), t = tById(x.tid); if (!t) return toast('Empresa não encontrada.', true); closeModal(true); detalhes(t); });
@@ -2313,7 +2313,7 @@ async function vGest(el) {
   const gq = $('#g-q', el); if (gq) { let t; gq.oninput = () => { clearTimeout(t); t = setTimeout(() => { A.gQ = gq.value; go('gest', true); setTimeout(() => { const i = $('#g-q'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); }, 350); }; }
   const ps = $('#g-pls', el); if (ps) ps.onclick = async () => { const dias = {}; DIAS_PL.forEach(([k]) => { dias[k] = []; }); $$('[data-pl]', el).forEach(c => { if (c.checked) { const [k, e] = c.dataset.pl.split('|'); dias[k].push(e); } });
     try { await FB.db.doc('plataforma/plantao').set({ dias, atualizadoEm: new Date().toISOString() }); A.plantao = { dias }; toast('Escala de plantão salva.'); go('gest', true); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
-  const rc = $('#g-rc', el); if (rc) rc.onclick = novoRecado; $$('[data-rcx]', el).forEach(b => b.onclick = async () => { if (!confirm('Apagar este recado?')) return; try { await FB.db.doc(`recados/${b.dataset.rcx}`).delete(); toast('Recado apagado.'); } catch (e) { toast('Não foi possível apagar.', true); } });
+  const rc = $('#g-rc', el); if (rc) rc.onclick = novoRecado; $$('[data-rcx]', el).forEach(b => b.onclick = async () => { if (!(await nxConfirm('Apagar este recado?'))) return; try { await FB.db.doc(`recados/${b.dataset.rcx}`).delete(); toast('Recado apagado.'); } catch (e) { toast('Não foi possível apagar.', true); } });
   const rt = $('#g-rt', el); if (rt) rt.onclick = () => novoRetorno(); ligarRetornos(el); if (aba === 'mural') setTimeout(recadosVisto, 3000);
 }
 { const _go3 = go; go = function (v, ms) { if (v === 'gest' && A.papel === 'dono') { A.view = 'gest'; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === 'gest')); $('#side').classList.remove('open'); $('#t-view').textContent = 'Gestão da equipe'; const el = $('#view'), sc = $('.content').scrollTop; el.innerHTML = ''; vGest(el); $('.content').scrollTop = ms ? sc : 0; return; } return _go3(v, ms); }; }
@@ -2353,7 +2353,7 @@ function asaasOuvir() {
     for (const d of s.docs) { const p = d.data(); if ((A._comOk = A._comOk || {})[d.id]) continue; A._comOk[d.id] = 1; const t = A.tenants.find(x => x.id === p.tid);
       try { if (t && p.revenda) await registrarComissao(p.revenda, t, +p.valor || 0, p.plano, p.obs || 'Pagamento pelo Asaas'); await FB.db.doc(`pagamentos/${d.id}`).update({ comissaoPendente: false }); } catch (e) { } } }, () => { });
 }
-function copiar(txt, ok) { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(ok || 'Copiado.')).catch(() => { prompt('Copie:', txt); }); }
+function copiar(txt, ok) { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(ok || 'Copiado.')).catch(async () => { (await nxPrompt('Copie:', txt)); }); }
 function cobrancaTexto(r, desc) { return `Segue o link de pagamento${desc ? ' (' + desc + ')' : ''}:\nValor: ${brl(+r.valor || 0)} · vence em ${fd(r.vencimento)}\n${r.fatura}\n\nNo link você paga com PIX, boleto ou cartão. A liberação é automática assim que o pagamento for confirmado.`; }
 function cobrancaPronta(r, o = {}) {
   const txt = cobrancaTexto(r, o.desc), wa = o.whatsapp ? linkWa(o.whatsapp, txt) : '';
@@ -2460,7 +2460,7 @@ PAPEL_NX.financeiro[1].push('asaas');
 }; }
 { const _vr = vRst; vRst = async function (el) { await _vr(el); if (!asaasUrl()) return; $$('[data-rsp]', el).forEach(b => b.insertAdjacentHTML('beforebegin', `<button class="btn sec sm" data-rsas="${b.dataset.rsp}">Link Asaas</button>`));
   $$('[data-rsas]', el).forEach(b => b.onclick = async () => { b.disabled = true; try { const p = (await FB.db.doc(`rsTerceirizado/${b.dataset.rsas}`).get()).data() || {}, r = await asaasCall('/api/cobrar', { tipo: 'rst', id: b.dataset.rsas }); cobrancaPronta(r, { desc: `seleção terceirizada ${p.numero || ''}`, whatsapp: p.whatsapp }); }
-    catch (e) { if (e.codigo === 'sem_doc') { const d = prompt('Informe o CPF ou CNPJ da empresa (obrigatório no Asaas):'); if (d) try { const r = await asaasCall('/api/cobrar', { tipo: 'rst', id: b.dataset.rsas, doc: d }); cobrancaPronta(r, {}); } catch (e2) { toast(e2.message, true); } } else toast(e.message, true); } b.disabled = false; }); }; }
+    catch (e) { if (e.codigo === 'sem_doc') { const d = (await nxPrompt('Informe o CPF ou CNPJ da empresa (obrigatório no Asaas):')); if (d) try { const r = await asaasCall('/api/cobrar', { tipo: 'rst', id: b.dataset.rsas, doc: d }); cobrancaPronta(r, {}); } catch (e2) { toast(e2.message, true); } } else toast(e.message, true); } b.disabled = false; }); }; }
 setInterval(() => { try { if (FB_ON && A.user) asaasOuvir(); } catch (e) { } }, 2500);
 /* =====================================================================
    LOTE 18: renovação automática (cobrança antes do vencimento), NFS-e
@@ -3174,7 +3174,7 @@ function reunApresentar(r) {
   const sair = () => { clearInterval(rel); if (_reunUn) { _reunUn(); _reunUn = null; } ov.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', esc1); };
   const esc1 = e => { if (e.key === 'Escape' && !document.fullscreenElement) sair(); }; document.addEventListener('keydown', esc1);
   $('#rn-sai').onclick = sair; $('#rn-gn').onclick = () => window.open(GUIA_URL, '_blank', 'noopener');
-  $('#rn-enc').onclick = async () => { if (!confirm('Encerrar a reunião? O convite passa a pedir a avaliação de quem participou.')) return; try { await FB.db.doc(`reunioesTreino/${r.id}`).update({ status: 'encerrada', encerradaEm: new Date().toISOString() }); toast('Reunião encerrada.'); sair(); if (A.view === 'reun') go('reun'); } catch (e) { toast(e.code || e.message, true); } };
+  $('#rn-enc').onclick = async () => { if (!(await nxConfirm('Encerrar a reunião? O convite passa a pedir a avaliação de quem participou.'))) return; try { await FB.db.doc(`reunioesTreino/${r.id}`).update({ status: 'encerrada', encerradaEm: new Date().toISOString() }); toast('Reunião encerrada.'); sair(); if (A.view === 'reun') go('reun'); } catch (e) { toast(e.code || e.message, true); } };
 }
 /* sala fixa do Google Meet: fica em Dados da plataforma */
 async function painelSalaMeet(el) {
@@ -3231,7 +3231,7 @@ async function vIndic(el) {
     <section class="panel"><h2 style="margin:0 0 10px">Leads indicados (ainda não viraram empresa)</h2>${indL.length ? `<ul class="list">${indL.map(l => `<li><div class="t" style="flex:1"><div><b>${esc(l.nome)}</b>${l.empresa ? ` · ${esc(l.empresa)}` : ''}</div><div>indicado por <b>${esc(nomeT(l.indicadoPor))}</b> · ${fd(String(l.em || '').slice(0, 10))} · ${esc(l.status || 'novo')}</div></div></li>`).join('')}</ul>` : '<div class="empty">Nenhum lead indicado aguardando.</div>'}</section>
     <section class="panel"><h2 style="margin:0 0 10px">Quem mais indica</h2>${Object.keys(quem).length ? `<ul class="list">${Object.entries(quem).sort((a, b) => b[1] - a[1]).map(([id, n]) => { const t = ts.find(x => x.id === id) || {}; return `<li><div class="t" style="flex:1"><div><b>${esc(nomeT(id))}</b></div><div>${n} indicação(ões) · ${t.indicGanhos || 0} mês(es) ganho(s)</div></div></li>`; }).join('')}</ul>` : '<div class="empty">Ninguém indicou ainda.</div>'}</section>`;
   $$('[data-ib]', el).forEach(b => b.onclick = async () => { const ind = ts.find(t => t.id === b.dataset.ib), dono = ts.find(t => t.id === ind.indicadoPor); if (!dono) return toast('A empresa que indicou não existe mais.', true);
-    if (!confirm(`Dar 1 mês grátis para ${dono.nome}? A validade passa de ${fd(dono.expira)} para ${fd(iso(addD(pd(dono.expira), 30)))}.`)) return;
+    if (!(await nxConfirm(`Dar 1 mês grátis para ${dono.nome}? A validade passa de ${fd(dono.expira)} para ${fd(iso(addD(pd(dono.expira), 30)))}.`))) return;
     try { const nova = addD(dono.expiraDate || pd(dono.expira), 30), b2 = FB.db.batch();
       b2.update(FB.db.doc(`tenants/${dono.id}`), { expiraTs: firebase.firestore.Timestamp.fromDate(nova), indicGanhos: (dono.indicGanhos || 0) + 1 });
       b2.update(FB.db.doc(`tenants/${ind.id}`), { indicBonusEm: new Date().toISOString() }); await b2.commit(); toast(`Mês grátis dado para ${dono.nome}.`); } catch (e) { toast('Não foi possível: ' + (e.code || e.message), true); } });
@@ -3325,8 +3325,8 @@ if (typeof supChat === 'function') { const _scL28 = supChat; supChat = function 
     box.innerHTML = '<button type="button" class="btn ghost sm" id="sc-aula">Aulas em vídeo</button><button type="button" class="btn ghost sm" id="sc-reun">Convite da reunião ao vivo</button>';
     env.closest('.row').after(box);
     $('#sc-aula', m).onclick = async () => {
-      const mod = prompt('Quais aulas?\n1 = NEXUM RH (para o dono e o RH)\n2 = Portal do Colaborador (para o funcionário)\n3 = Recrutamento e Seleção', '1'); if (!mod) return;
-      const md = { '1': 'rh', '2': 'portal', '3': 'rs' }[mod.trim()] || 'rh', nome = prompt('Nome de quem vai assistir:', md !== 'portal' ? (x.nome || '') : ''); if (!nome) return;
+      const mod = (await nxPrompt('Quais aulas?\n1 = NEXUM RH (para o dono e o RH)\n2 = Portal do Colaborador (para o funcionário)\n3 = Recrutamento e Seleção', '1')); if (!mod) return;
+      const md = { '1': 'rh', '2': 'portal', '3': 'rs' }[mod.trim()] || 'rh', nome = (await nxPrompt('Nome de quem vai assistir:', md !== 'portal' ? (x.nome || '') : '')); if (!nome) return;
       const tk = supTokenAula();
       try { await FB.db.collection('treinoLinks').doc(tk).set({ mod: md, nome: nome.trim(), empresa: x.empresa || '', tid: x.tid || '', tel: '', conv: prot, canal: 'sistema', criadoEm: new Date().toISOString(), criadoPor: (A.user && A.user.email) || '', ativo: true, feitas: {}, pos: {}, pct: 0, concluido: false, visitas: 0 });
         ins(`Segue o treinamento em vídeo do ${{ rh: 'NEXUM RH', rs: 'Recrutamento e Seleção', portal: 'Portal do Colaborador' }[md]} para ${nome.trim().split(' ')[0]}:\nhttps://rh.nexumdp.com.br/aula.html?t=${tk}\nSão aulas curtas, com voz; assista até o fim de cada uma para liberar a próxima.`); } catch (e) { toast('Não foi possível gerar o link: ' + (e.code || e.message), true); }
@@ -3387,7 +3387,7 @@ vTrein = async function (el) {
   await _vTrein30(el); if (A.view !== 'trein' || !A.treinCache || $('#tr-em', el)) return;
   const m = A.treinCache.m, faltam = (A.tenants || []).filter(t => !t.bloqueado && t.email && !(m[t.id] || {}).concluido), bar = $('#tr-at', el); if (!bar || !faltam.length) return;
   const b = document.createElement('button'); b.className = 'btn sec sm'; b.id = 'tr-em'; b.textContent = `Lembrar por e-mail (${faltam.length})`; bar.after(b);
-  b.onclick = async () => { if (!confirm(`Mandar um lembrete do treinamento por e-mail para ${faltam.length} empresa(s) que ainda não terminaram?`)) return; b.disabled = true;
+  b.onclick = async () => { if (!(await nxConfirm(`Mandar um lembrete do treinamento por e-mail para ${faltam.length} empresa(s) que ainda não terminaram?`))) return; b.disabled = true;
     try { const x = await emailEquipe(faltam.map(t => { const d = m[t.id] || {}; return { para: t.email, nome: t.nome, assunto: 'Seu treinamento do NEXUM RH', titulo: d.feitas ? 'Faltam poucas aulas' : 'Seu treinamento está liberado',
         texto: d.feitas ? `A ${t.nome} já assistiu ${d.feitas} de ${d.total} aulas do treinamento. Para terminar, entre no NEXUM RH, abra o menu Treinamento e clique em Continuar.` : `O treinamento em vídeo do NEXUM RH já está liberado para a ${t.nome}: aulas curtas, com voz, mostrando cada tela. É só entrar no sistema e abrir o menu Treinamento.`, url: 'https://rh.nexumdp.com.br/', botao: 'Abrir o treinamento' }; }));
       toast(`${x.enviados} lembrete(s) enviados por e-mail.`); }
@@ -4124,7 +4124,7 @@ async function ligarNota57(m, title) {
   const n = NF57.n; if (!n) return; const cfg = NF57.cfg, t = tById(n.tid) || {};
   const pr = $('#nv-pr', m); if (pr) pr.onclick = () => verNotaImpressa(n, cfg);
   $('#nv57-pdf', m).onclick = async e => { const b = e.target; b.disabled = true; b.textContent = 'Gerando…'; try { const p = await pdfNota57(n, cfg); const a = document.createElement('a'); a.href = p.uri; a.download = p.nome; a.click(); } catch (er) { toast(er.message || 'Não foi possível gerar o PDF.', true); } b.disabled = false; b.textContent = 'Baixar PDF'; };
-  $('#nv57-em', m).onclick = async e => { const para = prompt('Enviar a nota para qual e-mail?', t.email || ''); if (!para) return; if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(para.trim())) return toast('E-mail inválido.', true);
+  $('#nv57-em', m).onclick = async e => { const para = (await nxPrompt('Enviar a nota para qual e-mail?', t.email || '')); if (!para) return; if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(para.trim())) return toast('E-mail inválido.', true);
     const b = e.target; b.disabled = true; b.textContent = 'Enviando…';
     try { const p = await pdfNota57(n, cfg), link = /^https:\/\//.test(n.link || '') ? n.link : /^https:\/\//.test(n.pdf || '') ? n.pdf : '';
       const j = await asaasCall('/api/nx/email', { tid: n.tid, para: para.trim(), nome: n.empresa, assunto: `Nota fiscal nº ${n.numero} · NEXUM RH`, titulo: `Sua nota fiscal nº ${n.numero}`, texto: `Olá, ${n.empresa || ''}!\n\nSegue em anexo a nota fiscal de serviço (NFS-e) nº ${n.numero}${n.competencia ? ', referente a ' + n.competencia : ''}, no valor de ${brl(+n.valor || 0)}.${n.codigo ? '\n\nCódigo de verificação: ' + n.codigo : ''}\n\nObrigado por usar o NEXUM RH!`, anexos: [{ nome: p.nome, base64: p.base64 }], ...(link ? { url: link, botao: 'Ver a nota oficial' } : {}) });
@@ -4174,7 +4174,7 @@ async function contratoRs57(p, k, el) {
   if (k) {
     modal(`Contrato · ${p.empresa || ''}`, `<p style="margin:0 0 6px">${k.status === 'assinado' ? `<span class="pill ok">Assinado</span> por <b>${esc(k.nome || '')}</b> em ${new Date(k.assinadoEm).toLocaleString('pt-BR')} · IP ${esc(k.ip || '')}` : '<span class="pill warn">Enviado, aguardando a assinatura</span>'}</p>
       <p class="hint" style="margin:0">Modalidade: ${esc({ ambos: 'apresentado e contratado', contratado: 'só por contratado', apresentado: 'só por apresentado' }[k.modalidade] || k.modalidade)} · ${brl((k.valores || {}).porCandidato)} por apresentado · ${brl((k.valores || {}).porContratado)} por contratado</p>${envio(k.id)}`,
-      { foot: `${k.status !== 'assinado' ? '<button class="btn ghost" id="rk-cx" style="color:var(--bad);margin-right:auto">Cancelar este link</button>' : ''}<button class="btn" data-close>Fechar</button>`, onMount: m => { ligarEnvioRs57(m, p, k.id); const cx = $('#rk-cx', m); if (cx) cx.onclick = async () => { if (!confirm('Cancelar este link? O cliente não consegue mais assinar por ele.')) return; await FB.db.doc(`rsContratos/${k.id}`).set({ status: 'cancelado', canceladoEm: new Date().toISOString() }, { merge: true }); closeModal(); vRst(el); }; } });
+      { foot: `${k.status !== 'assinado' ? '<button class="btn ghost" id="rk-cx" style="color:var(--bad);margin-right:auto">Cancelar este link</button>' : ''}<button class="btn" data-close>Fechar</button>`, onMount: m => { ligarEnvioRs57(m, p, k.id); const cx = $('#rk-cx', m); if (cx) cx.onclick = async () => { if (!(await nxConfirm('Cancelar este link? O cliente não consegue mais assinar por ele.'))) return; await FB.db.doc(`rsContratos/${k.id}`).set({ status: 'cancelado', canceladoEm: new Date().toISOString() }, { merge: true }); closeModal(); vRst(el); }; } });
     return;
   }
   modal(`Contrato por link · ${p.empresa || ''}`, `<p class="hint" style="margin:0 0 12px">O cliente recebe o contrato completo (proposta, valores, vagas e cláusulas) e assina pelo celular, com o desenho da assinatura e uma foto ao vivo.</p>
@@ -4384,7 +4384,7 @@ async function extras58(el) {
   /* link em 1 clique */
   const lk = async (id, modo, b) => { const t0 = b.textContent; b.disabled = true; b.textContent = '…';
     try { const j = await asaasCall('/api/pay/link', { id, email: modo === 'e' }); if (modo === 'w') { const tel = String(j.telefone || '').replace(/\D/g, ''); window.open(`https://wa.me/${tel ? (tel.length <= 11 ? '55' + tel : tel) : ''}?text=${encodeURIComponent(j.texto)}`, '_blank', 'noopener'); }
-      else if (modo === 'c') { try { await navigator.clipboard.writeText(j.link); toast('Link copiado.'); } catch (e) { prompt('Copie o link:', j.link); } } else toast(j.enviado ? 'E-mail enviado para ' + j.email + '.' : 'O e-mail não saiu agora. Confira o e-mail do cliente.', !j.enviado); }
+      else if (modo === 'c') { try { await navigator.clipboard.writeText(j.link); toast('Link copiado.'); } catch (e) { (await nxPrompt('Copie o link:', j.link)); } } else toast(j.enviado ? 'E-mail enviado para ' + j.email + '.' : 'O e-mail não saiu agora. Confira o e-mail do cliente.', !j.enviado); }
     catch (e) { toast(e.message, true); } b.disabled = false; b.textContent = t0; };
   $$('[data-lkw]', el).forEach(b => b.onclick = () => lk(b.dataset.lkw, 'w', b)); $$('[data-lkc]', el).forEach(b => b.onclick = () => lk(b.dataset.lkc, 'c', b)); $$('[data-lke]', el).forEach(b => b.onclick = () => lk(b.dataset.lke, 'e', b));
   /* régua */
@@ -4396,7 +4396,7 @@ async function extras58(el) {
     if (!passos.length) return toast('Deixe pelo menos um lembrete.', true);
     try { await FB.db.doc('plataforma/regua').set({ suave: s, total: t, passos, atualizadoEm: new Date().toISOString(), por: (A.user && A.user.email) || '' }); toast('Régua salva. Vale a partir da próxima rodada do dia.'); go('npay', true); } catch (e) { toast('Não foi possível salvar: ' + (e.code || e.message), true); } };
   /* cupons */
-  $$('[data-cux]', el).forEach(b => b.onclick = async () => { if (!confirm(`Desativar o cupom ${b.dataset.cux}?`)) return; try { await FB.db.doc('cupons/' + b.dataset.cux).set({ ativo: false, desativadoEm: new Date().toISOString() }, { merge: true }); toast('Cupom desativado.'); go('npay', true); } catch (e) { toast(e.code || e.message, true); } });
+  $$('[data-cux]', el).forEach(b => b.onclick = async () => { if (!(await nxConfirm(`Desativar o cupom ${b.dataset.cux}?`))) return; try { await FB.db.doc('cupons/' + b.dataset.cux).set({ ativo: false, desativadoEm: new Date().toISOString() }, { merge: true }); toast('Cupom desativado.'); go('npay', true); } catch (e) { toast(e.code || e.message, true); } });
   $('#cu-novo', el).onclick = () => { const ts = A.tenants.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     modal('Criar cupom de desconto', `<div class="grid"><div class="fld"><label for="cu-c">Código</label><input class="inp" id="cu-c" maxlength="20" placeholder="NEXUM10" style="text-transform:uppercase"></div><div class="fld"><label for="cu-t">Tipo</label><select class="inp" id="cu-t"><option value="pct">Porcentagem (%)</option><option value="valor">Valor (R$)</option></select></div>
       <div class="fld"><label for="cu-v">Desconto</label><input class="inp" id="cu-v" inputmode="decimal" placeholder="10"></div><div class="fld"><label for="cu-d">Válido até (opcional)</label><input class="inp" id="cu-d" type="date" min="${h}"></div>
@@ -4427,7 +4427,7 @@ async function extras58(el) {
     return { uri, nome, base64: uri.split(',')[1] }; };
   $('#ct-pdf', el).onclick = async e => { const b = e.target; b.disabled = true; try { const p = await pdf(), a = document.createElement('a'); a.href = p.uri; a.download = p.nome; a.click(); } catch (er) { toast(er.message, true); } b.disabled = false; };
   $('#ct-env', el).onclick = async e => { let para = ''; try { const s = await FB.db.doc('plataforma/pay').get(); para = (s.exists && s.data().contadorEmail) || ''; } catch (x) { }
-    para = (prompt('E-mail do contador da NEXUM:', para) || '').trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) return para && toast('E-mail inválido.', true);
+    para = ((await nxPrompt('E-mail do contador da NEXUM:', para)) || '').trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) return para && toast('E-mail inválido.', true);
     const b = e.target; b.disabled = true; b.textContent = 'Enviando…';
     try { const p = await pdf(); FB.db.doc('plataforma/pay').set({ contadorEmail: para }, { merge: true }).catch(() => { });
       const j = await asaasCall('/api/nx/email', { para, assunto: `Recebimentos da NEXUM · ${nomeMes()}`, titulo: `Relatório de ${nomeMes()}`, texto: `Olá! Segue em anexo o relatório dos recebimentos da NEXUM em ${nomeMes()}, com cliente, forma de pagamento, taxa do Asaas, valor líquido e número da nota fiscal de cada um.`, anexos: [{ nome: p.nome, base64: p.base64 }] });
@@ -4489,9 +4489,208 @@ async function reajuste60(el) {
   $('#rj-s', el).onclick = async e => { const b = e.target, pct = +String($('#rj-p', el).value).replace(',', '.') || 0, at = $('#rj-a', el).checked;
     if (at && !(pct > 0 && pct <= 30)) return toast('Informe o percentual do ano (entre 0,01% e 30%).', true);
     b.disabled = true; try { await FB.db.doc('plataforma/reajuste').set({ ativo: at, indice: $('#rj-i', el).value.trim().slice(0, 20) || 'IPCA', pct, antecedencia: Math.max(15, Math.min(60, parseInt($('#rj-d', el).value) || 30)), atualizadoEm: new Date().toISOString(), por: (A.user && A.user.email) || '' }, { merge: true }); toast(at ? 'Reajuste salvo e ligado. Os avisos saem na rodada do dia.' : 'Reajuste salvo (desligado).'); go('npay', true); } catch (er) { toast('Não foi possível salvar: ' + (er.code || er.message), true); b.disabled = false; } };
-  $$('[data-rjp]', el).forEach(b => b.onclick = async () => { const pular = !!b.dataset.v; if (pular && !confirm('Não reajustar esta empresa? Se o aviso já saiu, o valor antigo continua valendo.')) return; b.disabled = true;
+  $$('[data-rjp]', el).forEach(b => b.onclick = async () => { const pular = !!b.dataset.v; if (pular && !(await nxConfirm('Não reajustar esta empresa? Se o aviso já saiu, o valor antigo continua valendo.'))) return; b.disabled = true;
     try { await asaasCall('/api/nx/reajuste/pular', { tid: b.dataset.rjp, pular }); toast(pular ? 'Esta empresa não será reajustada.' : 'Esta empresa volta a ser reajustada.'); go('npay', true); } catch (er) { toast(er.message, true); b.disabled = false; } });
 }
+</script>
+<script>
+/* =====================================================================
+   LOTE 61 (Painel do Dono): modais melhores (vale para todos os modais do sistema)
+   1 pergunta antes de descartar o que foi preenchido · 2 rodapé fixo · 3 no celular abre de baixo para cima
+   4 modal sobre modal (volta para o primeiro) · 5 confirmações no visual do NEXUM · 6 botão que trava enquanto salva
+   7 erro no campo · 8 rascunho automático · 9 teclado (Enter, Esc, Tab, foco) · 10 etapas em formulário longo
+   11 tamanhos padrão · 12 animação e fundo travado
+   ===================================================================== */
+function nxModalKit(cfg) {
+  if (window.__nxKit) return; window.__nxKit = cfg;
+  const W = window, D = document, esc2 = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const escuro = cfg.tema === 'escuro', PERIGO = /excluir|apagar|desligar|remover|tirar|descartar|bloquear|cancelar a|cancelar o|cancelar est|encerrar|desativar|estornar|reprovar|recusar/i;
+  /* ---------- estilos ---------- */
+  const OV = cfg.ov, BOX = cfg.box, BODY = cfg.body, FOOT = cfg.foot, HEAD = cfg.head, R = cfg.root;
+  const css = `
+.nxd-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(6,14,36,.55);display:flex;align-items:center;justify-content:center;padding:16px;animation:nxFd .14s ease-out;backdrop-filter:blur(2px)}
+.nxd{width:100%;max-width:420px;border-radius:16px;padding:20px 20px 16px;box-shadow:0 24px 70px rgba(6,14,36,.35);animation:nxPop .18s ease-out;font:inherit;${escuro ? 'background:#0A1636;color:#EAF1FF;border:1px solid #233A6E' : 'background:#fff;color:#14203D'}}
+.nxd h4{margin:0 0 6px;font-size:17px;line-height:1.3}.nxd p{margin:0;font-size:14.5px;line-height:1.5;white-space:pre-wrap;${escuro ? 'color:#C8D6F2' : 'color:#46507A'}}
+.nxd input{width:100%;margin-top:12px;height:46px;border-radius:12px;padding:0 14px;font:inherit;font-size:15px;outline:none;${escuro ? 'background:rgba(255,255,255,.06);color:#fff;border:1.5px solid #233A6E' : 'background:#fff;color:#14203D;border:1.5px solid #D5DCEB'}}.nxd input:focus{border-color:#1F6BFF;box-shadow:0 0 0 3px rgba(31,107,255,.18)}
+.nxd-b{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}.nxd-b button{min-height:44px;padding:0 18px;border-radius:12px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;border:1.5px solid transparent}
+.nxd-b .nao{background:transparent;${escuro ? 'color:#C8D6F2;border-color:#233A6E' : 'color:#14203D;border-color:#D5DCEB'}}.nxd-b .sim{background:#1F6BFF;color:#fff}.nxd-b .sim.perigo{background:#D92D20}
+@keyframes nxFd{from{opacity:0}to{opacity:1}}@keyframes nxPop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}@keyframes nxSobe{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes nxGira{to{transform:rotate(360deg)}}
+.nx-busy{position:relative;pointer-events:none;opacity:.85}.nx-busy:after{content:"";display:inline-block;width:14px;height:14px;margin-left:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:nxGira .7s linear infinite;vertical-align:-2px}
+.nx-erro{border-color:#D92D20!important;box-shadow:0 0 0 3px rgba(217,45,32,.14)!important}.nx-erro-msg{color:#D92D20;font-size:12.5px;font-weight:600;margin:4px 0 0}
+.nx-ban{border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.nx-ban.err{background:#FDECEC;color:#9B1C14;border:1px solid #F5C2BE}.nx-ban.ras{background:#EAF1FF;color:#14306E;border:1px solid #C9D6F2}.nx-ban b{flex:1;min-width:160px}.nx-ban button{border:0;border-radius:9px;padding:7px 12px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;background:#1F6BFF;color:#fff}.nx-ban button.s{background:transparent;color:inherit;text-decoration:underline}
+.nx-et{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px;margin:-6px 0 8px;scrollbar-width:none}.nx-et::-webkit-scrollbar{display:none}.nx-et button{flex:none;border:1.5px solid #D5DCEB;background:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;color:#46507A;cursor:pointer;white-space:nowrap}.nx-et button.on{border-color:#1F6BFF;background:#EAF1FF;color:#1749BE}.nx-et i{display:block;position:absolute;left:0;bottom:4px;height:3px;border-radius:3px;background:#1F6BFF;transition:width .2s}
+.nx-alca{display:none}
+html.nx-trava,html.nx-trava body{overflow:hidden!important}html.nx-trava #sup-b,html.nx-trava #sp-bol,html.nx-trava #sp-pn{display:none!important}@media (max-width:640px){html.nx-trava .toast,html.nx-trava #toast,html.nx-trava #toasts{top:calc(12px + env(safe-area-inset-top));bottom:auto!important}}html.nx-trava .content{overflow:hidden!important}
+${R ? `${OV}{align-items:center!important;overflow:hidden!important}
+${BOX}{display:flex!important;flex-direction:column;max-height:calc(100dvh - 32px);border-radius:16px;animation:nxPop .18s ease-out}
+${BODY}{overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0;overscroll-behavior:contain}
+${FOOT}{flex:none;position:sticky;bottom:0;z-index:3;background:inherit;border-bottom-left-radius:16px;border-bottom-right-radius:16px}
+${HEAD}{flex:none}
+${BOX}.nx-lg{max-width:920px}
+@media (max-width:640px){${OV}{align-items:flex-end!important;padding:0!important}${BOX}{max-width:100%!important;width:100%!important;max-height:94dvh;border-radius:20px 20px 0 0!important;animation:nxSobe .22s ease-out}${FOOT}{border-radius:0;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.nx-alca{display:block;flex:none;width:44px;height:5px;border-radius:5px;background:#C9D1E3;margin:8px auto 0;touch-action:none}}` : ''}`;
+  const st = D.createElement('style'); st.id = 'nx-kit61'; st.textContent = css; D.head.appendChild(st);
+
+  /* ---------- 5. confirmações e perguntas no visual do NEXUM ---------- */
+  function dialogo(o) {
+    return new Promise(ok => {
+      const prev = D.activeElement, ov = D.createElement('div'); ov.className = 'nxd-ov'; ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true');
+      const perigo = o.perigo != null ? o.perigo : PERIGO.test(o.msg || ''), tit = o.titulo || (o.prompt ? 'Preencha' : perigo ? 'Tem certeza?' : 'Confirmar');
+      ov.innerHTML = `<div class="nxd"><h4>${esc2(tit)}</h4><p>${esc2(o.msg || '')}</p>${o.prompt ? `<input type="text" value="${esc2(o.padrao == null ? '' : o.padrao)}" aria-label="${esc2(o.msg || 'Resposta')}">` : ''}<div class="nxd-b">${o.so ? '' : `<button type="button" class="nao">${esc2(o.nao || 'Cancelar')}</button>`}<button type="button" class="sim ${perigo && !o.prompt ? 'perigo' : ''}">${esc2(o.sim || (o.so ? 'Entendi' : perigo ? 'Sim, continuar' : 'OK'))}</button></div></div>`;
+      D.body.appendChild(ov); W.__nxDlg = ov;
+      const inp = ov.querySelector('input'), fim = v => { if (!ov.isConnected) return; ov.remove(); W.__nxDlg = null; try { prev && prev.focus && prev.focus(); } catch (e) { } ok(v); };
+      ov.querySelector('.sim').onclick = () => fim(o.prompt ? inp.value : true); const n = ov.querySelector('.nao'); if (n) n.onclick = () => fim(o.prompt ? null : false);
+      ov.addEventListener('mousedown', e => { if (e.target === ov) fim(o.prompt ? null : false); });
+      ov.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fim(o.prompt ? null : false); } else if (e.key === 'Enter' && (inp ? D.activeElement === inp : true)) { e.preventDefault(); e.stopPropagation(); ov.querySelector('.sim').click(); }
+        else if (e.key === 'Tab') { const f = [...ov.querySelectorAll('input,button')]; const i = f.indexOf(D.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); } });
+      setTimeout(() => { if (inp) { inp.focus(); inp.select(); } else ov.querySelector('.sim').focus(); }, 30);
+    });
+  }
+  W.nxConfirm = (msg, o) => dialogo({ ...(o || {}), msg: String(msg == null ? '' : msg) });
+  W.nxPrompt = (msg, padrao, o) => dialogo({ ...(o || {}), msg: String(msg == null ? '' : msg), prompt: true, padrao });
+  W.nxAviso = (msg, o) => dialogo({ ...(o || {}), msg: String(msg == null ? '' : msg), so: true });
+  if (!R) return;
+
+  /* ---------- estado ---------- */
+  const raiz = () => D.querySelector(R), caixaAtual = () => { const r = raiz(); return r ? r.querySelector(BOX) : null; };
+  let ultimoFoco = null, ultimoClique = { t: 0, el: null }, aberto = null; const pilha = [], guarda = D.createElement('div'); guarda.id = 'nx-pilha'; guarda.style.display = 'none';
+  D.addEventListener('DOMContentLoaded', () => D.body.appendChild(guarda)); if (D.body) D.body.appendChild(guarda);
+  D.addEventListener('focusin', e => { const r = raiz(); if (r && !r.contains(e.target) && !(W.__nxDlg && W.__nxDlg.contains(e.target))) ultimoFoco = e.target; }, true);
+  D.addEventListener('pointerdown', e => { ultimoClique = { t: Date.now(), el: e.target }; }, true);
+  const campos = b => [...b.querySelectorAll('input,select,textarea')].filter(x => !['hidden', 'file', 'password', 'button', 'submit', 'image', 'reset'].includes(x.type) && !x.closest('.nx-et,.nx-ban') && !/^cc-/.test(x.autocomplete || ''));
+  const titulo = b => { const h = b.querySelector(HEAD + ' h3, ' + HEAD + ' h2, h3'); return (h ? h.textContent : '').trim().slice(0, 80); };
+  const chaveR = b => 'nxRasc:' + (cfg.sistema || '') + ':' + titulo(b);
+
+  /* ---------- 8. rascunho automático ---------- */
+  function salvarRasc(b) { const cs = campos(b); if (cs.length < 5) return; const v = cs.map((x, i) => ({ i, id: x.id || '', nm: x.name || '', t: x.type, v: x.type === 'checkbox' || x.type === 'radio' ? x.checked : String(x.value || '').slice(0, 5000) }));
+    try { localStorage.setItem(chaveR(b), JSON.stringify({ em: Date.now(), n: cs.length, v })); } catch (e) { } }
+  function limparRasc(b) { try { localStorage.removeItem(chaveR(b)); } catch (e) { } }
+  function ofertaRasc(b) {
+    const cs = campos(b); if (cs.length < 5) return; let r = null; try { r = JSON.parse(localStorage.getItem(chaveR(b)) || 'null'); } catch (e) { } if (!r || !r.v || Date.now() - r.em > 7 * 864e5) return;
+    const mudou = r.v.some(x => { const c = (x.id && b.querySelector('#' + CSS.escape(x.id))) || cs[x.i]; if (!c) return false; return x.t === 'checkbox' || x.t === 'radio' ? c.checked !== x.v : String(c.value) !== String(x.v); }); if (!mudou) return;
+    const bd = b.querySelector(BODY) || b; const ban = D.createElement('div'); ban.className = 'nx-ban ras'; ban.innerHTML = `<b>Você tem um rascunho de ${new Date(r.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}. Continuar de onde parou?</b><button type="button">Continuar</button><button type="button" class="s">Descartar</button>`;
+    bd.insertBefore(ban, bd.firstChild);
+    ban.querySelector('button').onclick = () => { r.v.forEach(x => { const c = (x.id && b.querySelector('#' + CSS.escape(x.id))) || cs[x.i]; if (!c) return; if (x.t === 'checkbox' || x.t === 'radio') c.checked = !!x.v; else c.value = x.v; c.dispatchEvent(new Event('input', { bubbles: true })); c.dispatchEvent(new Event('change', { bubbles: true })); }); b.__nxSujo = true; ban.remove(); };
+    ban.querySelector('.s').onclick = () => { limparRasc(b); ban.remove(); };
+  }
+  /* ---------- 10. etapas em formulário longo ---------- */
+  function etapas(b) {
+    const bd = b.querySelector(BODY); if (!bd || bd.querySelector('.nx-et')) return;
+    const hs = [...bd.querySelectorAll('h3,h4,legend,.sec-t,.fs-t')].filter(h => h.offsetParent !== null && h.textContent.trim().length > 1 && !h.closest('.nx-ban,table,.nxd'));
+    if (hs.length < 3 || bd.scrollHeight < bd.clientHeight * 1.5) return;
+    const nav = D.createElement('div'); nav.className = 'nx-et'; nav.style.background = getComputedStyle(b).backgroundColor || '#fff';
+    nav.innerHTML = hs.slice(0, 8).map((h, i) => `<button type="button" data-i="${i}">${i + 1} ${esc2(h.textContent.trim().slice(0, 22))}</button>`).join('') + '<i></i>';
+    bd.insertBefore(nav, bd.firstChild); const barra = nav.querySelector('i');
+    nav.querySelectorAll('button').forEach(x => x.onclick = () => { const h = hs[+x.dataset.i]; bd.scrollTo({ top: h.offsetTop - nav.offsetHeight - 6, behavior: 'smooth' }); });
+    const marca = () => { const y = bd.scrollTop + nav.offsetHeight + 12; let k = 0; hs.forEach((h, i) => { if (h.offsetTop <= y) k = i; }); nav.querySelectorAll('button').forEach((x, i) => x.classList.toggle('on', i === k)); barra.style.width = Math.min(100, Math.round(bd.scrollTop / Math.max(1, bd.scrollHeight - bd.clientHeight) * 100)) + '%'; };
+    bd.addEventListener('scroll', marca, { passive: true }); marca();
+  }
+  /* ---------- prepara cada modal que abre ---------- */
+  function preparar(b) {
+    if (b.__nxOk) return; b.__nxOk = true; b.__nxSujo = false; b.__nxAbriu = Date.now();
+    if (!b.matches('.lg,.xl,.sm,.full,.nx-lg') && b.querySelector('table') && (b.querySelector('table').offsetWidth || 0) > 640) b.classList.add('nx-lg');
+    const al = D.createElement('div'); al.className = 'nx-alca'; al.setAttribute('aria-hidden', 'true'); b.insertBefore(al, b.firstChild);
+    let tm = null; b.addEventListener('input', e => { if (!e.isTrusted) return; b.__nxSujo = true; clearTimeout(tm); tm = setTimeout(() => salvarRasc(b), 600); const c = e.target.closest('.nx-erro'); if (c) { c.classList.remove('nx-erro'); const m = c.parentNode && c.parentNode.querySelector('.nx-erro-msg'); if (m) m.remove(); } });
+    b.addEventListener('change', e => { if (e.isTrusted) { b.__nxSujo = true; clearTimeout(tm); tm = setTimeout(() => salvarRasc(b), 600); } });
+    /* 3. arrastar para baixo fecha (celular) */
+    let y0 = null; const hd = b.querySelector(HEAD); [al, hd].forEach(z => { if (!z) return; z.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+      z.addEventListener('touchmove', e => { if (y0 == null) return; const dy = e.touches[0].clientY - y0; if (dy > 0) b.style.transform = `translateY(${dy}px)`; }, { passive: true });
+      z.addEventListener('touchend', e => { if (y0 == null) return; const dy = (e.changedTouches[0].clientY - y0); y0 = null; b.style.transform = ''; if (dy > 90) tentarFechar(b); }); });
+    setTimeout(() => { if (!b.isConnected) return; ofertaRasc(b); etapas(b); }, 120);
+  }
+  /* ---------- 1. descartar o que foi preenchido? ---------- */
+  async function tentarFechar(b) {
+    if (b.__nxSujo) { const ok = await W.nxConfirm('Você preencheu dados neste formulário. Se fechar agora, o que foi digitado não será salvo.', { titulo: 'Descartar o que você preencheu?', sim: 'Descartar', nao: 'Continuar preenchendo', perigo: true }); if (!ok) return; limparRasc(b); }
+    b.__nxSujo = false; b.__nxUsuario = true; cfg.fechar();
+  }
+  D.addEventListener('mousedown', e => { const b = caixaAtual(); if (b && e.target === b.closest(OV) && e.isTrusted) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  D.addEventListener('click', e => {
+    const b = caixaAtual(); if (!b || (W.__nxDlg && W.__nxDlg.contains(e.target))) return; const ov = b.closest(OV);
+    const fechar = (e.target === ov) || (e.target.closest(cfg.x) && b.contains(e.target.closest(cfg.x)));
+    if (fechar && e.isTrusted) { e.preventDefault(); e.stopImmediatePropagation(); tentarFechar(b); return; }
+    /* 6. botão que trava enquanto salva */
+    const bt = e.target.closest(FOOT + ' button, ' + FOOT + ' .btn'); if (!bt || !b.contains(bt) || bt.matches(cfg.x) || bt.matches('.sec,.ghost,.cl,.nao') || bt.disabled) return;
+    if (bt.__nxAte && bt.__nxAte > Date.now()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    bt.__nxAte = Date.now() + 2000; setTimeout(() => { if (!bt.isConnected || bt.disabled) return; bt.classList.add('nx-busy'); bt.__nxTm = setTimeout(() => { bt.classList.remove('nx-busy'); }, 1750); }, 250);
+  }, true);
+  /* 9. teclado: Esc, Enter e Tab */
+  W.addEventListener('keydown', e => {
+    if (W.__nxDlg) return; const b = caixaAtual(); if (!b) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); tentarFechar(b); return; }
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) { const t = e.target; if (!b.contains(t) || t.tagName !== 'INPUT' || ['checkbox', 'radio', 'file', 'button', 'submit'].includes(t.type) || t.closest('form')) return;
+      const ps = [...b.querySelectorAll(FOOT + ' button, ' + FOOT + ' .btn')].filter(x => !x.matches(cfg.x) && !x.matches('.sec,.ghost,.cl') && !x.disabled && x.offsetParent !== null); if (ps.length === 1) { e.preventDefault(); ps[0].click(); } return; }
+    if (e.key === 'Tab') { const f = [...b.querySelectorAll('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent !== null); if (!f.length) return; const i = f.indexOf(D.activeElement);
+      if (i < 0 || (e.shiftKey && i === 0) || (!e.shiftKey && i === f.length - 1)) { e.preventDefault(); f[e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 || i < 0 ? 0 : i + 1)].focus(); } }
+  }, true);
+  /* 7. erro no campo: o aviso de erro também aparece no campo certo */
+  if (cfg.toastFn && typeof W[cfg.toastFn] === 'function') { const T0 = W[cfg.toastFn]; W[cfg.toastFn] = function (m, ruim) { const r = T0.apply(this, arguments); try { if (ruim) erroNoModal(String(m || '')); } catch (e) { } return r; }; }
+  function erroNoModal(m) {
+    const b = caixaAtual(); if (!b || !m) return; b.querySelectorAll(FOOT + ' .nx-busy').forEach(x => { x.classList.remove('nx-busy'); x.__nxAte = 0; });
+    const bd = b.querySelector(BODY) || b, low = m.toLowerCase(); let alvo = null;
+    for (const lb of bd.querySelectorAll('label')) { const t = lb.textContent.replace(/\(.*?\)|[*:]/g, '').trim().toLowerCase(); if (t.length < 3 || t.length > 40) continue;
+      const pal = t.split(/\s+/).filter(w => w.length > 3); if (low.includes(t) || (pal.length && pal.every(w => low.includes(w)))) { const c = lb.htmlFor ? bd.querySelector('#' + CSS.escape(lb.htmlFor)) : lb.querySelector('input,select,textarea'); if (c && c.offsetParent !== null) { alvo = c; break; } } }
+    bd.querySelectorAll('.nx-ban.err').forEach(x => x.remove());
+    if (alvo) { alvo.classList.add('nx-erro'); const ant = alvo.parentNode.querySelector('.nx-erro-msg'); if (ant) ant.remove(); const d = D.createElement('div'); d.className = 'nx-erro-msg'; d.textContent = m; alvo.insertAdjacentElement('afterend', d); alvo.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => { try { alvo.focus(); } catch (e) { } }, 250); }
+    else { const ban = D.createElement('div'); ban.className = 'nx-ban err'; ban.setAttribute('role', 'alert'); ban.textContent = m; bd.insertBefore(ban, bd.firstChild); bd.scrollTo({ top: 0, behavior: 'smooth' }); }
+  }
+  /* 4. modal sobre modal: o formulário de baixo fica guardado e volta quando o de cima fecha */
+  if (cfg.abrirFn && typeof W[cfg.abrirFn] === 'function') { const A0 = W[cfg.abrirFn]; W[cfg.abrirFn] = function () {
+    const b = caixaAtual(), bd = b && (b.querySelector(BODY) || b), c = ultimoClique;
+    if (b && bd && c.el && bd.contains(c.el) && Date.now() - c.t < 1500 && campos(b).length >= 2) { const ov = b.closest(OV) || b; pilha.push({ ov, onClose: cfg.estado ? cfg.estado.ler() : null, foco: ultimoFoco }); guarda.appendChild(ov); }
+    return A0.apply(this, arguments); }; }
+  /* 12. fundo travado + 9. foco volta + 4. devolve o modal guardado */
+  let opener = null;
+  const obs = new MutationObserver(() => {
+    const r = raiz(); if (!r) return; const b = r.querySelector(BOX);
+    if (b) { if (aberto && aberto !== b && !aberto.isConnected && !aberto.__nxUsuario && !guarda.contains(aberto)) limparRasc(aberto); if (!b.__nxOk) { if (!aberto) opener = ultimoFoco; preparar(b); } aberto = b; D.documentElement.classList.add('nx-trava'); return; }
+    if (aberto) { const fb = aberto; aberto = null; if (!fb.__nxUsuario) limparRasc(fb); }
+    if (pilha.length && !r.children.length) { const p = pilha.pop(); r.appendChild(p.ov); if (cfg.estado) cfg.estado.voltar(p.onClose); const bb = r.querySelector(BOX); aberto = bb; setTimeout(() => { const f = bb && campos(bb)[0]; if (f) f.focus(); }, 30); return; }
+    D.documentElement.classList.remove('nx-trava'); const o = opener; opener = null; if (o && o.isConnected && !W.__nxDlg) setTimeout(() => { try { o.focus({ preventScroll: true }); } catch (e) { } }, 20);
+  });
+  const ligar = () => { const r = raiz(); if (r) obs.observe(r, { childList: true }); else setTimeout(ligar, 500); }; ligar();
+}
+
+nxModalKit({ sistema: 'adm', root: '#modal-root', ov: '#modal-root .ov', box: '#modal-root .modal', body: '#modal-root .modal-b', foot: '#modal-root .modal-f', head: '#modal-root .modal-h', x: '[data-close]', fechar: () => closeModal(), toastFn: 'toast', abrirFn: 'modal', estado: { ler: () => _onClose, voltar: f => { _onClose = f; } } });
+</script>
+<script>
+/* =====================================================================
+   LOTE 61 (Painel do Dono): som de caixa registradora a cada pagamento
+   Com o Painel aberto: um "plim" e um aviso na tela a cada pagamento confirmado.
+   Com o Painel fechado: aviso no celular (ligue em Financeiro > NEXUM PAY > "Avisos no celular").
+   ===================================================================== */
+const PLIM61 = { ids: null, som: (() => { try { return localStorage.getItem('nx:plim') !== '0'; } catch (e) { return true; } })() };
+function plim61() {
+  if (!PLIM61.som) return; try { const C = window.__ac61 = window.__ac61 || new (window.AudioContext || window.webkitAudioContext)(), t = C.currentTime;
+    [[1318.5, 0, .5], [1760, .09, .9], [2637, .09, .5]].forEach(([f, d, dur]) => { const o = C.createOscillator(), g = C.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.22, t + d + .01); g.gain.exponentialRampToValueAtTime(.0005, t + d + dur); o.connect(g); g.connect(C.destination); o.start(t + d); o.stop(t + d + dur + .05); });
+  } catch (e) { }
+}
+document.addEventListener('pointerdown', () => { try { if (window.__ac61 && window.__ac61.state === 'suspended') window.__ac61.resume(); else if (!window.__ac61) window.__ac61 = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }, { once: true });
+setInterval(() => { try {
+  if (!A || !Array.isArray(A.pag) || !A.user) return; const l = A.pag.filter(p => num(p.valor) > 0 || num(p.valorSaldo) > 0);
+  if (!PLIM61.ids) { PLIM61.ids = new Set(l.map(p => p.id)); return; }
+  const novos = l.filter(p => !PLIM61.ids.has(p.id) && Date.now() - Date.parse(p.registradoEm || p.data || 0) < 30 * 60000); l.forEach(p => PLIM61.ids.add(p.id)); if (!novos.length) return;
+  const tot = novos.reduce((s, p) => s + num(p.valor || p.valorSaldo), 0), txt = novos.length === 1 ? `${novos[0].empresa || 'Cliente'} · ${brl(num(novos[0].valor || novos[0].valorSaldo))}${novos[0].forma ? ' · ' + novos[0].forma : ''}` : `${novos.length} pagamentos · ${brl(tot)}`;
+  plim61(); toast('💰 Pagamento recebido: ' + txt);
+  if ('Notification' in window && Notification.permission === 'granted' && document.hidden) { try { new Notification('💰 Pagamento recebido', { body: txt, icon: 'https://rh.nexumdp.com.br/icon-192.png', tag: 'nx-plim' }); } catch (e) { } }
+} catch (e) { } }, 3000);
+/* avisos no celular com o Painel fechado */
+async function ligarAvisos61(b) {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return toast('Este navegador não recebe avisos. No celular, use o Chrome.', true);
+  b.disabled = true; b.textContent = 'Ligando…';
+  try { const p = await Notification.requestPermission(); if (p !== 'granted') throw new Error('Os avisos estão bloqueados. Libere nas configurações do navegador.');
+    const reg = await navigator.serviceWorker.register('sw-adm.js');
+    if (!firebase.messaging) await new Promise((ok, er) => { const s = document.createElement('script'); s.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js'; s.onload = ok; s.onerror = () => er(new Error('Não consegui carregar os avisos.')); document.head.appendChild(s); });
+    await navigator.serviceWorker.ready; const app = (FB && FB.app) || firebase.app('nexum-admin'), tk = await app.messaging().getToken({ serviceWorkerRegistration: reg }); if (!tk) throw new Error('O navegador não devolveu o código do aparelho.');
+    await asaasCall('/api/nx/push-dono', { token: tk }); toast('Pronto! Você vai receber um aviso neste aparelho a cada pagamento.'); b.textContent = 'Avisos ligados ✓';
+  } catch (e) { toast(e.message || String(e), true); b.disabled = false; b.textContent = 'Avisos no celular'; }
+}
+{ const _vp61 = vPay57; vPay57 = async function (el) { await _vp61.apply(this, arguments); try {
+  const h = el.querySelector('section.panel .row'); if (!h || $('#plim61', el)) return;
+  h.insertAdjacentHTML('beforeend', `<button class="btn ghost" id="plim61" title="Som a cada pagamento">${PLIM61.som ? '🔔 Som ligado' : '🔕 Som desligado'}</button><button class="btn ghost" id="push61">Avisos no celular</button>`);
+  $('#plim61', el).onclick = e => { PLIM61.som = !PLIM61.som; try { localStorage.setItem('nx:plim', PLIM61.som ? '1' : '0'); } catch (x) { } e.target.textContent = PLIM61.som ? '🔔 Som ligado' : '🔕 Som desligado'; if (PLIM61.som) plim61(); };
+  $('#push61', el).onclick = e => ligarAvisos61(e.target);
+} catch (e) { } }; }
 </script>
 </body>
 </html>
