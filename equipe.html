@@ -4692,5 +4692,26 @@ async function ligarAvisos61(b) {
   $('#push61', el).onclick = e => ligarAvisos61(e.target);
 } catch (e) { } }; }
 </script>
+<script>
+/* =====================================================================
+   LOTE 64 (Painel do Dono): cobrança contestada pelo cliente no NEXUM PAY
+   O atendimento mostra a cobrança (valor, vencimento, motivo) e o botão para cancelar a cobrança.
+   ===================================================================== */
+if (typeof supChat === 'function') { const _scL64 = supChat; supChat = function (prot) {
+  const r = _scL64.apply(this, arguments);
+  setTimeout(() => { try {
+    const m = $('.modal'), cc = m && $('#sc-c', m), x = (A.sup || []).find(y => y.protocolo === prot); if (!cc || !x || !x.cobranca || $('#ct64-b', m)) return; const c = x.cobranca;
+    cc.insertAdjacentHTML('beforebegin', `<div id="ct64-b" style="border:1px solid #F3D9A4;background:#FFF7E6;border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13.5px;line-height:1.5;color:#5A3D00">
+      <b style="display:block;margin-bottom:2px">Cobrança contestada pelo cliente</b>${brl(+c.valor || 0)} · vence ${c.vencimento ? new Date(c.vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—'} · <span style="font-family:monospace;font-size:12px">${esc(c.id || '')}</span><br>Motivo: <b>${esc(c.motivoTxt || c.motivo || '')}</b>
+      <div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" id="ct64-x" style="background:var(--bad)">Cancelar esta cobrança</button></div></div>`);
+    $('#ct64-x', m).onclick = async e => { const b = e.currentTarget; if (!(await nxConfirm(`Cancelar a cobrança de ${brl(+c.valor || 0)} de ${x.empresa || 'cliente'}? O link de pagamento deixa de funcionar.`, { sim: 'Cancelar cobrança', perigo: true }))) return;
+      b.disabled = true; b.textContent = 'Cancelando…';
+      try { await asaasCall('/api/cancelar', { id: c.id }); b.textContent = 'Cobrança cancelada ✓'; toast('Cobrança cancelada. Avise o cliente pelo chat.'); logEq('asaas', `Cancelou cobrança contestada de ${brl(+c.valor || 0)} · ${x.empresa || ''} · protocolo ${prot}`);
+        const t = $('#sc-t', m); if (t && !t.value.trim()) t.value = `Conferimos e cancelamos a cobrança de ${brl(+c.valor || 0)} com vencimento em ${c.vencimento ? new Date(c.vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : ''}. Desculpe pelo transtorno!`; }
+      catch (er) { toast(er.message, true); b.disabled = false; b.textContent = 'Cancelar esta cobrança'; } };
+  } catch (e) { } }, 60);
+  return r;
+}; }
+</script>
 </body>
 </html>
