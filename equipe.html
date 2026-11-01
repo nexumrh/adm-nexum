@@ -4467,5 +4467,31 @@ async function carteiras59(el) {
         $('#cd-ok', m).onclick = async e => { const b = e.target; b.disabled = true; try { const j = await asaasCall('/api/pay/saldo/devolver', { tid: $('#cd-t', m).value, valor: $('#cd-v', m).value, obs: $('#cd-o', m).value.trim() }); toast('Saldo devolvido. Saldo agora: ' + brl(j.saldo) + '. Faça o PIX de volta pela sua conta.'); closeModal(); go('npay', true); } catch (er) { toast(er.message, true); b.disabled = false; } }; } }); };
 }
 </script>
+<script>
+/* =====================================================================
+   LOTE 60 (Painel do Dono): reajuste anual da mensalidade
+   Você informa o índice do ano (IPCA, por exemplo) e o percentual. 30 dias antes do aniversário do contrato,
+   cada cliente recebe o aviso (app, e-mail, WhatsApp) e o novo valor vale a partir da data.
+   Plano Fidelidade mantém o valor até o fim. Dá para tirar uma empresa do reajuste.
+   ===================================================================== */
+{ const _vp60 = vPay57; vPay57 = async function (el) { await _vp60.apply(this, arguments); try { await reajuste60(el); } catch (e) { console.warn('reajuste 60', e); } }; }
+async function reajuste60(el) {
+  let d = { cfg: { ativo: false, indice: 'IPCA', pct: 0, antecedencia: 30 }, lista: [] }; try { d = await asaasCall('/api/nx/reajuste', {}); } catch (e) { }
+  const c = d.cfg || {}, h = iso(hoje()), ult = c.ultimaRotina;
+  el.insertAdjacentHTML('beforeend', `<section class="panel" id="rj60"><div class="row" style="gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h3 style="margin:0 0 4px;font-size:15px">Reajuste anual da mensalidade ${c.ativo ? '<span class="pill ok">ligado</span>' : '<span class="pill">desligado</span>'}</h3><p class="hint" style="margin:0">30 dias antes do aniversário do contrato, o cliente é avisado no app, por e-mail e WhatsApp. O novo valor só vale a partir da data. Quem está no Plano Fidelidade mantém o valor até o fim.</p></div></div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:12px"><label class="chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rj-a" ${c.ativo ? 'checked' : ''}> Ligar o reajuste automático</label>
+      <div class="fld" style="margin:0"><label for="rj-i">Índice</label><input class="inp" id="rj-i" value="${esc(c.indice || 'IPCA')}" style="width:120px"></div>
+      <div class="fld" style="margin:0"><label for="rj-p">Percentual do ano (%)</label><input class="inp" id="rj-p" inputmode="decimal" value="${String(c.pct || '').replace('.', ',')}" style="width:120px" placeholder="ex.: 4,68"></div>
+      <div class="fld" style="margin:0"><label for="rj-d">Avisar com quantos dias</label><input class="inp" id="rj-d" type="number" min="15" max="60" value="${c.antecedencia || 30}" style="width:110px"></div>
+      <button class="btn" id="rj-s">Salvar</button></div>
+    <p class="hint" style="margin:8px 0 0">Confira o índice no site do IBGE (IPCA acumulado em 12 meses) antes de salvar. O contrato precisa ter a cláusula de reajuste anual.${ult ? ` Última rodada: ${new Date(ult.em).toLocaleDateString('pt-BR')} · ${ult.avisados || 0} aviso(s).` : ''}</p>
+    ${d.lista.length ? `<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>Empresa</th><th>Aniversário</th><th class="n">Hoje</th><th class="n">Novo valor</th><th>Situação</th><th></th></tr></thead><tbody>${d.lista.map(x => `<tr><td>${esc(x.empresa)}</td><td>${fd(x.vigencia)}</td><td class="n">${brl(x.de)}</td><td class="n">${x.pulado ? '—' : brl(x.para)}</td><td>${x.pulado ? `<span class="pill">${esc(x.pulado)}</span>` : x.avisadoEm ? `<span class="pill ok">avisado em ${new Date(x.avisadoEm).toLocaleDateString('pt-BR')}</span>` : x.vigencia <= h ? '<span class="pill">passou</span>' : '<span class="pill warn">vai ser avisado</span>'}</td><td style="text-align:right">${x.pulado === 'Plano Fidelidade' ? '' : `<button class="btn ghost sm" data-rjp="${esc(x.tid)}" data-v="${x.pulado === 'sem reajuste' ? '' : '1'}">${x.pulado === 'sem reajuste' ? 'Voltar a reajustar' : 'Não reajustar'}</button>`}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint" style="margin:10px 0 0">Nenhum aniversário de contrato nos próximos 60 dias.</p>'}</section>`);
+  $('#rj-s', el).onclick = async e => { const b = e.target, pct = +String($('#rj-p', el).value).replace(',', '.') || 0, at = $('#rj-a', el).checked;
+    if (at && !(pct > 0 && pct <= 30)) return toast('Informe o percentual do ano (entre 0,01% e 30%).', true);
+    b.disabled = true; try { await FB.db.doc('plataforma/reajuste').set({ ativo: at, indice: $('#rj-i', el).value.trim().slice(0, 20) || 'IPCA', pct, antecedencia: Math.max(15, Math.min(60, parseInt($('#rj-d', el).value) || 30)), atualizadoEm: new Date().toISOString(), por: (A.user && A.user.email) || '' }, { merge: true }); toast(at ? 'Reajuste salvo e ligado. Os avisos saem na rodada do dia.' : 'Reajuste salvo (desligado).'); go('npay', true); } catch (er) { toast('Não foi possível salvar: ' + (er.code || er.message), true); b.disabled = false; } };
+  $$('[data-rjp]', el).forEach(b => b.onclick = async () => { const pular = !!b.dataset.v; if (pular && !confirm('Não reajustar esta empresa? Se o aviso já saiu, o valor antigo continua valendo.')) return; b.disabled = true;
+    try { await asaasCall('/api/nx/reajuste/pular', { tid: b.dataset.rjp, pular }); toast(pular ? 'Esta empresa não será reajustada.' : 'Esta empresa volta a ser reajustada.'); go('npay', true); } catch (er) { toast(er.message, true); b.disabled = false; } });
+}
+</script>
 </body>
 </html>

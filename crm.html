@@ -1768,5 +1768,61 @@ window.ERRO38 = { sistema: 'CRM', ctx: () => ({ tela: 'CRM' }), token: () => (ty
 (function () { const st = document.createElement('style'); st.id = 'toque38'; st.textContent = '@media (max-width:760px),(pointer:coarse) and (max-width:1024px){.btn,a.btn,button.btn,.btn.sm,.btn.ghost,.btn.sec{min-height:40px!important;height:auto}.modal-h button,button.x,header button,.tg-abre,button[aria-label^="Fechar"]{min-height:40px;min-width:40px}.tabs button,.chip,button.on,.nav button,.nav-g,.bnav button,.tb,select,select.inp,input.inp:not([type=checkbox]):not([type=radio]){min-height:40px}.menu-btn,.ib,.ferr{min-width:40px;min-height:40px}.f36{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:40px;margin-top:-10px;margin-bottom:-10px}.side .nav button,.side nav button{min-height:40px}}'; document.head.appendChild(st); })();
 
 </script>
+<script>
+/* =====================================================================
+   LOTE 60 (CRM): comissão dos vendedores
+   - "Virou cliente": grava quem vendeu e qual empresa virou cliente
+   - "Comissões": quanto cada vendedor ganha, só quando o cliente paga (1º pagamento + recorrente)
+   - O dono e o financeiro veem todos, marcam como paga, estornam e mudam as regras; o vendedor vê só a dele
+   ===================================================================== */
+{ const _fz60 = finalizar; finalizar = function (i) {
+  if (!i || i.canal !== 'lead') return _fz60.apply(this, arguments);
+  const soN = v => String(v || '').replace(/\D/g, ''), tel = soN(i.raw.whatsapp || i.tel), nm = String(i.raw.empresa || i.empresa || '').toLowerCase().trim();
+  const ts = (C.tenants || []).slice().sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')));
+  const pal = ts.find(t => (tel && soN(t.telefone).slice(-8) === tel.slice(-8)) || (nm && String(t.nome || '').toLowerCase().trim() === nm)), vend = i.raw.atendenteEmail || C.user.email;
+  modal('Concluir lead', `<p style="margin-top:0">Como terminou?</p><div class="row" style="gap:8px"><button class="btn bad" id="fl-p">Perdido</button><button class="btn ok" id="fl-g">Virou cliente 🎉</button></div>
+    <div id="fl-gd" hidden style="margin-top:14px"><div class="fld"><label for="fl-t">Qual empresa virou cliente?</label><select class="inp" id="fl-t"><option value="">Ainda não tem conta (vincular depois)</option>${ts.map(t => `<option value="${esc(t.id)}" ${pal && pal.id === t.id ? 'selected' : ''}>${esc(t.nome || t.id)}</option>`).join('')}</select></div>
+      <div class="fld" style="margin-top:10px"><label for="fl-v">Quem vendeu</label><select class="inp" id="fl-v">${opts(membros().map(m => [m.email, m.nome]), vend)}</select></div><p class="hint" style="margin:8px 0 0">A comissão entra quando o cliente pagar.</p><div class="row end" style="margin-top:10px"><button class="btn ok" id="fl-ok">Concluir como cliente</button></div></div>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button>', onMount: m => {
+      $('#fl-p', m).onclick = async () => { await atualizar(i, { status: 'perdido', atualizadoEm: agora() }); fechar(); toast('Lead concluído.'); };
+      $('#fl-g', m).onclick = () => { $('#fl-gd', m).hidden = false; };
+      $('#fl-ok', m).onclick = async () => { const ve = $('#fl-v', m).value, mb = membros().find(x => x.email === ve) || {};
+        await atualizar(i, { status: 'ganho', atualizadoEm: agora(), ganhoEm: agora(), tid: $('#fl-t', m).value || '', vendedorEmail: ve, vendedor: mb.nome || ve }); fechar(); toast('Lead concluído como cliente. 🎉'); };
+    } });
+}; }
+{ const _dn60 = desenharNav; desenharNav = function () {
+  const r = _dn60.apply(this, arguments), el = $('#nav'), rt = el && $('#nv-rt', el);
+  if (rt && !$('#nv-com', el)) { rt.insertAdjacentHTML('afterend', `<button id="nv-com">${I('moeda')}<span>Comissões</span></button>`); $('#nv-com', el).onclick = () => { el.classList.remove('aberto'); abrirComissoes(); }; }
+  return r;
+}; }
+const COM60 = { mes: new Date().toISOString().slice(0, 7), d: null };
+function abrirComissoes() { modal('Comissões', '<div id="cm-box"><div class="vazio" style="padding:26px 0">Carregando…</div></div>', { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: () => pintarComissoes() }); }
+async function pintarComissoes() {
+  const el = $('#cm-box'); if (!el) return; let d;
+  try { d = COM60.d = await conector('/api/crm/comissoes', { mes: COM60.mes }); } catch (e) { el.innerHTML = `<div class="vazio" style="padding:26px 0">${esc(e.message)}</div>`; return; }
+  const adm = d.todos, tot = d.vendedores.reduce((s, v) => s + v.total, 0), est = d.itens.filter(x => x.estorno).length, novos = d.vendedores.reduce((s, v) => s + v.novos, 0);
+  const meses = []; for (let k = 0; k < 12; k++) { const x = new Date(); x.setDate(1); x.setMonth(x.getMonth() - k); meses.push([x.toISOString().slice(0, 7), x.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })]); }
+  el.innerHTML = `<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center"><select class="inp" id="cm-m" style="width:auto">${opts(meses, d.mes)}</select><span class="hint" style="flex:1">Regra: ${d.cfg.pct1}% do 1º pagamento${d.cfg.pctRec && d.cfg.meses ? ` + ${d.cfg.pctRec}% dos ${d.cfg.meses} meses seguintes` : ''}. Só conta pagamento confirmado.</span>${adm ? '<button class="btn sec sm" id="cm-rg">Regras</button><button class="btn sec sm" id="cm-vc">Vincular cliente</button>' : ''}<button class="btn sec sm" id="cm-csv">${I('baixar')}Planilha</button></div>
+    <div class="mt" style="margin:12px 0"><div><b>${brl(tot)}</b><span>comissão do mês</span></div><div><b>${novos}</b><span>clientes novos pagos</span></div><div><b>${d.itens.filter(x => !x.estorno).length}</b><span>pagamentos com comissão</span></div><div><b style="color:${est ? 'var(--bad)' : 'inherit'}">${est}</b><span>estornos</span></div></div>
+    ${d.vendedores.length ? d.vendedores.map(v => `<div class="cm-v" style="border:1px solid var(--line);border-radius:12px;margin:0 0 10px;overflow:hidden"><div class="row" style="gap:10px;padding:12px 14px;flex-wrap:wrap;background:var(--soft)"><div style="flex:1;min-width:180px"><b>${esc(v.nome)}</b><div class="hint">${v.novos} cliente(s) novo(s) · 1º pagamento ${brl(v.primeiro)} · recorrente ${brl(v.recorrente)}${v.estornos ? ` · ${v.estornos} estorno(s)` : ''}</div></div><b style="font-size:17px">${brl(v.total)}</b>${v.paga ? `<span class="pill" style="background:var(--ok-s);color:var(--ok)">paga em ${new Date(v.paga.em).toLocaleDateString('pt-BR')}</span>` : adm && v.total > 0 ? `<button class="btn sm" data-cmp="${esc(v.email)}" data-v="${v.total}">Marcar como paga</button>` : '<span class="pill">a pagar</span>'}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">${d.itens.filter(x => x.email === v.email).map(x => `<tr style="border-top:1px solid var(--line2)${x.estorno ? ';opacity:.55;text-decoration:line-through' : ''}"><td style="padding:8px 14px">${new Date(x.data + 'T12:00').toLocaleDateString('pt-BR')}</td><td style="padding:8px">${esc(x.empresa)}</td><td style="padding:8px" class="hint">${esc(x.tipo)} · ${x.pct}% de ${brl(x.base)}</td><td style="padding:8px;text-align:right"><b>${brl(x.valor)}</b></td><td style="padding:8px 14px;text-align:right">${adm ? `<button class="btn ghost sm" data-cme="${esc(x.id)}" data-d="${x.estorno ? 1 : ''}">${x.estorno ? 'Desfazer' : 'Estornar'}</button>` : ''}</td></tr>`).join('')}</table></div>`).join('')
+      : `<div class="vazio" style="padding:22px 0">${I('moeda')}<div>Nenhuma comissão em ${esc(meses.find(x => x[0] === d.mes)[1])}.<br>Ao concluir um lead como "Virou cliente", escolha a empresa e quem vendeu.</div></div>`}
+    ${adm && d.semVinculo.length ? `<h4 class="rt-g">Clientes ganhos sem empresa ou vendedor (${d.semVinculo.length})</h4><p class="hint" style="margin:0 0 6px">Sem isso a comissão não é calculada. Use "Vincular cliente".</p>${d.semVinculo.map(s => `<div class="hint" style="padding:3px 0">• ${esc(s.nome)}${s.atendente ? ' · atendido por ' + esc(s.atendente) : ''}</div>`).join('')}` : ''}`;
+  $('#cm-m', el).onchange = e => { COM60.mes = e.target.value; pintarComissoes(); };
+  $('#cm-csv', el).onclick = () => { const cab = ['Data', 'Vendedor', 'Cliente', 'Tipo', '%', 'Base', 'Comissão', 'Estorno'], v2 = n => (+n || 0).toFixed(2).replace('.', ',');
+    const csv = '﻿' + [cab, ...d.itens.map(x => [x.data.split('-').reverse().join('/'), x.vendedor, x.empresa, x.tipo, x.pct, v2(x.base), v2(x.valor), x.estorno ? 'sim' : ''])].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `Comissoes ${d.mes}.csv`; a.click(); };
+  const acao = async (b, corpo, ok) => { b.disabled = true; try { await conector('/api/crm/comissao', corpo); toast(ok); pintarComissoes(); } catch (e) { toast(e.message, true); b.disabled = false; } };
+  $$('[data-cmp]', el).forEach(b => b.onclick = () => { if (confirm(`Marcar ${brl(+b.dataset.v)} como paga?`)) acao(b, { acao: 'pagar', mes: d.mes, email: b.dataset.cmp, valor: +b.dataset.v }, 'Comissão marcada como paga.'); });
+  $$('[data-cme]', el).forEach(b => b.onclick = () => { if (b.dataset.d) return acao(b, { acao: 'estornar', id: b.dataset.cme, desfazer: true }, 'Estorno desfeito.'); const mo = prompt('Motivo do estorno (ex.: cliente cancelou em 30 dias):'); if (mo !== null) acao(b, { acao: 'estornar', id: b.dataset.cme, motivo: mo }, 'Comissão estornada.'); });
+  const rg = $('#cm-rg', el); if (rg) rg.onclick = () => { const c = d.cfg; modal('Regras da comissão', `<div class="fld"><label for="cr-1">% do 1º pagamento do cliente</label><input class="inp" id="cr-1" type="number" min="0" max="100" value="${c.pct1}"></div><div class="fld" style="margin-top:10px"><label for="cr-r">% dos pagamentos seguintes</label><input class="inp" id="cr-r" type="number" min="0" max="100" value="${c.pctRec}"></div><div class="fld" style="margin-top:10px"><label for="cr-m">Por quantos meses depois do 1º</label><input class="inp" id="cr-m" type="number" min="0" max="36" value="${c.meses}"></div><p class="hint" style="margin:8px 0 0">Vale para os cálculos de agora em diante (inclusive os meses já mostrados).</p>`,
+    { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="cr-ok">Salvar</button>', onMount: m => { $('#cr-ok', m).onclick = async () => { try { await conector('/api/crm/comissao', { acao: 'regras', pct1: +$('#cr-1', m).value, pctRec: +$('#cr-r', m).value, meses: +$('#cr-m', m).value }); toast('Regras salvas.'); abrirComissoes(); } catch (e) { toast(e.message, true); } }; } }); };
+  const vc = $('#cm-vc', el); if (vc) vc.onclick = () => { const ts = (C.tenants || []).slice().sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')));
+    modal('Vincular cliente a um vendedor', `<div class="fld"><label for="cv-t">Empresa cliente</label><select class="inp" id="cv-t">${opts(ts.map(t => [t.id, t.nome || t.id]), '')}</select></div><div class="fld" style="margin-top:10px"><label for="cv-v">Vendedor</label><select class="inp" id="cv-v">${opts(membros().map(m => [m.email, m.nome]), '')}</select></div><div class="fld" style="margin-top:10px"><label for="cv-d">Conta a partir de</label><input class="inp" id="cv-d" type="date" value="${new Date().toISOString().slice(0, 10)}"></div><p class="hint" style="margin:8px 0 0">Use para vendas fechadas fora dos leads (WhatsApp, indicação, presencial). Os pagamentos da empresa a partir dessa data geram comissão.</p>`,
+      { foot: '<button class="btn sec" data-close>Cancelar</button><button class="btn" id="cv-ok">Vincular</button>', onMount: m => { $('#cv-ok', m).onclick = async () => { const ve = $('#cv-v', m).value, mb = membros().find(x => x.email === ve) || {};
+        try { await conector('/api/crm/comissao', { acao: 'vincular', tid: $('#cv-t', m).value, vendedorEmail: ve, vendedor: mb.nome || ve, desde: $('#cv-d', m).value }); toast('Cliente vinculado.'); abrirComissoes(); } catch (e) { toast(e.message, true); } }; } }); };
+}
+</script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
+
