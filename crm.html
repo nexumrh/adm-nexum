@@ -344,7 +344,7 @@ function filtrar(l, semEtapa) {
     && (semEtapa || (f.etapa === 'abertos' ? i.etapa !== 'fim' : f.etapa === 'semresp' ? i.etapa !== 'fim' && i.ultimaDe === 'cliente' : f.etapa === 'fim' ? i.etapa === 'fim' && i.em >= hoje7 : true))
     && (!q || `${i.nome} ${i.sub} ${i.ultima} ${i.empresa} ${soD(i.tel)} ${(i.tags || []).join(' ')}`.toLowerCase().includes(q)));
 }
-const ordenar = l => l.sort((a, b) => ((b.naoLidas > 0) - (a.naoLidas > 0)) || String(b.em).localeCompare(String(a.em)));
+const ordenar = l => l.sort((a, b) => ((b.naoLidas > 0) - (a.naoLidas > 0)) || ((b.temp || 0) - (a.temp || 0)) || String(b.em).localeCompare(String(a.em)));
 const atual = () => itens().find(i => i.key === C.sel) || null;
 const tenantDe = i => (i.tid && C.tenants.find(t => t.id === i.tid)) || (soD(i.tel).length >= 10 && C.tenants.find(t => soD(t.telefone).slice(-9) === soD(i.tel).slice(-9))) || (i.email && C.tenants.find(t => (t.email || '').toLowerCase() === String(i.email).toLowerCase())) || null;
 
@@ -2035,6 +2035,88 @@ function abrirPlacar62() {
   return r;
 }; }
 </script>
+<script>
+/* =====================================================================
+   LOTE 65 (CRM): temperatura do lead, previsão de vendas do mês e mensagens do Recrutamento pelo WhatsApp
+   ===================================================================== */
+/* ---------- 15. Temperatura do lead: sobe com resposta rápida, interesse e proposta; desce com dias parado ---------- */
+function convDoLead65(l) { const t = soD(l.whatsapp).slice(-9); return (C.wa || []).find(c => c.leadId === l.id) || (t.length === 9 && (C.wa || []).find(c => soD(c.numero).slice(-9) === t)) || null; }
+function tempLead65(l) {
+  const st = l.status || 'novo'; if (st === 'ganho' || st === 'perdido') return null;
+  const c = convDoLead65(l), agora = Date.now(), ult = Date.parse((c && (c.ultimaDoCliente || c.atualizadoEm)) || l.atualizadoEm || l.em || 0) || agora, h = (agora - ult) / 36e5;
+  let p = st === 'contato' ? 40 : 25; const motivos = [];
+  if (c && c.ultimaDe === 'cliente' && h <= 24) { p += 30; motivos.push('respondeu nas últimas 24h'); } else if (h <= 72) { p += 12; motivos.push('conversou nos últimos 3 dias'); }
+  if (l.plano) { p += 10; motivos.push('escolheu um plano'); } if (+l.funcionarios >= 5) { p += 6; motivos.push(`${l.funcionarios} funcionários`); }
+  if (l.proposta || (c && c.pagamento) || /proposta|pre[cç]o|valor|plano|contratar|assinar/i.test(`${l.resumo || ''} ${(c && c.ultimaMsg) || ''}`)) { p += 15; motivos.push('falou de preço ou proposta'); }
+  if (/diagn/i.test(l.origem || '')) { if (/risco alto/i.test(l.resumo || '')) { p += 25; motivos.push('diagnóstico: risco alto'); } else if (/risco m[eé]dio/i.test(l.resumo || '')) { p += 10; motivos.push('diagnóstico: risco médio'); } }
+  if (/demo|demonstra/i.test(`${l.origem || ''} ${l.resumo || ''}`) || l.demo) { p += 10; motivos.push('viu ou pediu demonstração'); }
+  const parado = Math.max(0, Math.floor(h / 24) - 2); if (parado) { p -= Math.min(40, parado * 3); motivos.push(`${Math.floor(h / 24)} dias sem resposta`); }
+  p = Math.max(0, Math.min(100, Math.round(p))); return { p, k: p >= 60 ? 'quente' : p >= 35 ? 'morno' : 'frio', motivos };
+}
+const TEMP65 = { quente: ['🔥 Quente', '#B42318', '#FBE7E7'], morno: ['🌤 Morno', '#A86A12', '#FBF1DF'], frio: ['❄ Frio', '#0B47D6', '#E8F0FF'] };
+{ const _il65 = itemLead; itemLead = function (l) { const i = _il65.apply(this, arguments); try { const t = tempLead65(l); if (t) { i.temp = t.p; i.tags = [TEMP65[t.k][0], ...(i.tags || []).filter(x => !/Quente|Morno|Frio/.test(x))]; } } catch (e) { } return i; }; }
+{ const _iw65 = itemWA; itemWA = function (c) { const i = _iw65.apply(this, arguments); try { const l = c.leadId && (C.leads || []).find(x => x.id === c.leadId); const t = l && tempLead65(l); if (t) { i.temp = t.p; i.tags = [TEMP65[t.k][0], ...(i.tags || []).filter(x => !/Quente|Morno|Frio/.test(x))]; } } catch (e) { } return i; }; }
+(function () { const st = document.createElement('style'); st.textContent = `.tp65{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}.rq65 li{align-items:flex-start}.rq65 .tx{white-space:pre-wrap;font-size:13px;background:var(--line2,#F4F4F8);border-radius:10px;padding:8px 10px;margin-top:6px}`; document.head.appendChild(st); })();
+const tpPill65 = t => t ? `<span class="tp65" style="color:${TEMP65[t.k][1]};background:${TEMP65[t.k][2]}">${TEMP65[t.k][0]}</span>` : '';
+
+/* ---------- 16. Previsão de vendas do mês ---------- */
+async function metaMes65() { const mes = new Date().toISOString().slice(0, 7); try { if (dono()) { const s = await FB.db.doc('plataforma/metasVendas').get(), d = s.exists ? s.data() : {}, m = d[mes] || d.padrao; if (m) return { valor: +m.valor || 0, qtd: +m.qtd || 0 }; } } catch (e) { } try { const s = await FB.db.doc('plataforma/vendasEquipe').get(), d = s.exists ? s.data() : {}; if (d.mes === mes && d.meta) return { valor: 0, qtd: +d.meta.qtd || 0 }; } catch (e) { } return null; }
+const valorLead65 = l => { const p = l.plano && PLANOS[l.plano]; if (p) return p[1]; const g = (C.leads || []).filter(x => x.status === 'ganho' && x.plano && PLANOS[x.plano]); return g.length ? Math.round(g.reduce((s, x) => s + PLANOS[x.plano][1], 0) / g.length) : PLANOS.profissional[1]; };
+async function abrirPrevisao65() {
+  const l = C.leads || [], lim = new Date(Date.now() - 180 * 864e5).toISOString(), hist = l.filter(x => (x.em || '') >= lim), mes = new Date().toISOString().slice(0, 7);
+  const g = hist.filter(x => x.status === 'ganho').length, pe = hist.filter(x => x.status === 'perdido').length, base = { novo: hist.length ? g / hist.length : .1, contato: g + pe ? g / (g + pe) : .3 };
+  const fat = { quente: 1.4, morno: 1, frio: .5 }, abertos = l.filter(x => ['novo', 'contato'].includes(x.status || 'novo')).map(x => { const t = tempLead65(x), v = valorLead65(x), ch = Math.min(.95, (base[x.status || 'novo'] || .1) * (t ? fat[t.k] : 1)); return { l: x, t, v, ch, esp: v * ch }; }).sort((a, b) => b.esp - a.esp);
+  const ganhos = l.filter(x => x.status === 'ganho' && String(x.ganhoEm || x.atualizadoEm || '').slice(0, 7) === mes), fechado = ganhos.reduce((s, x) => s + valorLead65(x), 0), prev = abertos.reduce((s, x) => s + x.esp, 0), meta = await metaMes65();
+  const kpi = (v, t) => `<div class="kpi" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px"><b style="display:block;font-size:18px">${v}</b><span class="hint">${t}</span></div>`;
+  modal('Previsão de vendas do mês', `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px">${kpi(brl(fechado + prev), 'previsto para o mês (mensalidade)')}${kpi(brl(fechado), `já fechado · ${ganhos.length} venda(s)`)}${meta ? kpi(meta.valor ? Math.round((fechado + prev) / meta.valor * 100) + '%' : `${ganhos.length + Math.round(abertos.reduce((s, x) => s + x.ch, 0))} de ${meta.qtd}`, meta.valor ? `da meta de ${brl(meta.valor)}` : 'vendas previstas da meta') : ''}${kpi(abertos.filter(x => x.t && x.t.k === 'quente').length, 'leads quentes')}</div>
+    <p class="hint" style="margin:0 0 10px">Valor de cada lead × chance de fechar. A chance vem do histórico dos últimos 180 dias (${Math.round(base.novo * 100)}% dos leads novos e ${Math.round(base.contato * 100)}% dos que conversaram viraram clientes), ajustada pela temperatura.</p>
+    ${abertos.length ? `<div style="overflow-x:auto"><table style="width:100%;min-width:520px;border-collapse:collapse;font-size:13.5px"><thead><tr><th style="text-align:left;padding:6px">Lead</th><th style="text-align:left;padding:6px">Temperatura</th><th style="text-align:left;padding:6px">Etapa</th><th style="text-align:right;padding:6px">Valor</th><th style="text-align:right;padding:6px">Chance</th></tr></thead><tbody>${abertos.slice(0, 40).map(x => `<tr style="border-top:1px solid var(--line);cursor:pointer" data-ld="${esc(x.l.id)}" title="${esc((x.t ? x.t.motivos : []).join(' · '))}"><td style="padding:7px 6px"><b>${esc(x.l.empresa || x.l.nome || 'Lead')}</b><div class="hint">${esc((x.t ? x.t.motivos.slice(0, 2) : []).join(' · '))}</div></td><td style="padding:6px">${tpPill65(x.t)}</td><td style="padding:6px">${(x.l.status || 'novo') === 'novo' ? 'Novo' : 'Em contato'}</td><td style="padding:6px;text-align:right">${brl(x.v)}</td><td style="padding:6px;text-align:right">${Math.round(x.ch * 100)}%</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nenhum lead aberto.</p>'}`,
+    { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => $$('[data-ld]', m).forEach(r => r.onclick = () => { fechar(); C.sel = 'ld:' + r.dataset.ld; try { mudou(); } catch (e) { } }) });
+}
+
+/* ---------- 19. Mensagens do Recrutamento (fila gravada pelo NEXUM Recrutamento) ---------- */
+C.rq65 = []; C.rqCfg65 = {}; let rqUnsub65 = null, rqAuto65 = { n: 0, desde: Date.now() };
+const podeRq65 = () => dono() || filasMinhas().includes('rs');
+function ouvirRq65() { if (rqUnsub65 || !podeRq65() || !FB || !FB.db) return; try { rqUnsub65 = FB.db.collection('recrutWa').where('status', '==', 'pendente').onSnapshot(s => { C.rq65 = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.em).localeCompare(String(b.em))); try { desenharNav(); } catch (e) { } autoRq65(); }, () => { }); C.subs.push(() => { try { rqUnsub65(); } catch (e) { } rqUnsub65 = null; }); } catch (e) { } }
+setInterval(() => { try { if (C.user && C.papel) ouvirRq65(); } catch (e) { } }, 3000);
+setInterval(() => { try { if (C.user && podeRq65()) FB.db.doc('plataforma/crm').get().then(s => { C.rqCfg65 = ((s.exists ? s.data() : {}).waRecrut) || {}; }).catch(() => { }); } catch (e) { } }, 60000);
+async function enviarRq65(q, manual) {
+  try { const r = await conector('/api/wa/recrut', { id: q.id }); return r.via === 'modelo' ? 'enviado pelo modelo aprovado' : 'enviado'; }
+  catch (e) { if (manual && /24 horas|modelo/.test(e.message || '')) { const n = soD(q.numero).replace(/^55(?=\d{10,11}$)/, ''); window.open(`https://wa.me/55${n}?text=${encodeURIComponent(q.texto || '')}`, '_blank', 'noopener'); await FB.db.collection('recrutWa').doc(q.id).update({ status: 'manual', enviadoEm: new Date().toISOString(), por: C.user.email }).catch(() => { }); return 'aberto no WhatsApp do celular'; } throw e; }
+}
+async function autoRq65() {
+  if (!C.rqCfg65.auto || !C.rq65.length || autoRq65.rodando) return; autoRq65.rodando = true;
+  try { if (Date.now() - rqAuto65.desde > 36e5) rqAuto65 = { n: 0, desde: Date.now() };
+    for (const q of C.rq65.slice(0, 5)) { if (rqAuto65.n >= 40) break; if (q.etapa === 'reprovado' && !C.rqCfg65.reprovAuto) continue; try { await enviarRq65(q, false); rqAuto65.n++; } catch (e) { if (/fora_janela|24 horas|modelo/.test(e.message || '')) continue; break; } } }
+  finally { autoRq65.rodando = false; }
+}
+function abrirRq65() {
+  const des = m => { const l = C.rq65; $('#rq-l', m).innerHTML = l.length ? `<ul class="list rq65">${l.map(q => `<li style="display:block;padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1"><b>${esc(q.nome || 'Candidato')}</b> · ${esc(q.vaga || '')}<div class="hint">${esc(q.empresa || '')} · ${esc(ETAPA_RQ65[q.etapa] || q.etapa || '')} · ${esc(q.numero || '')} · ${new Date(q.em).toLocaleString('pt-BR').slice(0, 17)}</div></div><button class="btn sm" data-rq="${esc(q.id)}">Enviar</button><button class="btn ghost sm" data-rqx="${esc(q.id)}">Descartar</button></div><div class="tx">${esc(q.texto || '')}</div></li>`).join('')}</ul>` : '<p class="hint">Nenhuma mensagem esperando. Quando um candidato mudar de etapa no NEXUM Recrutamento (com o envio ligado nas Configurações de lá), a mensagem aparece aqui.</p>';
+    $$('[data-rq]', m).forEach(b => b.onclick = async () => { const q = C.rq65.find(x => x.id === b.dataset.rq); b.disabled = true; b.textContent = 'Enviando…'; try { toast(`${q.nome}: ${await enviarRq65(q, true)}.`); } catch (e) { toast(e.message, true); b.disabled = false; b.textContent = 'Enviar'; } });
+    $$('[data-rqx]', m).forEach(b => b.onclick = async () => { await FB.db.collection('recrutWa').doc(b.dataset.rqx).update({ status: 'descartado', em2: new Date().toISOString(), por: C.user.email }).catch(e => toast(e.message, true)); }); };
+  const cfg = C.rqCfg65;
+  modal('Mensagens do Recrutamento', `<p class="hint" style="margin-top:0">Avisos aos candidatos gravados pelo NEXUM Recrutamento. O envio sai pelo WhatsApp oficial da NEXUM: como texto, se o candidato escreveu nas últimas 24 horas; senão, pelo modelo aprovado na Meta. Sem modelo, o “Enviar” abre o WhatsApp do celular com a mensagem pronta.</p>
+    ${dono() ? `<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rq-a" ${cfg.auto ? 'checked' : ''}> Enviar sozinho enquanto o CRM estiver aberto (até 40 por hora)</label><label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="rq-r" ${cfg.reprovAuto ? 'checked' : ''}> Incluir as mensagens de reprovação no envio automático</label>
+      <div style="margin-top:8px"><label for="rq-m" class="hint">Nome do modelo aprovado na Meta (variáveis: nome, empresa, vaga, recado)</label><input class="inp" id="rq-m" value="${esc(cfg.modelo || '')}" placeholder="ex.: aviso_candidatura"></div><button class="btn sec sm" id="rq-s" style="margin-top:8px">Salvar</button></div>` : ''}
+    <div class="row" style="gap:8px;margin-bottom:6px"><b style="flex:1">Esperando envio (${C.rq65.length})</b>${C.rq65.length > 1 ? '<button class="btn sm" id="rq-t">Enviar todos</button>' : ''}</div><div id="rq-l"></div>`,
+    { largo: true, foot: '<button class="btn sec" data-close>Fechar</button>', onMount: m => { des(m); const iv = setInterval(() => { if (!document.body.contains(m)) return clearInterval(iv); des(m); }, 2500);
+      const s = $('#rq-s', m); if (s) s.onclick = async () => { const w = { auto: $('#rq-a', m).checked, reprovAuto: $('#rq-r', m).checked, modelo: $('#rq-m', m).value.trim() }; try { await FB.db.doc('plataforma/crm').set({ waRecrut: w }, { merge: true }); C.rqCfg65 = w; toast('Salvo.'); autoRq65(); } catch (e) { toast(e.message, true); } };
+      const t = $('#rq-t', m); if (t) t.onclick = async () => { t.disabled = true; let ok = 0, man = 0; for (const q of C.rq65.slice()) { try { const r = await enviarRq65(q, false); ok++; } catch (e) { if (/24 horas|modelo|fora_janela/.test(e.message || '')) man++; else { toast(e.message, true); break; } } } toast(`${ok} enviada(s).${man ? ` ${man} precisa(m) do botão “Enviar” (fora das 24 horas e sem modelo).` : ''}`); t.disabled = false; }; } });
+}
+const ETAPA_RQ65 = { inscrito: 'Inscrição recebida', triagem: 'Triagem', teste: 'Teste', entrevista: 'Entrevista', aprovado: 'Aprovado', reprovado: 'Reprovado' };
+
+/* ---------- botões no menu ---------- */
+{ const _dn65 = desenharNav; desenharNav = function () {
+  const r = _dn65.apply(this, arguments);
+  try { const el = $('#nav'); if (!el) return r; const ref = $('#nv-fun', el) || $('#nv-plc', el) || $('#nv-esf', el) || $('#nv-risco', el);
+    if (ref && podeLeads() && !$('#nv-pv65', el)) { ref.insertAdjacentHTML('afterend', `<button id="nv-pv65">${I('barras')}<span>Previsão de vendas</span></button>`); $('#nv-pv65', el).onclick = () => { el.classList.remove('aberto'); abrirPrevisao65(); }; }
+    const ref2 = $('#nv-pv65', el) || ref; if (ref2 && podeRq65()) { const n = (C.rq65 || []).length, b = $('#nv-rq65', el);
+      if (!b) { ref2.insertAdjacentHTML('afterend', `<button id="nv-rq65">${I('chatl')}<span>Recrutamento (WhatsApp)</span>${n ? `<span class="n">${n}</span>` : ''}</button>`); $('#nv-rq65', el).onclick = () => { el.classList.remove('aberto'); abrirRq65(); }; }
+      else { const sp = b.querySelector('.n'); if (n && !sp) b.insertAdjacentHTML('beforeend', `<span class="n">${n}</span>`); else if (sp) { if (n) sp.textContent = n; else sp.remove(); } } } } catch (e) { }
+  return r;
+}; }
+</script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
+
 

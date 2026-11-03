@@ -4713,5 +4713,58 @@ if (typeof supChat === 'function') { const _scL64 = supChat; supChat = function 
   return r;
 }; }
 </script>
+<script>
+/* =====================================================================
+   LOTE 65 (Painel do Dono): retenção por mês de entrada e previsão de receita dos próximos 3 meses
+   (em Números do negócio, abaixo da previsão do mês)
+   ===================================================================== */
+const MES65 = m => new Date(+m.slice(0, 4), +m.slice(5) - 1, 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '').replace(' de ', '/');
+const somaMes65 = (m, k) => { const d = new Date(+m.slice(0, 4), +m.slice(5) - 1 + k, 1); return iso(d).slice(0, 7); };
+const difMes65 = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5) - +a.slice(5));
+async function painelRetencao65(el) {
+  if (!el || $('#rt65', el)) return; const sec = document.createElement('section'); sec.className = 'panel'; sec.id = 'rt65'; sec.innerHTML = '<h2 style="margin:0">Retenção por mês de entrada</h2><p class="hint">Calculando…</p>'; el.appendChild(sec);
+  let canc = []; try { canc = (await FB.db.collection('cancelamentos').get()).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { }
+  const hm = iso(hoje()).slice(0, 7), ts = (A.tenants || []).filter(t => !t.robo), pag = A.pag || [], prim = {};
+  pag.forEach(p => { if (!p.tid || !p.data || num(p.valor) <= 0) return; const m = String(p.data).slice(0, 7); if (!prim[p.tid] || m < prim[p.tid]) prim[p.tid] = m; });
+  const cli = ts.map(t => { const ent = prim[t.id] || (!t.trial && t.criadoEm ? String(t.criadoEm).slice(0, 7) : null); if (!ent) return null; const ativo = !t.bloqueado && diffD(hoje(), pd(t.expira)) >= -15, ult = ativo ? hm : String(t.expira).slice(0, 7); return { t, ent, ult, ativo }; }).filter(Boolean);
+  const coortes = [...new Set(cli.map(c => c.ent))].sort().slice(-8), K = 6;
+  const cor = p => p == null ? '' : p >= 90 ? 'background:#0E8A5F;color:#fff' : p >= 75 ? 'background:#2FA372;color:#fff' : p >= 60 ? 'background:#79C7A3' : p >= 40 ? 'background:#F6D58A' : 'background:#F3A79B';
+  const cel = (m, k) => { const g = cli.filter(c => c.ent === m), alvo = somaMes65(m, k); if (alvo > hm || !g.length) return null; const vivos = g.filter(c => c.ult >= alvo); return { p: Math.round(vivos.length / g.length * 100), sairam: g.filter(c => c.ult < alvo) }; };
+  const porPlano = Object.keys(PLANOS).map(k => { const g = cli.filter(c => c.t.plano === k); return g.length ? [PLANOS[k].nome, g.length, Math.round(g.filter(c => c.ativo).length / g.length * 100)] : null; }).filter(Boolean);
+  const porOrig = {}; cli.forEach(c => { const o = c.t.revenda ? 'Revenda' : /indic/i.test(c.t.origem || '') ? 'Indicação' : c.t.origem ? (/site|vendas/i.test(c.t.origem) ? 'Site' : String(c.t.origem)) : 'Não informado'; (porOrig[o] = porOrig[o] || [0, 0])[0]++; if (c.ativo) porOrig[o][1]++; });
+  sec.innerHTML = `<h2 style="margin:0 0 4px">Retenção por mês de entrada</h2><p class="hint" style="margin:0 0 12px">De cada mês em que clientes começaram a pagar, quantos por cento continuam ativos nos meses seguintes. Toque numa célula para ver quem saiu e o motivo.</p>
+    ${coortes.length ? `<div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>Entrada</th><th class="n">Clientes</th>${Array.from({ length: K }, (_, k) => `<th class="n">${k ? k + 'º mês' : 'entrada'}</th>`).join('')}</tr></thead><tbody>${coortes.map(m => `<tr><td><b>${MES65(m)}</b></td><td class="n">${cli.filter(c => c.ent === m).length}</td>${Array.from({ length: K }, (_, k) => { const x = cel(m, k); return x ? `<td class="n" style="${cor(x.p)};font-weight:700;cursor:${x.sairam.length ? 'pointer' : 'default'}" data-rt="${m}|${k}">${x.p}%</td>` : '<td></td>'; }).join('')}</tr>`).join('')}</tbody></table></div>`
+      : '<p class="hint" style="margin:0">Ainda não há clientes pagantes suficientes.</p>'}
+    <div class="cols" style="margin-top:12px"><div><h3 style="font-size:14px;margin:0 0 6px">Por plano</h3><table><tbody>${porPlano.map(x => `<tr><td>${esc(x[0])}</td><td class="n hint">${x[1]} cliente(s)</td><td class="n"><b>${x[2]}%</b> ativos</td></tr>`).join('') || '<tr><td class="hint">—</td></tr>'}</tbody></table></div>
+    <div><h3 style="font-size:14px;margin:0 0 6px">Por origem</h3><table><tbody>${Object.entries(porOrig).sort((a, b) => b[1][0] - a[1][0]).map(([o, [n, a]]) => `<tr><td>${esc(o)}</td><td class="n hint">${n} cliente(s)</td><td class="n"><b>${Math.round(a / n * 100)}%</b> ativos</td></tr>`).join('')}</tbody></table></div></div>`;
+  $$('[data-rt]', sec).forEach(td => td.onclick = () => { const [m, k] = td.dataset.rt.split('|'), x = cel(m, +k); if (!x || !x.sairam.length) return;
+    modal(`Saíram até o ${+k ? k + 'º mês' : 'mês de entrada'} · entrada em ${MES65(m)}`, `<ul class="list">${x.sairam.map(c => { const cc = canc.filter(z => (z.tid || z.id) === c.t.id).pop(); return `<li><div class="t"><div><b>${esc(c.t.nome)}</b> · ${esc((PLANOS[c.t.plano] || {}).nome || c.t.plano)}</div><div>Último mês ativo: ${MES65(c.ult)}${cc && cc.motivo ? ' · motivo: ' + esc(cc.motivo) : ' · sem motivo registrado'}</div></div></li>`; }).join('')}</ul>`); });
+}
+async function painelPrevisao3m65(el) {
+  if (!el || $('#pv65', el)) return; const sec = document.createElement('section'); sec.className = 'panel'; sec.id = 'pv65'; sec.innerHTML = '<h2 style="margin:0">Previsão dos próximos 3 meses</h2><p class="hint">Calculando…</p>'; const pv = $('#pv-rec', el); pv ? pv.after(sec) : el.prepend(sec);
+  const h = hoje(), hj = iso(h), hm = hj.slice(0, 7); let raw = {}, ass = new Set(), pix = new Set(), saude = {}, canc = [];
+  try { (await FB.db.collection('tenants').get()).docs.forEach(d => raw[d.id] = d.data()); } catch (e) { }
+  try { (await FB.db.collection('assinaturasAsaas').get()).docs.forEach(d => { const x = d.data(); if (x.status === 'ACTIVE' && x.tid) ass.add(x.tid); }); } catch (e) { }
+  try { (await FB.db.collection('pixAuto').get()).docs.forEach(d => { const x = d.data(); if (x.status === 'ACTIVE' && x.tid) pix.add(x.tid); }); } catch (e) { }
+  try { const s = await FB.db.doc('plataforma/saude').get(); saude = s.exists ? s.data() : {}; } catch (e) { }
+  try { canc = (await FB.db.collection('cancelamentos').get()).docs.map(d => d.data()).filter(c => c.status === 'pedido'); } catch (e) { }
+  const esfr = new Set((saude.esfriando || []).map(x => x.tid || x.id || x)), ped = new Set(canc.map(c => c.tid || c.id)), meses = [1, 2, 3].map(k => somaMes65(hm, k));
+  const ts = (A.tenants || []).filter(t => !t.trial && !t.bloqueado && diffD(h, pd(t.expira)) >= -15);
+  const res = meses.map(m => ({ m, g: 0, p: 0, r: 0, rl: [] }));
+  ts.forEach(t => { const x = raw[t.id] || {}, fid = x.fidelidade && !x.fidelidade.encerradaEm ? x.fidelidade : null;
+    meses.forEach((m, i) => { let v = fid && String(fid.fim || '') >= m + '-01' ? num(fid.mensal) : ((PLANOS[t.plano] || {}).preco || 0); if (x.reajuste && x.reajuste.para && !x.reajuste.pulado && String(x.reajuste.vigencia || '') <= m + '-28') v = num(x.reajuste.para); if (t.recrutamento) v += 289; if (!v) return;
+      const venc = diffD(h, pd(t.expira)) < 0, risco = ped.has(t.id) ? 'pediu cancelamento' : esfr.has(t.id) ? 'uso caindo' : venc ? 'pagamento atrasado' : '';
+      const gar = !risco && ((fid && String(fid.fim || '') >= m + '-01') || ass.has(t.id) || pix.has(t.id) || (x.carne && String(x.carne.ate || '') >= m + '-01'));
+      if (risco) { res[i].r += v; if (!i) res[0].rl.push({ t, v, risco }); } else if (gar) res[i].g += v; else res[i].p += v; }); });
+  const max = Math.max(1, ...res.map(x => x.g + x.p + x.r)), tot = x => x.g + x.p + x.r;
+  sec.innerHTML = `<h2 style="margin:0 0 4px">Previsão dos próximos 3 meses</h2><p class="hint" style="margin:0 0 12px">Mensalidades dos clientes ativos, separadas pelo jeito que pagam. Inclui os reajustes anuais já agendados e o Recrutamento e Seleção.</p>
+    <div style="display:flex;gap:18px;align-items:flex-end;height:180px;padding:0 6px;border-bottom:1px solid var(--line)" role="img" aria-label="Previsão de receita para ${meses.map(MES65).join(', ')}">${res.map(x => `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="${MES65(x.m)}: ${brl(tot(x))}"><div style="height:${x.r / max * 100}%;background:#F2B34A;border-radius:6px 6px 0 0"></div><div style="height:${x.p / max * 100}%;background:var(--pri)"></div><div style="height:${x.g / max * 100}%;background:#0E8A5F"></div></div>`).join('')}</div>
+    <div style="display:flex;gap:18px;padding:6px 6px 0">${res.map(x => `<div style="flex:1;text-align:center"><b>${brl(tot(x))}</b><div class="hint">${MES65(x.m)}</div></div>`).join('')}</div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#0E8A5F;margin-right:4px"></i>garantido: fidelidade, débito automático, PIX automático ou carnê</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--pri);margin-right:4px"></i>provável: paga em dia</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#F2B34A;margin-right:4px"></i>em risco</span></div>
+    <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Mês</th><th class="n">Garantido</th><th class="n">Provável</th><th class="n">Em risco</th><th class="n">Total</th></tr></thead><tbody>${res.map(x => `<tr><td>${mesNome(x.m)}</td><td class="n">${brl(x.g)}</td><td class="n">${brl(x.p)}</td><td class="n">${brl(x.r)}</td><td class="n"><b>${brl(tot(x))}</b></td></tr>`).join('')}</tbody></table></div>
+    ${res[0].rl.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">${res[0].rl.length} cliente(s) em risco: ligue antes da renovação</summary><ul class="list" style="margin-top:6px">${res[0].rl.sort((a, b) => b.v - a.v).map(x => `<li><div class="t"><div><b>${esc(x.t.nome)}</b> · ${brl(x.v)}/mês</div><div>${esc(x.risco)} · vence em ${fd(x.t.expira)}</div></div></li>`).join('')}</ul></details>` : ''}`;
+}
+if (typeof vNum === 'function') { const _vn65 = vNum; vNum = async function (el) { const r = await _vn65.apply(this, arguments); try { await painelPrevisao3m65(el); } catch (e) { console.warn(e); } try { await painelRetencao65(el); } catch (e) { console.warn(e); } return r; }; }
+</script>
 </body>
 </html>
