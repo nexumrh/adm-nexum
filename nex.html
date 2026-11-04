@@ -113,7 +113,7 @@ async function carregar() {
     if (!N.d) $('#root').innerHTML = `<div class="login"><form><h1>Não foi possível abrir</h1><p>${esc(e.message)}</p><button class="btn" type="button" onclick="location.reload()">Tentar de novo</button></form></div>`; else toast(e.message, true); }
 }
 function casca() {
-  const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info'], ...(d.todos ? [['eq', 'Equipe (gestão)', 'grupo']] : [])];
+  const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info']];
   const meses = []; for (let k = 0; k < 12; k++) { const x = new Date(); x.setDate(15); x.setMonth(x.getMonth() - k); meses.push(x.toISOString().slice(0, 7)); }
   $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo">NEX <i>equipe</i></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
     <div class="eu"><div class="av" style="background:${cor(d.eu.nome)}">${esc(ini(d.eu.nome))}</div><div style="min-width:0"><b style="font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis">${esc(d.eu.nome)}</b><div style="font-size:12px;color:#9FB1DA">${esc(PAPEL[d.eu.papel] || 'Equipe NEXUM')}</div></div></div><button class="sair" id="sair">Sair</button></aside>
@@ -133,7 +133,7 @@ function appCard() { if (ehApp() || (!APP.ev && !ehIOS() && !matchMedia('(max-wi
 function ligarApp() { const i = $('#app-i'), x = $('#app-x'); if (i) i.onclick = async () => { if (!APP.ev) return toast('Abra pelo Chrome do celular para instalar.'); APP.ev.prompt(); const r = await APP.ev.userChoice.catch(() => ({})); APP.ev = null; if (r.outcome === 'accepted') { const c = $('#app-c'); if (c) c.remove(); } };
   if (x) x.onclick = () => { try { localStorage.setItem('nex:app-x', '1'); } catch (e) { } const c = $('#app-c'); if (c) c.remove(); }; }
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('nex-sw.js', { scope: 'nex' }).catch(() => { }));
-function pintar() { if (location.hash === '#equipe' && N.d && N.d.todos && !N._hash) { N._hash = 1; N.view = 'eq'; } casca(); if (N.view === 'eq' && N.d.todos && !N.quem) return pintarEquipe(); pintarMeu(); }
+function pintar() { casca(); if (N.view === 'eq' && N.d.todos && !N.quem) return pintarEquipe(); pintarMeu(); }
 function barra(v, m, c) { const p = m ? Math.min(100, Math.round(v / m * 100)) : 0; return `<div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><i style="width:${m ? p : 0}%;background:${c}"></i></div>`; }
 function cartaoMeta(tit, ic, bg, fg, v, m, un, extra, bat) {
   const p = m ? Math.round(v / m * 100) : null;
@@ -146,7 +146,7 @@ function pintarMeu() {
   const its = d.itens.filter(x => N.aba === 'tudo' || x.tipo === N.aba), max = Math.max(1, ...d.hist.map(h => h.total));
   const st = x => pago && x.status === 'aprovada' ? ST.paga : r.travada && x.status !== 'estornada' ? ['wa', 'aguardando a meta'] : ST[x.status] || ST.aprovada;
   const prox = (() => { const i = d.ranking.findIndex(x => x.eu); if (i <= 0) return i === 0 && d.ranking.length > 1 ? 'Você está em 1º lugar. Continue assim!' : ''; const f = d.ranking[i - 1].pts - d.ranking[i].pts + 1; return `Faltam <b>${f} pontos</b> para passar ${esc(String(d.ranking[i - 1].nome).split(' ')[0])}${d.regras.ptVenda && f <= d.regras.ptVenda ? ': 1 venda de plano já resolve' : ''}.`; })();
-  el.innerHTML = `${appCard()}
+  el.innerHTML = `${appCard()}${d.todos ? `<section class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px"><div style="flex:1;min-width:220px"><b>As metas, as regras e os pagamentos ficam no Painel</b><div style="font-size:13px;color:var(--muted)">Painel &gt; Plataforma &gt; Metas e comissões (NEX). Aqui no NEX cada pessoa da equipe acompanha o próprio mês.</div></div><a class="btn" href="https://adm.nexumdp.com.br/" style="text-decoration:none">Abrir o Painel</a></section>` : ''}
   <section class="hero" aria-label="Resumo do mês"><div><small>Comissão do mês até agora</small><b class="big">${brl(r.comissao)}</b><div class="sub">${pago ? `paga em ${new Date(pago.em).toLocaleDateString('pt-BR')} · ${brl(pago.valor)}` : r.travada ? `<b>Libera quando você bater a meta do mês</b> (${r.nBat} de ${r.nMetas} batida${r.nMetas > 1 ? 's' : ''})` : `${brl(r.liberada)} já aprovados${r.comissao > r.liberada ? ` · ${brl(r.comissao - r.liberada)} em garantia` : ''}`}</div></div>
     <div class="k"><small>${r.nMetas ? `Bônus de meta (${r.nBat} de ${r.nMetas})` : 'Bônus de meta'}</small><b>${r.nMetas ? '+ ' + brl(r.bonus) : '—'}</b><div class="sub">${r.nMetas ? (r.bonus < r.bonusPossivel ? `até ${brl(r.bonusPossivel)} batendo todas` : 'todas as metas batidas') : 'sem meta neste mês'}</div></div>
     <div class="k"><small>${d.passou < d.diasMes ? 'Previsão do mês' : 'Total do mês'}</small><b>${brl(d.passou < d.diasMes ? d.previsao + r.bonus : r.total)}</b><div class="sub">${d.passou < d.diasMes ? 'no ritmo de hoje' : 'comissão + bônus'}</div></div></section>
