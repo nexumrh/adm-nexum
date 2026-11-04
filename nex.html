@@ -56,8 +56,8 @@ button,input,select{font:inherit}button{cursor:pointer}
 .login::before,.login::after{content:"";position:absolute;pointer-events:none;border-radius:4px;background:linear-gradient(90deg,transparent,rgba(64,140,255,.55),transparent);height:2px;width:70%;transform:rotate(-38deg);filter:blur(.3px)}
 .login::before{top:6%;left:-18%;box-shadow:0 0 22px 6px rgba(26,92,255,.35)}.login::after{top:3%;right:-30%;width:60%;opacity:.7}
 .lg-in{position:relative;z-index:1;width:min(420px,100%);display:flex;flex-direction:column;gap:22px}
-.lg-marca{display:flex;flex-direction:column;align-items:center;gap:8px}.lg-marca img{height:54px;width:auto;filter:drop-shadow(0 6px 22px rgba(26,92,255,.45))}
-.lg-sub{display:flex;align-items:center;gap:12px;width:100%;justify-content:center;font-size:17px;font-weight:600;letter-spacing:.6em;padding-left:.6em}.lg-sub::before,.lg-sub::after{content:"";height:1px;flex:1;max-width:90px;background:linear-gradient(90deg,transparent,#3E7BFF)}.lg-sub::after{transform:scaleX(-1)}
+.lg-marca{display:flex;flex-direction:column;align-items:center;gap:8px}.lg-marca img{height:64px;width:auto;filter:drop-shadow(0 6px 22px rgba(26,92,255,.45))}
+.lg-sub{display:flex;align-items:center;gap:12px;width:100%;justify-content:center;font-size:13px;font-weight:600;letter-spacing:.45em;padding-left:.45em;white-space:nowrap}.lg-sub::before,.lg-sub::after{content:"";height:1px;flex:1;max-width:90px;background:linear-gradient(90deg,transparent,#3E7BFF)}.lg-sub::after{transform:scaleX(-1)}
 .lg-hero{position:relative;min-height:150px}.lg-hero h1{max-width:78%}.lg-hero p{max-width:60%}.lg-hero h1{margin:0;font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em}.lg-hero h1 span{color:#2E9BFF}
 .lg-hero p{margin:14px 0 0;padding-left:12px;border-left:3px solid #1A7BFF;color:#C9D6F2;font-size:15px;line-height:1.4}
 .lg-graf{position:absolute;right:0;bottom:-6px;width:40%;height:140px;z-index:-1}
@@ -123,7 +123,7 @@ const GRAF = '<svg class="lg-graf" viewBox="0 0 200 160" aria-hidden="true"><def
 function telaLogin(msg) {
   let lembrar = true; try { lembrar = localStorage.getItem('nex:lembrar') !== '0'; } catch (e) { }
   $('#root').innerHTML = `<div class="login"><div class="lg-in">
-    <div class="lg-marca"><img src="nex-logo.webp" alt="NEXUM"><div class="lg-sub">NEX</div></div>
+    <div class="lg-marca"><img src="nex-marca.webp" alt="NEX"><div class="lg-sub">EQUIPE NEXUM</div></div>
     <div class="lg-hero">${GRAF}<h1>Bem-vindo ao<br><span>NEX!</span></h1><p>Acompanhe suas metas e comissões de forma rápida e segura.</p></div>
     <form class="lg-card" id="lg" autocomplete="on" novalidate>
       <label class="lg-f">${SV.user}<input id="lg-e" autocomplete="username" autocapitalize="characters" placeholder="Usuário (seu ID)" aria-label="Usuário: o seu ID ou e-mail" required></label>
@@ -154,9 +154,9 @@ async function carregar() {
 function casca() {
   const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info']];
   const meses = []; for (let k = 0; k < 12; k++) { const x = new Date(); x.setDate(15); x.setMonth(x.getMonth() - k); meses.push(x.toISOString().slice(0, 7)); }
-  $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo"><img src="nex-logo.webp" alt="NEXUM" style="height:30px;width:auto"><i>NEX</i></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
+  $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo"><img src="nex-marca.webp" alt="NEX" style="height:34px;width:auto"></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
     <div class="eu"><div class="av" style="background:${cor(d.eu.nome)}">${esc(ini(d.eu.nome))}</div><div style="min-width:0"><b style="font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis">${esc(d.eu.nome)}</b><div style="font-size:12px;color:#9FB1DA">${esc(PAPEL[d.eu.papel] || 'Equipe NEXUM')}</div></div></div><button class="sair" id="sair">Sair</button></aside>
-    <main class="main" id="cv"><div class="mlogo"><img src="nex-logo.webp" alt="NEXUM" style="height:26px;width:auto"><i>NEX</i><button id="sair2">Sair</button></div><div class="top"><div><h1>${N.view === 'eq' ? 'Equipe' : N.quem ? esc(d.eu.nome) : 'Olá, ' + esc(String(d.eu.nome).split(' ')[0])}</h1><p>${esc(mesNome(d.mes))}${d.passou < d.diasMes ? ` · faltam ${d.diasMes - d.passou} dia(s) para fechar o mês` : ' · mês fechado'}</p></div>
+    <main class="main" id="cv"><div class="mlogo"><img src="nex-marca.webp" alt="NEX" style="height:28px;width:auto"><button id="sair2">Sair</button></div><div class="top"><div><h1>${N.view === 'eq' ? 'Equipe' : N.quem ? esc(d.eu.nome) : 'Olá, ' + esc(String(d.eu.nome).split(' ')[0])}</h1><p>${esc(mesNome(d.mes))}${d.passou < d.diasMes ? ` · faltam ${d.diasMes - d.passou} dia(s) para fechar o mês` : ' · mês fechado'}</p></div>
       ${N.quem ? '<button class="btn sec sm" id="volta">Voltar para a equipe</button>' : ''}<select class="sel" id="mes" aria-label="Mês">${meses.map(m => `<option value="${m}"${m === d.mes ? ' selected' : ''}>${esc(mesNome(m))}</option>`).join('')}</select></div><div id="corpo"></div></main></div>
     <nav class="bnav">${nav.slice(0, 5).map(([k, t, i]) => `<button data-nv="${k}" class="${N.view === k ? 'on' : ''}">${IC[i]}${t.split(' ')[0]}</button>`).join('')}</nav>`;
   $('#sair').onclick = $('#sair2').onclick = () => FB.auth.signOut(); $('#mes').onchange = e => { N.mes = e.target.value; carregar(); };
