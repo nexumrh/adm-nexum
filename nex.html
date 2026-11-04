@@ -52,9 +52,30 @@ button,input,select{font:inherit}button{cursor:pointer}
 .vazio{text-align:center;color:var(--muted);padding:26px 10px;font-size:13.5px}
 .btn{border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13.5px;background:var(--azul);color:#fff}.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn.sm{padding:6px 10px;font-size:12.5px}.btn:disabled{opacity:.6}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.fld label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
-.login{min-height:100vh;display:grid;place-items:center;padding:16px;background:linear-gradient(140deg,var(--navy),#1A3FA0)}
-.login form{background:#fff;border-radius:20px;padding:28px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.login h1{margin:0;font-size:24px;font-weight:800}.login p{margin:0;color:var(--muted);font-size:13.5px}.login .err{color:var(--bad);font-size:13px;min-height:18px}
+.login{min-height:100vh;min-height:100dvh;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px 24px;color:#fff;background:radial-gradient(120% 60% at 100% 0%,rgba(26,92,255,.35),transparent 60%),radial-gradient(90% 50% at 0% 100%,rgba(26,92,255,.25),transparent 60%),linear-gradient(180deg,#071028 0%,#0A1733 55%,#06102A 100%)}
+.login::before,.login::after{content:"";position:absolute;pointer-events:none;border-radius:4px;background:linear-gradient(90deg,transparent,rgba(64,140,255,.55),transparent);height:2px;width:70%;transform:rotate(-38deg);filter:blur(.3px)}
+.login::before{top:6%;left:-18%;box-shadow:0 0 22px 6px rgba(26,92,255,.35)}.login::after{top:3%;right:-30%;width:60%;opacity:.7}
+.lg-in{position:relative;z-index:1;width:min(420px,100%);display:flex;flex-direction:column;gap:22px}
+.lg-marca{display:flex;flex-direction:column;align-items:center;gap:8px}.lg-marca img{height:54px;width:auto;filter:drop-shadow(0 6px 22px rgba(26,92,255,.45))}
+.lg-sub{display:flex;align-items:center;gap:12px;width:100%;justify-content:center;font-size:17px;font-weight:600;letter-spacing:.6em;padding-left:.6em}.lg-sub::before,.lg-sub::after{content:"";height:1px;flex:1;max-width:90px;background:linear-gradient(90deg,transparent,#3E7BFF)}.lg-sub::after{transform:scaleX(-1)}
+.lg-hero{position:relative;min-height:150px}.lg-hero h1{max-width:78%}.lg-hero p{max-width:60%}.lg-hero h1{margin:0;font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-.02em}.lg-hero h1 span{color:#2E9BFF}
+.lg-hero p{margin:14px 0 0;padding-left:12px;border-left:3px solid #1A7BFF;color:#C9D6F2;font-size:15px;line-height:1.4}
+.lg-graf{position:absolute;right:0;bottom:-6px;width:40%;height:140px;z-index:-1}
+.lg-card{background:linear-gradient(180deg,rgba(13,28,64,.85),rgba(7,16,40,.85));border:1px solid rgba(64,128,255,.35);border-radius:22px;padding:22px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+.lg-f{display:flex;align-items:center;gap:12px;border:1px solid rgba(160,180,220,.28);border-radius:14px;padding:0 14px;height:56px;background:rgba(4,10,28,.55);transition:border-color .15s,box-shadow .15s}
+.lg-f:focus-within{border-color:#2E7BFF;box-shadow:0 0 0 3px rgba(46,123,255,.22)}.lg-f svg{width:22px;height:22px;flex:none;color:#E6ECFA}
+.lg-f input{all:unset;flex:1;min-width:0;color:#fff;font-size:16px;height:100%}.lg-f input::placeholder{color:#8E9CBB}
+.lg-olho{all:unset;cursor:pointer;color:#8E9CBB;display:grid;place-items:center;padding:6px}.lg-olho:focus-visible{outline:2px solid #2E7BFF;border-radius:8px}
+.lg-op{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.lg-op label{display:flex;align-items:center;gap:10px;cursor:pointer;color:#E6ECFA}
+.lg-op input{appearance:none;width:22px;height:22px;border:1.5px solid #8E9CBB;border-radius:6px;margin:0;display:grid;place-items:center;cursor:pointer}.lg-op input:checked{background:#1A6BFF;border-color:#1A6BFF}.lg-op input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.lg-op button{all:unset;cursor:pointer;color:#2E9BFF;font-weight:600}.lg-op button:focus-visible{outline:2px solid #2E7BFF;border-radius:6px}
+.lg-b{border:0;height:56px;border-radius:14px;background:linear-gradient(180deg,#2E86FF,#1257F0);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 10px 30px rgba(26,92,255,.45);cursor:pointer}.lg-b svg{width:24px;height:24px}.lg-b:disabled{opacity:.7}
+.login .err{color:#FF8A8A;font-size:13.5px;min-height:18px;margin:-4px 0}.lg-msg{color:#C9D6F2;font-size:13.5px;background:rgba(26,92,255,.14);border-radius:12px;padding:10px 12px}
+.lg-pe{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:4px}.lg-lema{display:flex;align-items:center;gap:12px;width:100%;font-size:11px;letter-spacing:.28em;color:#E6ECFA;justify-content:center;text-align:center;white-space:nowrap}.lg-lema::before,.lg-lema::after{content:"";height:1px;flex:1;max-width:70px;background:#2E5FCF}
+.lg-pe img{height:30px;width:auto;opacity:.95}
+.login form.box{background:linear-gradient(180deg,rgba(13,28,64,.9),rgba(7,16,40,.9));border:1px solid rgba(64,128,255,.35);border-radius:20px;padding:24px;width:min(400px,100%);display:flex;flex-direction:column;gap:12px;position:relative;z-index:1}
+.login form.box h1{margin:0;font-size:22px}.login form.box p{margin:0;color:#C9D6F2;font-size:14px}
+@media(max-width:380px){.lg-hero h1{font-size:30px}}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}.toast.bad{background:var(--bad)}
 .bnav{display:none}.mlogo{display:none}
 section[id]{scroll-margin-top:14px}
@@ -93,24 +114,42 @@ async function api(rota, body) {
   try { r = await fetch(N.url + rota, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify(body || {}) }); } catch (e) { throw new Error('Sem conexão. Confira a internet.'); }
   const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.erro || 'Erro ' + r.status); return j;
 }
-function telaLogin(msg, porEmail) {
-  $('#root').innerHTML = `<div class="login"><form id="lg" autocomplete="on"><div style="background:var(--navy);margin:-28px -28px 6px;padding:22px 28px;border-radius:20px 20px 0 0;display:flex;align-items:center;gap:10px"><img src="nex-logo.webp" alt="NEXUM" style="height:34px;width:auto"><span style="background:var(--azul);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:800">NEX</span></div><h1>Entrar</h1><p>Metas e comissões da equipe NEXUM. Use ${porEmail ? 'o seu e-mail e a senha' : 'o ID e a senha que a proprietária passou para você'}.</p>
-    <div class="fld"><label for="lg-e">${porEmail ? 'E-mail' : 'Seu ID'}</label><input class="inp" id="lg-e" ${porEmail ? 'type="email" autocomplete="username"' : 'autocomplete="username" autocapitalize="characters" placeholder="Ex.: NX-7KQ2PA"'} required></div><div class="fld"><label for="lg-s">Senha</label><input class="inp" id="lg-s" type="password" autocomplete="current-password" required></div>
-    <div class="err" id="lg-x" role="alert">${esc(msg || '')}</div><button class="btn" id="lg-b" style="padding:12px">Entrar</button><button type="button" class="btn sec sm" id="lg-t">${porEmail ? 'Entrar com o meu ID' : 'Entrar com e-mail'}</button></form></div>`;
-  $('#lg-t').onclick = () => telaLogin('', !porEmail);
-  $('#lg').onsubmit = async e => { e.preventDefault(); const b = $('#lg-b'), u = $('#lg-e').value.trim(), s = $('#lg-s').value; b.disabled = true; b.textContent = 'Entrando…';
-    try {
-      if (porEmail || u.includes('@')) await FB.auth.signInWithEmailAndPassword(u, s);
+const SV = { user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>', cad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 15v2.5"/></svg>',
+  olho: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 20 20 4"/></svg>', olhoA: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  entrar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M3 12h12M11 8l4 4-4 4"/></svg>' };
+const GRAF = '<svg class="lg-graf" viewBox="0 0 200 160" aria-hidden="true"><defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E86FF"/><stop offset="1" stop-color="#1A5CFF" stop-opacity=".05"/></linearGradient><linearGradient id="ga" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1A5CFF" stop-opacity="0"/><stop offset="1" stop-color="#5EC8FF"/></linearGradient><filter id="gl"><feGaussianBlur stdDeviation="2.2"/></filter></defs>'
+  + [[18, 118], [56, 98], [94, 84], [132, 62], [170, 40]].map(([x, y]) => `<rect x="${x}" y="${y}" width="22" height="${160 - y}" rx="3" fill="url(#gb)"/>`).join('')
+  + '<path d="M0 120 C60 110 120 80 186 12" stroke="url(#ga)" stroke-width="6" fill="none" filter="url(#gl)"/><path d="M0 120 C60 110 120 80 186 12" stroke="url(#ga)" stroke-width="3.5" fill="none"/><path d="M170 8 L194 2 L190 26 Z" fill="#5EC8FF"/></svg>';
+function telaLogin(msg) {
+  let lembrar = true; try { lembrar = localStorage.getItem('nex:lembrar') !== '0'; } catch (e) { }
+  $('#root').innerHTML = `<div class="login"><div class="lg-in">
+    <div class="lg-marca"><img src="nex-logo.webp" alt="NEXUM"><div class="lg-sub">NEX</div></div>
+    <div class="lg-hero">${GRAF}<h1>Bem-vindo ao<br><span>NEX!</span></h1><p>Acompanhe suas metas e comissões de forma rápida e segura.</p></div>
+    <form class="lg-card" id="lg" autocomplete="on" novalidate>
+      <label class="lg-f">${SV.user}<input id="lg-e" autocomplete="username" autocapitalize="characters" placeholder="Usuário (seu ID)" aria-label="Usuário: o seu ID ou e-mail" required></label>
+      <label class="lg-f">${SV.cad}<input id="lg-s" type="password" autocomplete="current-password" placeholder="Senha" aria-label="Senha" required><button type="button" class="lg-olho" id="lg-o" aria-label="Mostrar a senha">${SV.olho}</button></label>
+      <div class="lg-op"><label><input type="checkbox" id="lg-l" ${lembrar ? 'checked' : ''}> Lembrar-me</label><button type="button" id="lg-q">Esqueceu sua senha?</button></div>
+      <div class="err" id="lg-x" role="alert">${esc(msg || '')}</div>
+      <button class="lg-b" id="lg-b">${SV.entrar}<span>Entrar</span></button>
+    </form>
+    <div class="lg-pe"><div class="lg-lema">JUNTOS POR GRANDES CONQUISTAS</div><img src="nex-logo.webp" alt="NEXUM"></div></div></div>`;
+  $('#lg-o').onclick = () => { const i = $('#lg-s'), v = i.type === 'password'; i.type = v ? 'text' : 'password'; $('#lg-o').innerHTML = v ? SV.olhoA : SV.olho; $('#lg-o').setAttribute('aria-label', v ? 'Esconder a senha' : 'Mostrar a senha'); };
+  $('#lg-q').onclick = () => { $('#lg-x').innerHTML = '<span class="lg-msg" style="display:block">Peça uma senha nova para a proprietária da NEXUM. Ela troca na hora pelo Painel e te manda pelo WhatsApp.</span>'; };
+  $('#lg').onsubmit = async e => { e.preventDefault(); const b = $('#lg-b'), u = $('#lg-e').value.trim(), s = $('#lg-s').value, lb = $('#lg-l').checked;
+    if (!u || !s) { $('#lg-x').textContent = 'Informe o usuário e a senha.'; return; }
+    b.disabled = true; b.querySelector('span').textContent = 'Entrando…';
+    try { try { localStorage.setItem('nex:lembrar', lb ? '1' : '0'); } catch (er) { } await FB.auth.setPersistence(lb ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION).catch(() => { });
+      if (u.includes('@')) await FB.auth.signInWithEmailAndPassword(u, s);
       else { const s2 = await FB.db.doc('plataforma/publico').get().catch(() => null); N.url = String((s2 && s2.exists && s2.data().asaasUrl) || '').replace(/\/+$/, ''); if (!N.url) throw new Error('O NEX ainda não foi configurado.');
         let r; try { r = await fetch(N.url + '/api/nex/entrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: u, senha: s }) }); } catch (er) { throw new Error('Sem conexão. Confira a internet.'); }
         const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.erro || 'Não foi possível entrar agora.'); await FB.auth.signInWithCustomToken(j.token); }
-    } catch (er) { $('#lg-x').textContent = /password|credential|not-found|invalid/.test(er.code || '') ? 'E-mail ou senha incorretos.' : (er.message && !er.code ? er.message : 'Não foi possível entrar agora.'); b.disabled = false; b.textContent = 'Entrar'; } };
+    } catch (er) { $('#lg-x').textContent = /password|credential|not-found|invalid/.test(er.code || '') ? 'Usuário ou senha incorretos.' : (er.message && !er.code ? er.message : 'Não foi possível entrar agora.'); b.disabled = false; b.querySelector('span').textContent = 'Entrar'; } };
 }
 async function carregar() {
   const v = $('#cv'); if (v) v.style.opacity = '.55';
   try { N.d = await api('/api/nex/painel', { mes: N.mes, email: N.quem || undefined }); pintar(); }
-  catch (e) { if (/só para a equipe/i.test(e.message)) { $('#root').innerHTML = `<div class="login"><form><h1>Sem acesso</h1><p>${esc(e.message)} Peça para a proprietária incluir o seu e-mail em Equipe da NEXUM, no Painel.</p><button class="btn" type="button" id="sx">Sair</button></form></div>`; $('#sx').onclick = () => FB.auth.signOut(); return; }
-    if (!N.d) $('#root').innerHTML = `<div class="login"><form><h1>Não foi possível abrir</h1><p>${esc(e.message)}</p><button class="btn" type="button" onclick="location.reload()">Tentar de novo</button></form></div>`; else toast(e.message, true); }
+  catch (e) { if (/só para a equipe/i.test(e.message)) { $('#root').innerHTML = `<div class="login"><form class="box"><h1>Sem acesso</h1><p>${esc(e.message)} Peça para a proprietária incluir o seu e-mail em Equipe da NEXUM, no Painel.</p><button class="btn" type="button" id="sx">Sair</button></form></div>`; $('#sx').onclick = () => FB.auth.signOut(); return; }
+    if (!N.d) $('#root').innerHTML = `<div class="login"><form class="box"><h1>Não foi possível abrir</h1><p>${esc(e.message)}</p><button class="btn" type="button" onclick="location.reload()">Tentar de novo</button></form></div>`; else toast(e.message, true); }
 }
 function casca() {
   const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info']];
@@ -195,7 +234,7 @@ function pintarEquipe() {
   $('#rg-s', el).onclick = async () => { const o = { acao: 'regras' }; ['vaga', 'garantia', 'bonus', 'ptVenda', 'ptVaga', 'ptAtend'].forEach(k => o[k] = +$('#rg-' + k, el).value || 0); o.exigirMeta = $('#rg-x', el).checked;
     try { await api('/api/nex/acao', o); toast('Regras salvas.'); carregar(); } catch (e) { toast(e.message, true); } };
 }
-try { firebase.initializeApp(FIREBASE_CONFIG); FB = { auth: firebase.auth(), db: firebase.firestore() }; FB.auth.onAuthStateChanged(u => { if (!u) { N.d = null; return telaLogin(); } $('#root').innerHTML = '<div class="login"><form><p>Carregando…</p></form></div>'; carregar(); }); }
-catch (e) { document.getElementById('root').innerHTML = '<div class="login"><form><h1>Sem conexão</h1><p>Não foi possível carregar o NEX. Confira a internet e abra de novo.</p></form></div>'; }
+try { firebase.initializeApp(FIREBASE_CONFIG); FB = { auth: firebase.auth(), db: firebase.firestore() }; FB.auth.onAuthStateChanged(u => { if (!u) { N.d = null; return telaLogin(); } $('#root').innerHTML = '<div class="login"><form class="box"><p>Carregando…</p></form></div>'; carregar(); }); }
+catch (e) { document.getElementById('root').innerHTML = '<div class="login"><form class="box"><h1>Sem conexão</h1><p>Não foi possível carregar o NEX. Confira a internet e abra de novo.</p></form></div>'; }
 </script>
 </body></html>
