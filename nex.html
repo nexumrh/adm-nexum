@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="nex-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEX">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A5CFF'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'%3ENX%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="nex-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -56,9 +56,9 @@ button,input,select{font:inherit}button{cursor:pointer}
 .login form{background:#fff;border-radius:20px;padding:28px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
 .login h1{margin:0;font-size:24px;font-weight:800}.login p{margin:0;color:var(--muted);font-size:13.5px}.login .err{color:var(--bad);font-size:13px;min-height:18px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}.toast.bad{background:var(--bad)}
-.bnav{display:none}
+.bnav{display:none}.mlogo{display:none}
 section[id]{scroll-margin-top:14px}
-@media(max-width:900px){.app{grid-template-columns:1fr;background:var(--bg)}.side{display:none}.hero,.g3,.g2{grid-template-columns:1fr}.main{padding:16px 16px 90px}.grid{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.mlogo{display:flex;align-items:center;gap:8px;background:var(--navy);margin:-16px -16px 16px;padding:12px 16px}.mlogo i{font-style:normal;background:var(--azul);color:#fff;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800}.mlogo button{all:unset;margin-left:auto;color:#C9D4F0;font-size:13px;cursor:pointer}.app{grid-template-columns:1fr;background:var(--bg)}.side{display:none}.hero,.g3,.g2{grid-template-columns:1fr}.main{padding:16px 16px 90px}.grid{grid-template-columns:1fr 1fr}
   .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}.bnav button{all:unset;flex:1;text-align:center;font-size:11px;color:var(--muted);padding:6px 0;cursor:pointer}.bnav button.on{color:var(--azul);font-weight:700}.bnav svg{width:20px;height:20px;display:block;margin:0 auto 2px}}
 </style></head><body>
 <div id="root"></div>
@@ -94,7 +94,7 @@ async function api(rota, body) {
   const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.erro || 'Erro ' + r.status); return j;
 }
 function telaLogin(msg, porEmail) {
-  $('#root').innerHTML = `<div class="login"><form id="lg" autocomplete="on"><div class="logo" style="color:var(--navy);margin:0">NEX <i style="color:#fff">equipe</i></div><h1>Entrar</h1><p>Metas e comissões da equipe NEXUM. Use ${porEmail ? 'o seu e-mail e a senha' : 'o ID e a senha que a proprietária passou para você'}.</p>
+  $('#root').innerHTML = `<div class="login"><form id="lg" autocomplete="on"><div style="background:var(--navy);margin:-28px -28px 6px;padding:22px 28px;border-radius:20px 20px 0 0;display:flex;align-items:center;gap:10px"><img src="nex-logo.webp" alt="NEXUM" style="height:34px;width:auto"><span style="background:var(--azul);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:800">NEX</span></div><h1>Entrar</h1><p>Metas e comissões da equipe NEXUM. Use ${porEmail ? 'o seu e-mail e a senha' : 'o ID e a senha que a proprietária passou para você'}.</p>
     <div class="fld"><label for="lg-e">${porEmail ? 'E-mail' : 'Seu ID'}</label><input class="inp" id="lg-e" ${porEmail ? 'type="email" autocomplete="username"' : 'autocomplete="username" autocapitalize="characters" placeholder="Ex.: NX-7KQ2PA"'} required></div><div class="fld"><label for="lg-s">Senha</label><input class="inp" id="lg-s" type="password" autocomplete="current-password" required></div>
     <div class="err" id="lg-x" role="alert">${esc(msg || '')}</div><button class="btn" id="lg-b" style="padding:12px">Entrar</button><button type="button" class="btn sec sm" id="lg-t">${porEmail ? 'Entrar com o meu ID' : 'Entrar com e-mail'}</button></form></div>`;
   $('#lg-t').onclick = () => telaLogin('', !porEmail);
@@ -115,12 +115,12 @@ async function carregar() {
 function casca() {
   const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info']];
   const meses = []; for (let k = 0; k < 12; k++) { const x = new Date(); x.setDate(15); x.setMonth(x.getMonth() - k); meses.push(x.toISOString().slice(0, 7)); }
-  $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo">NEX <i>equipe</i></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
+  $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo"><img src="nex-logo.webp" alt="NEXUM" style="height:30px;width:auto"><i>NEX</i></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
     <div class="eu"><div class="av" style="background:${cor(d.eu.nome)}">${esc(ini(d.eu.nome))}</div><div style="min-width:0"><b style="font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis">${esc(d.eu.nome)}</b><div style="font-size:12px;color:#9FB1DA">${esc(PAPEL[d.eu.papel] || 'Equipe NEXUM')}</div></div></div><button class="sair" id="sair">Sair</button></aside>
-    <main class="main" id="cv"><div class="top"><div><h1>${N.view === 'eq' ? 'Equipe' : N.quem ? esc(d.eu.nome) : 'Olá, ' + esc(String(d.eu.nome).split(' ')[0])}</h1><p>${esc(mesNome(d.mes))}${d.passou < d.diasMes ? ` · faltam ${d.diasMes - d.passou} dia(s) para fechar o mês` : ' · mês fechado'}</p></div>
+    <main class="main" id="cv"><div class="mlogo"><img src="nex-logo.webp" alt="NEXUM" style="height:26px;width:auto"><i>NEX</i><button id="sair2">Sair</button></div><div class="top"><div><h1>${N.view === 'eq' ? 'Equipe' : N.quem ? esc(d.eu.nome) : 'Olá, ' + esc(String(d.eu.nome).split(' ')[0])}</h1><p>${esc(mesNome(d.mes))}${d.passou < d.diasMes ? ` · faltam ${d.diasMes - d.passou} dia(s) para fechar o mês` : ' · mês fechado'}</p></div>
       ${N.quem ? '<button class="btn sec sm" id="volta">Voltar para a equipe</button>' : ''}<select class="sel" id="mes" aria-label="Mês">${meses.map(m => `<option value="${m}"${m === d.mes ? ' selected' : ''}>${esc(mesNome(m))}</option>`).join('')}</select></div><div id="corpo"></div></main></div>
     <nav class="bnav">${nav.slice(0, 5).map(([k, t, i]) => `<button data-nv="${k}" class="${N.view === k ? 'on' : ''}">${IC[i]}${t.split(' ')[0]}</button>`).join('')}</nav>`;
-  $('#sair').onclick = () => FB.auth.signOut(); $('#mes').onchange = e => { N.mes = e.target.value; carregar(); };
+  $('#sair').onclick = $('#sair2').onclick = () => FB.auth.signOut(); $('#mes').onchange = e => { N.mes = e.target.value; carregar(); };
   const vt = $('#volta'); if (vt) vt.onclick = () => { N.quem = ''; N.view = 'eq'; carregar(); };
   $$('[data-nv]').forEach(b => b.onclick = () => { const k = b.dataset.nv; if (k === 'eq') { N.view = 'eq'; N.quem = ''; return N.quem ? carregar() : pintar(); } if (N.view === 'eq') { N.view = 'meu'; pintar(); } const s = $('#s-' + k); if (s) s.scrollIntoView({ behavior: 'smooth' }); else window.scrollTo({ top: 0, behavior: 'smooth' }); $$('[data-nv]').forEach(x => x.classList.toggle('on', x.dataset.nv === k)); });
 }
