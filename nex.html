@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NEX · Equipe NEXUM</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A1733">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A5CFF'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='15' fill='white' text-anchor='middle'%3ENX%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--azul:#1A5CFF;--navy:#0A1733;--muted:#5B6B8C;--line:#E2E1EC;--bg:#F4F5FA;--ok:#0E9F5B;--warn:#E08A00;--bad:#D93A3A}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--navy);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button{cursor:pointer}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;background:linear-gradient(to right,var(--navy) 230px,var(--bg) 230px)}
+.side{background:var(--navy);color:#fff;padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:.5px;margin:0 6px 18px}.logo i{font-style:normal;background:var(--azul);border-radius:8px;padding:2px 8px;font-size:13px}
+.side .nv{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#C9D4F0;font-size:14px;font-weight:500}
+.side .nv.on{background:rgba(26,92,255,.22);color:#fff}.side .nv:focus-visible{outline:2px solid #8FB0FF}.side svg{width:18px;height:18px;flex:none}
+.side .eu{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid rgba(255,255,255,.1)}
+.side .sair{all:unset;cursor:pointer;color:#9FB1DA;font-size:12.5px;padding:6px 12px}
+.av{width:38px;height:38px;border-radius:50%;background:#2E6BFF;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;font-size:14px}
+.main{padding:22px 26px 60px;max-width:1180px;width:100%}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{margin:0;font-size:24px;font-weight:800}.top p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.sel,.inp{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:14px;color:var(--navy)}.sel{margin-left:auto}
+.inp{width:100%}.inp:focus,.sel:focus{outline:2px solid #B9CCFF;border-color:var(--azul)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:#E8EFFF;color:var(--azul)}
+.hero{background:linear-gradient(120deg,var(--navy),#1A3FA0 70%,var(--azul));color:#fff;border-radius:20px;padding:22px;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:18px;margin-bottom:16px}
+.hero small{opacity:.8;font-size:12.5px}.hero b.big{display:block;font-size:34px;font-weight:800;margin:4px 0}.hero .sub{font-size:13px;opacity:.85}
+.hero .k{background:rgba(255,255,255,.1);border-radius:14px;padding:14px}.hero .k b{font-size:22px;display:block;margin-top:4px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
+.card h2{margin:0 0 4px;font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px}.card .h{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}.ic svg{width:18px;height:18px}
+.meta .row{display:flex;align-items:baseline;gap:6px;margin:6px 0}.meta .row b{font-size:26px;font-weight:800}.meta .row span{color:var(--muted);font-size:13px}
+.bar{height:10px;border-radius:9px;background:#EEF0F6;overflow:hidden;margin:8px 0 6px}.bar i{display:block;height:100%;border-radius:9px;transition:width .6s}
+.meta .pe{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted)}
+.tag{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.ok{background:#E3F6EC;color:var(--ok)}.wa{background:#FFF1DA;color:#A86400}.pa{background:#E8EFFF;color:var(--azul)}.mu{background:#EEF0F6;color:var(--muted)}.bd{background:#FDE8E8;color:var(--bad)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 10px;overflow-x:auto}.tabs button{all:unset;cursor:pointer;padding:9px 12px;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}.tabs button.on{color:var(--azul);border-color:var(--azul)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13.5px}th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:8px 6px;border-bottom:1px solid var(--line)}td{padding:10px 6px;border-bottom:1px solid #F0F1F6;vertical-align:middle}td.n,th.n{text-align:right;white-space:nowrap}
+.rk{list-style:none;margin:0;padding:0}.rk li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F0F1F6;font-size:13.5px}.rk li:last-child{border:0}.rk .p{width:24px;font-weight:800;color:var(--muted)}.rk li.eu{background:#F3F7FF;border-radius:10px;padding:8px}.rk .av{width:30px;height:30px;font-size:12px}.rk .v{margin-left:auto;font-weight:700}
+.graf{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px}.graf div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}.graf i{display:block;width:100%;min-height:3px;border-radius:8px 8px 4px 4px;background:linear-gradient(#5B8CFF,var(--azul))}.graf .at i{background:linear-gradient(#36D08A,var(--ok))}.graf b{font-size:11px;color:var(--navy)}
+.regra{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #F0F1F6;font-size:13.5px}.regra:last-child{border:0}.regra b{min-width:104px;color:var(--azul)}
+.pr{display:flex;gap:10px;align-items:center;background:#F3F7FF;border-radius:12px;padding:12px;font-size:13.5px;margin-top:10px}.pr svg{flex:none}
+.vazio{text-align:center;color:var(--muted);padding:26px 10px;font-size:13.5px}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13.5px;background:var(--azul);color:#fff}.btn.sec{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn.sm{padding:6px 10px;font-size:12.5px}.btn:disabled{opacity:.6}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.fld label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.login{min-height:100vh;display:grid;place-items:center;padding:16px;background:linear-gradient(140deg,var(--navy),#1A3FA0)}
+.login form{background:#fff;border-radius:20px;padding:28px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.login h1{margin:0;font-size:24px;font-weight:800}.login p{margin:0;color:var(--muted);font-size:13.5px}.login .err{color:var(--bad);font-size:13px;min-height:18px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}.toast.bad{background:var(--bad)}
+.bnav{display:none}
+section[id]{scroll-margin-top:14px}
+@media(max-width:900px){.app{grid-template-columns:1fr;background:var(--bg)}.side{display:none}.hero,.g3,.g2{grid-template-columns:1fr}.main{padding:16px 16px 90px}.grid{grid-template-columns:1fr 1fr}
+  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}.bnav button{all:unset;flex:1;text-align:center;font-size:11px;color:var(--muted);padding:6px 0;cursor:pointer}.bnav button.on{color:var(--azul);font-weight:700}.bnav svg{width:20px;height:20px;display:block;margin:0 auto 2px}}
+</style></head><body>
+<div id="root"></div>
+<script>
+const FIREBASE_CONFIG = { apiKey: 'AIzaSyDdcLJdO2qnmiGsR1EsKFu-uJfs4FRNvA4', authDomain: 'nexum-30044.firebaseapp.com', projectId: 'nexum-30044', storageBucket: 'nexum-30044.firebasestorage.app', messagingSenderId: '988792881104', appId: '1:988792881104:web:c0517c2b62b6e9f14603d5' };
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const brl = v => (+v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dt = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
+const ini = n => String(n || '?').trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
+const CORES = ['#0E9F5B', '#E08A00', '#7A4DFF', '#D93A3A', '#0891B2', '#2E6BFF'], cor = n => CORES[[...String(n)].reduce((s, c) => s + c.charCodeAt(0), 0) % CORES.length];
+const mesNome = m => { const [a, b] = m.split('-').map(Number); return new Date(a, b - 1, 15).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); };
+const PAPEL = { dono: 'Proprietária', suporte: 'Atendimento', comercial: 'Vendas', financeiro: 'Financeiro', selecao: 'Recrutamento' };
+const IC = {
+  casa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>',
+  moeda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2-3-2s-3 .8-3 2 1.3 1.8 3 2.2 3 1 3 2.3-1.3 2-3 2-3-.7-3-2"/></svg>',
+  alvo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+  trofeu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>',
+  grupo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20c0-2.6-1.4-4.6-3.6-5.5"/></svg>',
+  sobe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg>',
+  pessoa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 11l2 2 4-4"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/></svg>'
+};
+const N = { mes: new Date(Date.now() - 3 * 36e5).toISOString().slice(0, 7), d: null, aba: 'tudo', view: 'meu', url: '', quem: '' };
+let FB = null;
+function toast(t, bad) { const e = document.createElement('div'); e.className = 'toast' + (bad ? ' bad' : ''); e.setAttribute('role', 'status'); e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 3600); }
+async function api(rota, body) {
+  if (!N.url) { const s = await FB.db.doc('plataforma/publico').get().catch(() => null); N.url = String((s && s.exists && s.data().asaasUrl) || '').replace(/\/+$/, ''); }
+  if (!N.url) throw new Error('O conector ainda não foi configurado no Painel.');
+  const tk = await FB.auth.currentUser.getIdToken(); let r;
+  try { r = await fetch(N.url + rota, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify(body || {}) }); } catch (e) { throw new Error('Sem conexão. Confira a internet.'); }
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.erro || 'Erro ' + r.status); return j;
+}
+function telaLogin(msg, porEmail) {
+  $('#root').innerHTML = `<div class="login"><form id="lg" autocomplete="on"><div class="logo" style="color:var(--navy);margin:0">NEX <i style="color:#fff">equipe</i></div><h1>Entrar</h1><p>Metas e comissões da equipe NEXUM. Use ${porEmail ? 'o seu e-mail e a senha' : 'o ID e a senha que a proprietária passou para você'}.</p>
+    <div class="fld"><label for="lg-e">${porEmail ? 'E-mail' : 'Seu ID'}</label><input class="inp" id="lg-e" ${porEmail ? 'type="email" autocomplete="username"' : 'autocomplete="username" autocapitalize="characters" placeholder="Ex.: NX-7KQ2PA"'} required></div><div class="fld"><label for="lg-s">Senha</label><input class="inp" id="lg-s" type="password" autocomplete="current-password" required></div>
+    <div class="err" id="lg-x" role="alert">${esc(msg || '')}</div><button class="btn" id="lg-b" style="padding:12px">Entrar</button><button type="button" class="btn sec sm" id="lg-t">${porEmail ? 'Entrar com o meu ID' : 'Entrar com e-mail'}</button></form></div>`;
+  $('#lg-t').onclick = () => telaLogin('', !porEmail);
+  $('#lg').onsubmit = async e => { e.preventDefault(); const b = $('#lg-b'), u = $('#lg-e').value.trim(), s = $('#lg-s').value; b.disabled = true; b.textContent = 'Entrando…';
+    try {
+      if (porEmail || u.includes('@')) await FB.auth.signInWithEmailAndPassword(u, s);
+      else { const s2 = await FB.db.doc('plataforma/publico').get().catch(() => null); N.url = String((s2 && s2.exists && s2.data().asaasUrl) || '').replace(/\/+$/, ''); if (!N.url) throw new Error('O NEX ainda não foi configurado.');
+        let r; try { r = await fetch(N.url + '/api/nex/entrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: u, senha: s }) }); } catch (er) { throw new Error('Sem conexão. Confira a internet.'); }
+        const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.erro || 'Não foi possível entrar agora.'); await FB.auth.signInWithCustomToken(j.token); }
+    } catch (er) { $('#lg-x').textContent = /password|credential|not-found|invalid/.test(er.code || '') ? 'E-mail ou senha incorretos.' : (er.message && !er.code ? er.message : 'Não foi possível entrar agora.'); b.disabled = false; b.textContent = 'Entrar'; } };
+}
+async function carregar() {
+  const v = $('#cv'); if (v) v.style.opacity = '.55';
+  try { N.d = await api('/api/nex/painel', { mes: N.mes, email: N.quem || undefined }); pintar(); }
+  catch (e) { if (/só para a equipe/i.test(e.message)) { $('#root').innerHTML = `<div class="login"><form><h1>Sem acesso</h1><p>${esc(e.message)} Peça para a proprietária incluir o seu e-mail em Equipe da NEXUM, no Painel.</p><button class="btn" type="button" id="sx">Sair</button></form></div>`; $('#sx').onclick = () => FB.auth.signOut(); return; }
+    if (!N.d) $('#root').innerHTML = `<div class="login"><form><h1>Não foi possível abrir</h1><p>${esc(e.message)}</p><button class="btn" type="button" onclick="location.reload()">Tentar de novo</button></form></div>`; else toast(e.message, true); }
+}
+function casca() {
+  const d = N.d, nav = [['meu', 'Meu mês', 'casa'], ['com', 'Comissões', 'moeda'], ['metas', 'Metas', 'alvo'], ['rank', 'Ranking', 'trofeu'], ['regras', 'Como eu ganho', 'info'], ...(d.todos ? [['eq', 'Equipe (gestão)', 'grupo']] : [])];
+  const meses = []; for (let k = 0; k < 12; k++) { const x = new Date(); x.setDate(15); x.setMonth(x.getMonth() - k); meses.push(x.toISOString().slice(0, 7)); }
+  $('#root').innerHTML = `<div class="app"><aside class="side" aria-label="Menu"><div class="logo">NEX <i>equipe</i></div>${nav.map(([k, t, i]) => `<button class="nv ${N.view === k || (k !== 'eq' && N.view !== 'eq' && k === 'meu') ? 'on' : ''}" data-nv="${k}">${IC[i]}${t}</button>`).join('')}
+    <div class="eu"><div class="av" style="background:${cor(d.eu.nome)}">${esc(ini(d.eu.nome))}</div><div style="min-width:0"><b style="font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis">${esc(d.eu.nome)}</b><div style="font-size:12px;color:#9FB1DA">${esc(PAPEL[d.eu.papel] || 'Equipe NEXUM')}</div></div></div><button class="sair" id="sair">Sair</button></aside>
+    <main class="main" id="cv"><div class="top"><div><h1>${N.view === 'eq' ? 'Equipe' : N.quem ? esc(d.eu.nome) : 'Olá, ' + esc(String(d.eu.nome).split(' ')[0])}</h1><p>${esc(mesNome(d.mes))}${d.passou < d.diasMes ? ` · faltam ${d.diasMes - d.passou} dia(s) para fechar o mês` : ' · mês fechado'}</p></div>
+      ${N.quem ? '<button class="btn sec sm" id="volta">Voltar para a equipe</button>' : ''}<select class="sel" id="mes" aria-label="Mês">${meses.map(m => `<option value="${m}"${m === d.mes ? ' selected' : ''}>${esc(mesNome(m))}</option>`).join('')}</select></div><div id="corpo"></div></main></div>
+    <nav class="bnav">${nav.slice(0, 5).map(([k, t, i]) => `<button data-nv="${k}" class="${N.view === k ? 'on' : ''}">${IC[i]}${t.split(' ')[0]}</button>`).join('')}</nav>`;
+  $('#sair').onclick = () => FB.auth.signOut(); $('#mes').onchange = e => { N.mes = e.target.value; carregar(); };
+  const vt = $('#volta'); if (vt) vt.onclick = () => { N.quem = ''; N.view = 'eq'; carregar(); };
+  $$('[data-nv]').forEach(b => b.onclick = () => { const k = b.dataset.nv; if (k === 'eq') { N.view = 'eq'; N.quem = ''; return N.quem ? carregar() : pintar(); } if (N.view === 'eq') { N.view = 'meu'; pintar(); } const s = $('#s-' + k); if (s) s.scrollIntoView({ behavior: 'smooth' }); else window.scrollTo({ top: 0, behavior: 'smooth' }); $$('[data-nv]').forEach(x => x.classList.toggle('on', x.dataset.nv === k)); });
+}
+function pintar() { casca(); if (N.view === 'eq' && N.d.todos && !N.quem) return pintarEquipe(); pintarMeu(); }
+function barra(v, m, c) { const p = m ? Math.min(100, Math.round(v / m * 100)) : 0; return `<div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><i style="width:${m ? p : 0}%;background:${c}"></i></div>`; }
+function cartaoMeta(tit, ic, bg, fg, v, m, un, extra, bat) {
+  const p = m ? Math.round(v / m * 100) : null;
+  return `<div class="card meta"><h2><span class="ic" style="background:${bg};color:${fg}">${IC[ic]}</span>${tit}</h2><div class="row"><b>${esc(v)}</b><span>${m ? `de ${esc(m)} ${un}` : un}</span></div>${barra(v, m, fg)}
+    <div class="pe"><span>${m ? `${p}%${bat ? ' · meta batida' : v < m ? ` · faltam ${m - v}` : ''}` : 'sem meta neste mês'}${extra ? ' · ' + extra : ''}</span>${m ? `<span class="tag ${bat ? 'ok' : 'pa'}">${bat ? 'batida' : 'em andamento'}</span>` : ''}</div></div>`;
+}
+const ST = { aprovada: ['pa', 'aprovada'], garantia: ['mu', 'em garantia'], estornada: ['bd', 'estornada'], paga: ['ok', 'paga'] };
+function pintarMeu() {
+  const d = N.d, r = d.resumo, m = r.meta || {}, pago = r.pago, el = $('#corpo'), papel = d.eu.papel;
+  const its = d.itens.filter(x => N.aba === 'tudo' || x.tipo === N.aba), max = Math.max(1, ...d.hist.map(h => h.total));
+  const st = x => pago && x.status === 'aprovada' ? ST.paga : ST[x.status] || ST.aprovada;
+  const prox = (() => { const i = d.ranking.findIndex(x => x.eu); if (i <= 0) return i === 0 && d.ranking.length > 1 ? 'Você está em 1º lugar. Continue assim!' : ''; const f = d.ranking[i - 1].pts - d.ranking[i].pts + 1; return `Faltam <b>${f} pontos</b> para passar ${esc(String(d.ranking[i - 1].nome).split(' ')[0])}${d.regras.ptVenda && f <= d.regras.ptVenda ? ': 1 venda de plano já resolve' : ''}.`; })();
+  el.innerHTML = `
+  <section class="hero" aria-label="Resumo do mês"><div><small>Comissão do mês até agora</small><b class="big">${brl(r.comissao)}</b><div class="sub">${pago ? `paga em ${new Date(pago.em).toLocaleDateString('pt-BR')} · ${brl(pago.valor)}` : `${brl(r.liberada)} já aprovados${r.comissao > r.liberada ? ` · ${brl(r.comissao - r.liberada)} em garantia` : ''}`}</div></div>
+    <div class="k"><small>${r.nMetas ? `Bônus de meta (${r.nBat} de ${r.nMetas})` : 'Bônus de meta'}</small><b>${r.nMetas ? '+ ' + brl(r.bonus) : '—'}</b><div class="sub">${r.nMetas ? (r.bonus < r.bonusPossivel ? `até ${brl(r.bonusPossivel)} batendo todas` : 'todas as metas batidas') : 'sem meta neste mês'}</div></div>
+    <div class="k"><small>${d.passou < d.diasMes ? 'Previsão do mês' : 'Total do mês'}</small><b>${brl(d.passou < d.diasMes ? d.previsao + r.bonus : r.total)}</b><div class="sub">${d.passou < d.diasMes ? 'no ritmo de hoje' : 'comissão + bônus'}</div></div></section>
+  <div class="g3" id="s-metas">
+    ${cartaoMeta('Vendas de planos', 'sobe', '#E8EFFF', 'var(--azul)', r.vendas, +m.vendas || 0, 'empresa(s) nova(s)', '', r.bat.vendas)}
+    ${cartaoMeta('Vagas preenchidas', 'pessoa', '#E3F6EC', 'var(--ok)', r.vagas, +m.vagas || 0, 'vaga(s)', '', r.bat.vagas)}
+    ${cartaoMeta('Atendimento', 'chat', '#FFF1DA', 'var(--warn)', r.atend, +m.atend || 0, 'atendimento(s)', r.nota != null ? `nota ${String(r.nota).replace('.', ',')}${+m.nota ? ' (meta ' + String(m.nota).replace('.', ',') + ')' : ''}` : '', r.bat.atend)}
+  </div>
+  <div class="g2"><section class="card" id="s-com"><h2>Minhas comissões</h2><p class="h">Cada venda e cada vaga entra sozinha, pelo CRM e pela Seleção terceirizada.</p>
+      <div class="tabs" role="tablist">${[['tudo', 'Tudo'], ['venda', 'Venda de planos'], ['rs', 'Venda do Recrutamento'], ['vaga', 'Vagas preenchidas']].map(([k, t]) => `<button role="tab" aria-selected="${N.aba === k}" class="${N.aba === k ? 'on' : ''}" data-ab="${k}">${t}</button>`).join('')}</div>
+      ${its.length ? `<div class="tw"><table><thead><tr><th>Data</th><th>O quê</th><th>Cliente</th><th class="n">Comissão</th><th>Situação</th></tr></thead><tbody>${its.map(x => `<tr><td>${dt(x.data)}</td><td>${esc(x.oque)}${x.pct ? `<div style="font-size:12px;color:var(--muted)">${x.pct}% de ${brl(x.base)}</div>` : x.candidato ? `<div style="font-size:12px;color:var(--muted)">${esc(x.candidato)}</div>` : ''}</td><td>${esc(x.cliente)}</td><td class="n">${brl(x.valor)}</td><td><span class="tag ${st(x)[0]}">${st(x)[1]}${x.status === 'garantia' ? ' até ' + dt(x.garantiaAte) : ''}</span></td></tr>`).join('')}</tbody></table></div>`
+        : `<div class="vazio">Nenhuma comissão ${N.aba === 'tudo' ? '' : 'deste tipo '}em ${esc(mesNome(d.mes))}.<br>${papel === 'suporte' ? 'No atendimento, o que conta são as metas e o bônus.' : 'Ela entra quando o cliente paga ou quando o candidato é contratado.'}</div>`}
+      ${d.regras.garantia ? `<div class="pr">${IC.info.replace('<svg', '<svg width="18" height="18" style="color:var(--azul)"')}<span>A comissão da vaga preenchida fica em garantia por ${d.regras.garantia} dias: se a pessoa contratada sair antes, ela pode ser estornada.</span></div>` : ''}</section>
+    <section class="card" id="s-rank"><h2>Ranking da equipe</h2><p class="h">Pontos do mês: venda ${d.regras.ptVenda}, vaga ${d.regras.ptVaga}, atendimento ${d.regras.ptAtend}.</p>
+      ${d.ranking.length ? `<ul class="rk">${d.ranking.map((p, i) => `<li class="${p.eu ? 'eu' : ''}"><span class="p">${i + 1}</span><div class="av" style="background:${p.eu ? 'var(--azul)' : cor(p.nome)}">${esc(ini(p.nome))}</div>${p.eu ? 'Você' : esc(p.nome)}<span class="v">${p.pts.toLocaleString('pt-BR')} pts</span></li>`).join('')}</ul>` : '<div class="vazio">Ainda sem pontos neste mês.</div>'}
+      ${prox ? `<div class="pr"><span>${prox}</span></div>` : ''}</section></div>
+  <div class="g2"><section class="card"><h2>Últimos 6 meses</h2><p class="h">Comissão e bônus por mês.</p>
+      <div class="graf">${d.hist.map(h => `<div class="${h.mes === d.mes ? 'at' : ''}"><b>${h.total ? brl(h.total).replace(',00', '') : ''}</b><i style="height:${Math.round(h.total / max * 100)}%"></i>${new Date(h.mes + '-15').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</div>`).join('')}</div></section>
+    <section class="card" id="s-regras"><h2>Como eu ganho</h2><p class="h">Regras definidas pela proprietária.</p>
+      <div class="regra"><b>Plano novo</b>${d.regras.pct1}% da 1ª mensalidade${d.regras.pctRec && d.regras.meses ? ` + ${d.regras.pctRec}% das próximas ${d.regras.meses}` : ''}</div>
+      <div class="regra"><b>Recrutamento</b>A mesma regra, na venda do NEXUM Recrutamento</div>
+      <div class="regra"><b>Vaga</b>${brl(d.regras.vaga)} por vaga preenchida${d.regras.garantia ? `, liberada após ${d.regras.garantia} dias` : ''}</div>
+      <div class="regra"><b>Bônus</b>${brl(d.regras.bonus)} por meta batida no mês</div>
+      <div class="regra"><b>Quando cai</b>Só conta pagamento de cliente confirmado. A proprietária aprova e marca como paga.</div></section></div>`;
+  $$('[data-ab]', el).forEach(b => b.onclick = () => { N.aba = b.dataset.ab; pintarMeu(); $('#s-com').scrollIntoView({ block: 'nearest' }); });
+}
+function pintarEquipe() {
+  const d = N.d, el = $('#corpo'), eq = d.equipe || [], tot = eq.reduce((s, p) => s + p.total, 0), apagar = eq.filter(p => !p.pago && p.total > 0), mt = d.metas || {}, ch = e => String(e).toLowerCase().replace(/[^\w.-]/g, '_');
+  el.innerHTML = `<section class="hero"><div><small>Total da equipe em ${esc(mesNome(d.mes))}</small><b class="big">${brl(tot)}</b><div class="sub">comissões + bônus</div></div><div class="k"><small>A pagar</small><b>${brl(apagar.reduce((s, p) => s + p.total, 0))}</b><div class="sub">${apagar.length} pessoa(s)</div></div><div class="k"><small>Pagos</small><b>${eq.filter(p => p.pago).length}</b><div class="sub">de ${eq.length} na equipe</div></div></section>
+    <section class="card" style="margin-bottom:16px"><h2>Pessoas</h2><p class="h">Clique no nome para ver o mês da pessoa como ela vê.</p><div class="tw"><table><thead><tr><th>Pessoa</th><th class="n">Vendas</th><th class="n">Vagas</th><th class="n">Atend.</th><th class="n">Comissão</th><th class="n">Bônus</th><th class="n">Total</th><th></th></tr></thead><tbody>
+      ${eq.map(p => `<tr><td><button class="btn sec sm" data-ver="${esc(p.email)}" style="text-align:left">${esc(p.nome)}</button><div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(PAPEL[p.papel] || '')}</div></td><td class="n">${p.vendas}${p.meta && +p.meta.vendas ? '/' + p.meta.vendas : ''}</td><td class="n">${p.vagas}${p.meta && +p.meta.vagas ? '/' + p.meta.vagas : ''}</td><td class="n">${p.atend}${p.nota != null ? ' · ' + String(p.nota).replace('.', ',') : ''}</td><td class="n">${brl(p.comissao)}</td><td class="n">${brl(p.bonus)}</td><td class="n"><b>${brl(p.total)}</b></td><td class="n">${p.pago ? `<span class="tag ok">paga ${new Date(p.pago.em).toLocaleDateString('pt-BR')}</span>` : p.total > 0 ? `<button class="btn sm" data-pg="${esc(p.email)}">Marcar como paga</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="vazio">Ninguém na equipe ainda. Inclua as pessoas em Equipe da NEXUM, no Painel.</td></tr>'}</tbody></table></div></section>
+    ${d.semResp && d.semResp.length ? `<section class="card" style="margin-bottom:16px"><h2>Vagas preenchidas sem responsável (${d.semResp.length})</h2><p class="h">Escolha quem da equipe fez a seleção para a comissão entrar.</p><div class="tw"><table><tbody>${d.semResp.map(x => `<tr><td>${dt(x.data)}</td><td>${esc(x.oque)}<div style="font-size:12px;color:var(--muted)">${esc(x.cliente)}${x.candidato ? ' · ' + esc(x.candidato) : ''}</div></td><td><select class="inp" data-at="${esc(x.id)}" style="width:auto"><option value="">Quem fez a seleção?</option>${eq.map(p => `<option value="${esc(p.email)}">${esc(p.nome)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div></section>` : ''}
+    <section class="card" style="margin-bottom:16px"><h2>Metas de ${esc(mesNome(d.mes))}</h2><p class="h">Deixe 0 para não ter meta naquele item. O bônus é pago por meta batida.</p><div class="tw"><table><thead><tr><th>Pessoa</th><th>Vendas (empresas)</th><th>Vagas</th><th>Atendimentos</th><th>Nota mínima</th></tr></thead><tbody>
+      ${eq.map(p => { const x = mt[ch(p.email)] || {}; return `<tr data-mt="${esc(p.email)}"><td>${esc(p.nome)}</td>${['vendas', 'vagas', 'atend', 'nota'].map(k => `<td><input class="inp" data-k="${k}" type="number" min="0" ${k === 'nota' ? 'max="5" step="0.1"' : 'step="1"'} value="${+x[k] || 0}" aria-label="${k} de ${esc(p.nome)}" style="width:96px"></td>`).join('')}</tr>`; }).join('')}</tbody></table></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="mt-p"> Usar também nos próximos meses</label><span style="flex:1"></span><button class="btn" id="mt-s">Salvar metas</button></div></section>
+    <section class="card"><h2>Regras</h2><p class="h">A porcentagem das vendas é a mesma das Comissões do CRM (hoje ${d.regras.pct1}% da 1ª mensalidade${d.regras.pctRec ? ` + ${d.regras.pctRec}% das próximas ${d.regras.meses}` : ''}). Mude por lá.</p>
+      <div class="grid">${[['vaga', 'Por vaga preenchida (R$)'], ['garantia', 'Garantia da vaga (dias)'], ['bonus', 'Bônus por meta batida (R$)'], ['ptVenda', 'Pontos por venda'], ['ptVaga', 'Pontos por vaga'], ['ptAtend', 'Pontos por atendimento']].map(([k, t]) => `<div class="fld"><label for="rg-${k}">${t}</label><input class="inp" id="rg-${k}" type="number" min="0" value="${+d.regras[k] || 0}"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="rg-s">Salvar regras</button></div></section>`;
+  $$('[data-ver]', el).forEach(b => b.onclick = () => { N.quem = b.dataset.ver; N.view = 'meu'; carregar(); });
+  $$('[data-pg]', el).forEach(b => b.onclick = async () => { const p = eq.find(x => x.email === b.dataset.pg); if (!confirm(`Marcar ${brl(p.total)} como pago para ${p.nome}?`)) return; b.disabled = true;
+    try { await api('/api/nex/acao', { acao: 'pagar', mes: d.mes, email: p.email, valor: p.total, vendas: p.vendasValor || 0 }); toast('Marcado como pago.'); carregar(); } catch (e) { toast(e.message, true); b.disabled = false; } });
+  $$('[data-at]', el).forEach(s => s.onchange = async () => { if (!s.value) return; try { await api('/api/nex/acao', { acao: 'atribuir', id: s.dataset.at, email: s.value }); toast('Responsável salvo.'); carregar(); } catch (e) { toast(e.message, true); } });
+  $('#mt-s', el).onclick = async () => { const metas = {}; $$('[data-mt]', el).forEach(tr => { const o = {}; $$('[data-k]', tr).forEach(i => o[i.dataset.k] = +i.value || 0); metas[tr.dataset.mt] = o; });
+    try { await api('/api/nex/acao', { acao: 'metas', mes: d.mes, metas, padrao: $('#mt-p', el).checked }); toast('Metas salvas.'); carregar(); } catch (e) { toast(e.message, true); } };
+  $('#rg-s', el).onclick = async () => { const o = { acao: 'regras' }; ['vaga', 'garantia', 'bonus', 'ptVenda', 'ptVaga', 'ptAtend'].forEach(k => o[k] = +$('#rg-' + k, el).value || 0);
+    try { await api('/api/nex/acao', o); toast('Regras salvas.'); carregar(); } catch (e) { toast(e.message, true); } };
+}
+try { firebase.initializeApp(FIREBASE_CONFIG); FB = { auth: firebase.auth(), db: firebase.firestore() }; FB.auth.onAuthStateChanged(u => { if (!u) { N.d = null; return telaLogin(); } $('#root').innerHTML = '<div class="login"><form><p>Carregando…</p></form></div>'; carregar(); }); }
+catch (e) { document.getElementById('root').innerHTML = '<div class="login"><form><h1>Sem conexão</h1><p>Não foi possível carregar o NEX. Confira a internet e abra de novo.</p></form></div>'; }
+</script>
+</body></html>

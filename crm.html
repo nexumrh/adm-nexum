@@ -2116,6 +2116,14 @@ const ETAPA_RQ65 = { inscrito: 'Inscrição recebida', triagem: 'Triagem', teste
   return r;
 }; }
 </script>
+<script>
+/* =====================================================================
+   LOTE 68 (CRM): atalho para o NEX (metas e comissões da equipe)
+   ===================================================================== */
+{ const _dn68 = desenharNav; desenharNav = function () { const r = _dn68.apply(this, arguments), el = $('#nav'), ref = el && ($('#nv-com', el) || $('#nv-rt', el));
+  if (ref && !$('#nv-nex', el)) { ref.insertAdjacentHTML('afterend', `<button id="nv-nex">${I('estrela')}<span>NEX: minhas metas</span></button>`); $('#nv-nex', el).onclick = () => window.open('https://adm.nexumdp.com.br/nex.html', '_blank', 'noopener'); }
+  return r; }; }
+</script>
 <!-- proteção: se algum texto sobrar depois daqui ao subir o arquivo, ele fica escondido -->
 <plaintext hidden style="display:none">
 
