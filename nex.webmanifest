@@ -1,0 +1,25 @@
+{
+ "name": "NEX · Equipe NEXUM",
+ "short_name": "NEX",
+ "description": "Metas e comissões da equipe NEXUM",
+ "start_url": "nex.html",
+ "scope": "nex",
+ "display": "standalone",
+ "background_color": "#0A1733",
+ "theme_color": "#0A1733",
+ "lang": "pt-BR",
+ "icons": [
+  {
+   "src": "nex-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any maskable"
+  },
+  {
+   "src": "nex-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
