@@ -399,7 +399,7 @@ function mudou() {
   if (novos.length && C.meuStatus === 'disponivel') { beep(); const i = novos[0]; toast(`Nova mensagem de ${i.nome} · ${CANAIS[i.canal][0]}`); try { if (document.hidden && Notification.permission === 'granted') new Notification('CRM NEXUM', { body: `${i.nome}: ${String(i.ultima).slice(0, 80)}` }); } catch (e) { } }
   _primeira = false;
   const sr = l.filter(i => i.etapa !== 'fim' && i.ultimaDe === 'cliente').length; document.title = (sr ? `(${sr}) ` : '') + 'CRM NEXUM';
-  try { if (EMBED && parent !== window) parent.postMessage({ crmnx: true, semResposta: sr }, location.origin); } catch (e) { }
+  try { if (EMBED && parent !== window) parent.postMessage({ crmnx: true, semResposta: sr }, location.origin); else if (window.opener && !window.opener.closed) window.opener.postMessage({ crmnx: true, semResposta: sr }, location.origin); } catch (e) { }
   if ($('.app')) { desenharNav(); if (C.view === 'kanban') desenharKanban(); else { desenharLista(); const a = atual(); if (a && $('#ch') && !$('#ch-h')) return abrir(C.sel); if (a && a.canal === 'sistema') desenharMsgs(); desenharChatTopo(); if (a) desenharPerfil(); } }
 }
 

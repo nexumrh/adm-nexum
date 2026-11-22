@@ -2555,11 +2555,13 @@ Object.values(PAPEL_NX).forEach(p => { if (!p[1].includes('crmnx')) p[1].unshift
 A.crmSemResp = A.crmSemResp || 0;
 window.addEventListener('message', e => { if (e.origin !== location.origin || !e.data || !e.data.crmnx) return; A.crmSemResp = +e.data.semResposta || 0; crmBadge(); });
 function crmBadge() { const b = $('.side .nav button[data-v="crmnx"]'); if (!b) return; let d = b.querySelector('.bdg'); if (!d) { b.insertAdjacentHTML('beforeend', '<span class="bdg"></span>'); d = b.querySelector('.bdg'); } d.textContent = A.crmSemResp || ''; d.style.background = A.crmSemResp ? '#E11D48' : ''; }
+/* o CRM abre numa aba própria (a mesma aba é reaproveitada se já estiver aberta) */
+function abrirCrmNx() { const w = window.open('crm.html', 'crm-nexum'); if (w) { try { w.focus(); } catch (e) { } } else toast('O navegador bloqueou a nova aba. Permita pop-ups para este site e clique de novo.', true); }
 function vCrmNx(el) {
   el.innerHTML = `<div class="row" style="gap:10px;flex-wrap:wrap;margin:-4px 0 10px"><p class="hint" style="flex:1;margin:0">WhatsApp, chat de suporte do RH e do Recrutamento e leads do site, em caixa de entrada e kanban.</p><a class="btn sec sm" href="crm.html" target="_blank" rel="noopener">Abrir em tela cheia</a></div>
     <iframe id="crmnx-f" src="crm.html?embed=1" title="CRM NEXUM" style="width:100%;height:calc(100vh - 150px);min-height:560px;border:1px solid var(--line,#E3E7F0);border-radius:16px;background:#fff;display:block" allow="clipboard-write; notifications; microphone"></iframe>`;
 }
-{ const _go5 = go; go = function (v, ms) { if (v === 'crmnx' && podeVer('crmnx')) { if (A.view === 'crmnx' && $('#crmnx-f')) return; A.view = 'crmnx'; $$('.side .nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === 'crmnx')); $('#side').classList.remove('open'); $('#t-view').textContent = 'CRM NEXUM'; const el = $('#view'); el.innerHTML = ''; vCrmNx(el); $('.content').scrollTop = 0; return; } return _go5(v, ms); }; }
+{ const _go5 = go; go = function (v, ms) { if (v === 'crmnx' && podeVer('crmnx')) { abrirCrmNx(); $('#side').classList.remove('open'); return; } return _go5(v, ms); }; }
 setInterval(() => { try { if (A.user) crmBadge(); } catch (e) { } }, 3000);
 /* o aviso "cliente aguardando" do suporte leva para o CRM */
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('#sa-ir'); if (b && podeVer('crmnx')) { e.stopImmediatePropagation(); e.preventDefault(); go('crmnx'); } }, true);
